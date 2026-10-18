@@ -1,0 +1,50 @@
+# Integración continua de KiroLogo.
+# Corre en cada pull request hacia main y en los empujes a main, para que
+# ningún cambio entre sin pasar el typecheck, el build y toda la suite de
+# pruebas, incluida la regresión del catálogo que exige el steering.
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+# Cancela ejecuciones viejas de la misma rama cuando llega un commit nuevo,
+# para no gastar minutos revisando codigo que ya quedo obsoleto.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verificar:
+    name: Typecheck, build y pruebas
+    runs-on: ubuntu-latest
+    steps:
+      - name: Clonar el repositorio
+        uses: actions/checkout@v4
+
+      # Lee la version del .nvmrc para usar exactamente el mismo Node que el
+      # desarrollo local y el build de Amplify. Una sola fuente de verdad.
+      - name: Preparar Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      # npm ci, no npm install: instalacion determinista desde el lockfile.
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Verificar tipos
+        run: npm run typecheck
+
+      - name: Compilar
+        run: npm run build
+
+      - name: Ejecutar pruebas
+        # Se limita la concurrencia a 2 workers: las pruebas de propiedad
+        # (fast-check, 200 corridas cada una) son intensivas en CPU y, con el
+        # paralelismo por defecto, se quedan sin núcleo en runners de 2 cores y
+        # expiran por tiempo. Acotando los workers corren de forma estable.
+        run: npm test -- --maxWorkers=2
