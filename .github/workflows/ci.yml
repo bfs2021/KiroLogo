@@ -19,15 +19,19 @@ concurrency:
 jobs:
   verificar:
     name: Typecheck, build y pruebas
-    runs-on: ubuntu-latest
+    # Se fija la imagen del runner en lugar de ubuntu-latest: esa etiqueta
+    # migra a Ubuntu 26 y una migración silenciosa puede romper el build sin
+    # que aparezca en ningún diff. Fijarla la hace reproducible y se sube a
+    # propósito cuando se decida.
+    runs-on: ubuntu-24.04
     steps:
       - name: Clonar el repositorio
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       # Lee la version del .nvmrc para usar exactamente el mismo Node que el
       # desarrollo local y el build de Amplify. Una sola fuente de verdad.
       - name: Preparar Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version-file: .nvmrc
           cache: npm
