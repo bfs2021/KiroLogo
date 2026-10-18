@@ -19,6 +19,7 @@ function calif(p: boolean, e: boolean, a: boolean): Calificacion {
     abstraccion: estrella(a),
     conteoJugador: 1,
     presupuestoEstrella: 1,
+    mensajeAbstraccion: null,
   };
 }
 

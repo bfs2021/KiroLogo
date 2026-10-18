@@ -21,7 +21,7 @@ let elegidos: string[];
 
 function calif(p: boolean, e: boolean, a: boolean): Calificacion {
   const est = (o: boolean) => (o ? { otorgada: true as const } : { otorgada: false as const, motivo: { clave: 'sinPrecision' as const } });
-  return { precision: est(p), economia: est(e), abstraccion: est(a), conteoJugador: 1, presupuestoEstrella: 1 };
+  return { precision: est(p), economia: est(e), abstraccion: est(a), conteoJugador: 1, presupuestoEstrella: 1, mensajeAbstraccion: null };
 }
 
 function conAprobados(...ids: string[]): Progreso {
@@ -311,10 +311,13 @@ describe('menu-mundos · seis mundos', () => {
     ]);
   });
 
-  it('el estado de cada mundo refleja catálogo y desbloqueo: 0 disponible, 1..5 próximamente', () => {
+  it('el estado de cada mundo refleja catálogo y desbloqueo: 0 disponible, 1 bloqueado, 2..5 próximamente', () => {
     const menu = crear(cargarProgreso(null));
     expect(menu.estadoDeMundo(0)).toBe('disponible');
-    for (const m of [1, 2, 3, 4, 5] as const) {
+    // El mundo 1 ya tiene niveles (mundo 1 · figuras), así que un jugador nuevo lo
+    // ve bloqueado (mundo anterior sin completar), no «próximamente».
+    expect(menu.estadoDeMundo(1)).toBe('bloqueado');
+    for (const m of [2, 3, 4, 5] as const) {
       expect(menu.estadoDeMundo(m), `mundo ${m}`).toBe('proximamente');
     }
   });
@@ -322,12 +325,13 @@ describe('menu-mundos · seis mundos', () => {
   it('un mundo sin niveles muestra «próximamente» por texto y no se puede abrir', () => {
     const menu = crear(cargarProgreso(null));
     menu.abrir();
-    const encabezado = menu.encabezadoMundo(1)!;
+    // El mundo 2 todavía no tiene niveles en el catálogo.
+    const encabezado = menu.encabezadoMundo(2)!;
     expect(encabezado.getAttribute('data-estado-mundo')).toBe('proximamente');
     expect(encabezado.querySelector('.kl-menu-mundo-estado')!.textContent).toBe('próximamente');
     expect(encabezado.disabled).toBe(true);
     encabezado.click();
-    expect(menu.mundoAbierto(1)).toBe(false);
+    expect(menu.mundoAbierto(2)).toBe(false);
   });
 });
 

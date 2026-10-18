@@ -18,8 +18,8 @@ describe('errores.ts', () => {
   // ==========================================================================
   
   describe('Tipos y constantes básicas', () => {
-    it('IdError contiene los 38 identificadores', () => {
-      // Lista completa de los 38 ids según el diseño
+    it('IdError contiene los 47 identificadores', () => {
+      // Lista completa de los ids según el diseño
       const todosIds: IdError[] = [
         // léxicos (4)
         'caracterNoValido',
@@ -35,7 +35,9 @@ describe('errores.ts', () => {
         'argumentoFaltante',
         'argumentoDeTipoEquivocado',
         'corcheteSinCerrar',
+        'corcheteSinCerrarEnLinea',
         'corcheteDeMas',
+        'corcheteDeMasEnLinea',
         'corcheteInesperado',
         'parametroInesperado',
         'palabraInesperada',
@@ -67,9 +69,16 @@ describe('errores.ts', () => {
         'generadorSinCandidato',
         'generadorDesconocido',
         'solicitudDeErrorInvalida',
+        // invitaciones de abstracción (1)
+        'invitacionAbstraccionRepite',
+        // reproducción en paralelo (4)
+        'divergenciaGiro',
+        'divergenciaAvance',
+        'divergenciaJugadorCorto',
+        'divergenciaExcesoFinal',
       ];
       
-      expect(todosIds).toHaveLength(40);
+      expect(todosIds).toHaveLength(47);
     });
     
     it('SeveridadError es "jugador" o "programacion"', () => {
@@ -202,11 +211,25 @@ describe('errores.ts', () => {
         expect(error.mensaje).toBe('Falta cerrar el corchete que abriste en la línea 2.');
       });
       
+      it('corcheteSinCerrarEnLinea', () => {
+        const error = crearError('corcheteSinCerrarEnLinea', { linea: 5 });
+        expect(error.id).toBe('corcheteSinCerrarEnLinea');
+        expect(error.severidad).toBe('jugador');
+        expect(error.mensaje).toBe('Falta cerrar el corchete que abriste en la línea 5.');
+      });
+      
       it('corcheteDeMas', () => {
         const error = crearError('corcheteDeMas', {});
         expect(error.id).toBe('corcheteDeMas');
         expect(error.severidad).toBe('jugador');
         expect(error.mensaje).toBe('Hay un corchete de cierre en la línea 4 que no abriste.');
+      });
+      
+      it('corcheteDeMasEnLinea', () => {
+        const error = crearError('corcheteDeMasEnLinea', { linea: 3 });
+        expect(error.id).toBe('corcheteDeMasEnLinea');
+        expect(error.severidad).toBe('jugador');
+        expect(error.mensaje).toBe('Hay un corchete de cierre en la línea 3 que no abriste.');
       });
       
       it('corcheteInesperado', () => {

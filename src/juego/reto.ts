@@ -11,6 +11,7 @@ import { ESTADO_INICIAL } from '../motor/tortuga.js';
 import { extraerSegmentos, type Segmento } from '../motor/segmentos.js';
 import { codificar } from '../azar/codigo-semilla.js';
 import { buscarNivel } from '../niveles/catalogo.js';
+import { GENERADORES } from './generadores-mundo-1.js';
 import type { Nivel } from '../niveles/tipos.js';
 import { buscarGenerador } from '../niveles/generadores/registro.js';
 
@@ -79,21 +80,33 @@ export function resolverReto(idNivel: string, semilla: number): ResultadoReto {
     referencia = nivel.origen.referencia;
     semillaEfectiva = nivel.origen.semilla;
   } else {
-    const generador = buscarGenerador(nivel.origen.idGenerador);
-    if (generador === null) {
-      return { exito: false, error: crearError('generadorDesconocido', {}) };
+    // Niveles generados. Dos registros conviven con contratos distintos: el del
+    // mundo 0 (niveles/generadores/registro.ts, con reintento y parámetros) y el
+    // del mundo 1 (juego/generadores-mundo-1.ts, por semilla). Se busca primero el
+    // del mundo 0; si el id no está ahí, se intenta el del mundo 1.
+    const idGenerador = nivel.origen.idGenerador;
+    const generador = buscarGenerador(idGenerador);
+    if (generador !== null) {
+      const generado = generador({
+        semilla,
+        parametros: nivel.origen.parametros,
+        intentosMaximos: INTENTOS_MAXIMOS_GENERADOR,
+      });
+      if (!generado.exito) {
+        // El generador agotó sus intentos: propaga su error del catálogo.
+        return { exito: false, error: generado.error };
+      }
+      referencia = generado.referencia;
+      semillaEfectiva = generado.semillaEfectiva;
+    } else {
+      const fn = GENERADORES[idGenerador];
+      if (fn === undefined) {
+        return { exito: false, error: crearError('generadorDesconocido', {}) };
+      }
+      const resultado = fn(semilla);
+      referencia = resultado.programa;
+      semillaEfectiva = resultado.semillaUsada;
     }
-    const generado = generador({
-      semilla,
-      parametros: nivel.origen.parametros,
-      intentosMaximos: INTENTOS_MAXIMOS_GENERADOR,
-    });
-    if (!generado.exito) {
-      // El generador agotó sus intentos: propaga su error del catálogo.
-      return { exito: false, error: generado.error };
-    }
-    referencia = generado.referencia;
-    semillaEfectiva = generado.semillaEfectiva;
   }
 
   // Ejecutar la referencia una sola vez, con los comandos del mundo del nivel.

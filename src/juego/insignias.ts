@@ -1,11 +1,11 @@
 // Insignias de KiroLogo.
 //
-// En esta spec existe una sola insignia: *Secuencia*, la del mundo 0. Se otorga
-// cuando, y solo cuando, los cinco niveles del mundo 0 tienen las tres estrellas
-// guardadas. El otorgamiento se deriva **solo** del progreso y el catálogo, sin
-// estado propio persistido, de modo que es reproducible a partir de las estrellas
-// guardadas (requisito 8.4). Ninguna insignia de otro mundo ni transversal se
-// otorga aquí (requisito 8.5).
+// Las insignias de concepto se otorgan al dominar un mundo entero: las tres
+// estrellas en todos sus niveles. Esta spec reconoce dos: *Secuencia* (mundo 0)
+// e *Iteración* (mundo 1). El otorgamiento se deriva **solo** del progreso y el
+// catálogo, sin estado propio persistido, de modo que es reproducible a partir
+// de las estrellas guardadas (requisito 8.4). Ninguna otra insignia por concepto
+// ni transversal se otorga aquí (requisito 8.5).
 
 import { CATALOGO } from '../niveles/catalogo.js';
 import type { Nivel } from '../niveles/tipos.js';
@@ -15,12 +15,13 @@ import type { Progreso } from './progreso.js';
 // Identificadores de insignia
 // ============================================================================
 
-/** La única insignia de esta spec: la del mundo 0. */
-export type IdInsignia = 'secuencia';
+/** Las insignias por concepto disponibles en esta spec. */
+export type IdInsignia = 'secuencia' | 'iteracion';
 
 /** El mundo al que pertenece cada insignia por concepto. */
 const MUNDO_DE_INSIGNIA: Readonly<Record<IdInsignia, number>> = {
   secuencia: 0,
+  iteracion: 1,
 };
 
 // ============================================================================
@@ -47,7 +48,7 @@ function mundoCompletoConTresEstrellas(mundo: number, progreso: Progreso): boole
 }
 
 // ============================================================================
-// La insignia Secuencia
+// Insignias por concepto
 // ============================================================================
 
 /**
@@ -61,13 +62,23 @@ export function insigniaSecuenciaOtorgada(progreso: Progreso): boolean {
   return mundoCompletoConTresEstrellas(0, progreso);
 }
 
+/**
+ * ¿Se otorga la insignia *Iteración*? Verdadero solo si todos los niveles del
+ * mundo 1 tienen las tres estrellas cada uno.
+ *
+ * @param progreso Progreso del jugador
+ */
+export function insigniaIteracionOtorgada(progreso: Progreso): boolean {
+  return mundoCompletoConTresEstrellas(1, progreso);
+}
+
 // ============================================================================
 // Insignias por mundo
 // ============================================================================
 
 /**
- * Las insignias otorgadas de un mundo. En esta spec solo el mundo 0 tiene una
- * insignia (*Secuencia*); cualquier otro mundo devuelve una lista vacía.
+ * Las insignias otorgadas de un mundo. Hoy el mundo 0 tiene *Secuencia* y el
+ * mundo 1 tiene *Iteración*; cualquier otro mundo devuelve una lista vacía.
  *
  * @param mundo Número de mundo (0 a 5)
  * @param progreso Progreso del jugador
@@ -78,6 +89,9 @@ export function insigniasDelMundo(mundo: number, progreso: Progreso): readonly I
   for (const id of Object.keys(MUNDO_DE_INSIGNIA) as IdInsignia[]) {
     if (MUNDO_DE_INSIGNIA[id] !== mundo) continue;
     if (id === 'secuencia' && insigniaSecuenciaOtorgada(progreso)) {
+      otorgadas.push(id);
+    }
+    if (id === 'iteracion' && insigniaIteracionOtorgada(progreso)) {
       otorgadas.push(id);
     }
   }

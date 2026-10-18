@@ -85,6 +85,7 @@ import { crearGuia, type Guia } from './ui/guia.js';
 import { crearMarcadorEstrellas, type MarcadorEstrellas } from './ui/marcador-estrellas.js';
 import { crearDiff, type EstiloDiff, type LectorTemaDiff } from './ui/diff.js';
 import { crearComparacion, type Comparacion } from './ui/comparacion.js';
+import { compararOperaciones, type ResultadoParalelo } from './motor/divergencia.js';
 
 // ============================================================================
 // Constantes visuales
@@ -786,6 +787,7 @@ export function crearAplicacion(deps: DependenciasAplicacion): Aplicacion {
   // derecha) y los controles debajo, y el orden del DOM es el orden de Tab. El panel es
   // una sola parada de Tab (flechas dentro), así «Ejecutar» queda a 2 Tabs del editor
   // (requisitos 24.5 y 28.1).
+
   // Controles.
   const controles: Controles = crearControles({
     contenedor: centro,
@@ -1299,6 +1301,17 @@ export function crearAplicacion(deps: DependenciasAplicacion): Aplicacion {
 
     // Muestra las estrellas y el comentario de Kiro.
     marcador.mostrar(calificacion);
+
+    // Si la precisión se niega, compara los dos recorridos para señalar, bajo el
+    // lienzo, el primer paso donde se separaron (lo muestra `comparacion`).
+    // Reutiliza las operaciones ya ejecutadas: no vuelve a parsear ni ejecutar.
+    let divergencia: ResultadoParalelo | null = null;
+    if (veredicto !== null && !veredicto.coincide) {
+      divergencia = compararOperaciones(reto.operaciones, operaciones);
+    }
+
+    // Comenta la calificación y, si niega la precisión, muestra el diff y, bajo
+    // el lienzo, dónde se separaron los dos recorridos.
     globo.comentarCalificacion(calificacion);
 
     // Compara con la figura de Kiro: si la precisión se niega, pasa solo a la superposición y
@@ -1310,6 +1323,7 @@ export function crearAplicacion(deps: DependenciasAplicacion): Aplicacion {
       segmentosReferencia: reto.segmentos,
       segmentosJugador: segmentos,
       veredicto: veredictoParaMostrar(veredicto, segmentos, reto.segmentos, reto.nivel.normalizacion),
+      divergencia,
     });
 
     // Refresca el menú (estados e insignia) con el progreso ya guardado.

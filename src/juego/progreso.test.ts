@@ -41,7 +41,7 @@ function crearAlmacen(inicial: Record<string, string> = {}): Storage & { datos: 
 /** Calificación con las tres estrellas otorgadas o negadas y un conteo opcional. */
 function calif(p: boolean, e: boolean, a: boolean, conteo = 1): Calificacion {
   const est = (o: boolean) => (o ? { otorgada: true as const } : { otorgada: false as const, motivo: { clave: 'sinPrecision' as const } });
-  return { precision: est(p), economia: est(e), abstraccion: est(a), conteoJugador: conteo, presupuestoEstrella: 1 };
+  return { precision: est(p), economia: est(e), abstraccion: est(a), conteoJugador: conteo, presupuestoEstrella: 1, mensajeAbstraccion: null };
 }
 
 // ============================================================================
