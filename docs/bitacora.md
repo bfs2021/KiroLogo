@@ -481,11 +481,15 @@ a esa regla: el **logo** de KiroLogo y la **mascota** del Globo_Kiro son imágen
 `public/marca/` (`kirologo.png` y `mascota.png`). El logo entra como `<img ... alt="KiroLogo">` en
 `index.html`; la mascota entra como imagen de **fondo CSS** en `.kl-globo::before` de `pantalla.css`.
 
-Esto es una **excepción temporal**, no un cambio del steering. Son bocetos que están fuera del control de
-versiones a la espera de que el líder decida el arte definitivo; la regla de «personajes por código»
-sigue vigente para todo lo demás. Se deja dicho su carácter temporal precisamente para que no se
-normalice: en cuanto el líder resuelva, o bien la marca pasa a dibujarse por código como el resto, o bien
-se abre una spec que modifique el steering de forma explícita. Mientras tanto, el requisito exige que el
+Esto es una **excepción temporal**, no un cambio del steering. Son bocetos que, en un inicio, se
+dejaron fuera del control de versiones; a partir de esta integración **se versionan** en
+`public/marca/` (antes estaban por error en `src/public/marca/`, donde Vite no los sirve, por lo que
+el sitio desplegado daba 404 en `/marca/kirologo.png` y `/marca/mascota.png`). Se mueven a la carpeta
+`public/` de la raíz, que es la que Vite publica, y se versionan para que el despliegue en Amplify los
+incluya. La regla de «personajes por código» sigue vigente para todo lo demás. Se deja dicho su
+carácter temporal precisamente para que no se normalice: en cuanto el líder resuelva, o bien la marca
+pasa a dibujarse por código como el resto, o bien se abre una spec que modifique el steering de forma
+explícita. Mientras tanto, el requisito exige que el
 nombre accesible del logo («KiroLogo», en el `alt`) quede disponible aunque la imagen no cargue, para que
 la excepción no degrade la accesibilidad.
 
