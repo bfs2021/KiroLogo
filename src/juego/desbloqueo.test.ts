@@ -13,7 +13,7 @@ const IDS = ['0.1', '0.2', '0.3', '0.4', '0.5'] as const;
 /** Calificación con las estrellas pedidas. */
 function calif(p: boolean, e: boolean, a: boolean): Calificacion {
   const est = (o: boolean) => (o ? { otorgada: true as const } : { otorgada: false as const, motivo: { clave: 'sinPrecision' as const } });
-  return { precision: est(p), economia: est(e), abstraccion: est(a), conteoJugador: 1, presupuestoEstrella: 1 };
+  return { precision: est(p), economia: est(e), abstraccion: est(a), conteoJugador: 1, presupuestoEstrella: 1, mensajeAbstraccion: null };
 }
 
 /** Progreso en memoria con un conjunto de niveles aprobados (solo precisión). */
