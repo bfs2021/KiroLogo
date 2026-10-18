@@ -29,6 +29,15 @@ ecosistema alrededor puede no estar igual de maduro. Si aparece fricción con al
   como cualquier otra cosa. No son notas personales.
 - Los mensajes de confirmación se escriben en español, igual que el resto del proyecto, y explican el
   **por qué** del cambio, no solo el qué.
+- **Los pull request se fusionan con merge commit**, nunca con squash ni con rebase. Es la estrategia
+  que usaron todos los PR anteriores y mantenerla deja un historial consistente: cada PR queda como un
+  merge rastreable y los commits originales de la rama se conservan tal como se revisaron.
+- **Antes de aprobar un PR se valida contra el estado real, no solo con los checks de CI.** Como
+  mínimo: `npm ci`, `npm run typecheck`, `npm run build` y la suite completa con `npm test --
+  --maxWorkers=2` en verde; y una revisión de las reglas duras del steering (sin `Math.random` fuera
+  del PRNG, sin `eval` ni `new Function`, `base: '/'` intacto, dominio en español sin alias en inglés,
+  dependencias nuevas fijadas y con licencia compatible con MIT). Recién entonces se aprueba y se
+  fusiona.
 - El directorio local de trabajo puede llamarse distinto al repositorio. No es parte del nombre del
   proyecto.
 
