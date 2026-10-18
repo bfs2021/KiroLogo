@@ -31,6 +31,12 @@ export interface EstadoPersonajes {
   readonly identidad: IdentidadTortuga;
   /** Festejo al ganar estrellas. Dibuja: spec 03. */
   readonly celebracion: boolean;
+  /**
+   * Agrandado visual de todo el conjunto en torno a la posición de la tortuga. No
+   * cambia la geometría ni el estado: con 1 (o ausente) el dibujo es el del
+   * diseño. Un valor no finito o no positivo se ignora.
+   */
+  readonly escala?: number;
 }
 
 export type ResultadoDibujo =
@@ -50,6 +56,25 @@ export interface EstiloPersonajes {
   readonly lapizContorno: string;
   readonly marcaRumbo: string; // color de la marca de rumbo (flecha de babor)
   readonly grosor: number;     // grosor de trazo, en unidades lógicas
+
+  // Opciones de presentación. Todas son opcionales y, sin ellas, el dibujo es
+  // exactamente el del diseño (sección 7.4): un tema puede activarlas sin tocar la
+  // geometría ni el modelo de la tortuga.
+
+  /** Relleno del caparazón; si falta, el de `relleno`. Permite dos tonos: piel y concha. */
+  readonly caparazon?: string;
+  /** Color de los escudos del caparazón (hexágono central y radios); si falta, no se dibujan. */
+  readonly detalle?: string;
+  /** Relleno de los ojos de Kiro; si falta, el color de su contorno. */
+  readonly kiroOjos?: string;
+  /**
+   * Cuándo se dibuja el lápiz: `siempre` (por omisión) o `solo-arriba`, que lo deja
+   * ver únicamente cuando está levantado. Con el lápiz abajo la propia estela ya dice
+   * que escribe; levantarlo sigue siendo visible, que es lo que exige el diseño.
+   */
+  readonly mostrarLapiz?: 'siempre' | 'solo-arriba';
+  /** Si se dibuja la flecha de rumbo del flanco de babor (por omisión, sí). */
+  readonly mostrarMarcaRumbo?: boolean;
 }
 
 export type LectorTemaPersonajes = () => EstiloPersonajes;
@@ -86,10 +111,24 @@ interface PuntoLocal {
  *   X = x·cos θ + y·sen θ
  *   Y = −x·sen θ + y·cos θ
  */
-function alRumbo(p: PuntoLocal, cos: number, sen: number, cx: number, cy: number): PuntoLocal {
+function alRumbo(
+  p: PuntoLocal,
+  cos: number,
+  sen: number,
+  cx: number,
+  cy: number,
+  escala: number,
+): PuntoLocal {
+  // Con escala 1 se conserva la expresión del diseño, bit a bit.
+  if (escala === 1) {
+    return {
+      x: cx + p.x * cos + p.y * sen,
+      y: cy - p.x * sen + p.y * cos,
+    };
+  }
   return {
-    x: cx + p.x * cos + p.y * sen,
-    y: cy - p.x * sen + p.y * cos,
+    x: cx + (p.x * cos + p.y * sen) * escala,
+    y: cy + (-p.x * sen + p.y * cos) * escala,
   };
 }
 
@@ -270,6 +309,37 @@ function dibujarMuesca(ctx: ContextoDibujo, T: Transformador): void {
   trazarPolilinea(ctx, T, [espejo(GALON_BRAZO), GALON_VERTICE, GALON_BRAZO], false);
 }
 
+/**
+ * Escudos del caparazón: un hexágono central y un radio desde cada vértice hacia el
+ * borde, como el dorso de una tortuga. Es solo trazo; el color lo da el tema.
+ */
+const ESCUDO_CENTRO: PuntoLocal = { x: 0, y: -1.2 };
+const ESCUDO_RADIO = 3.8;
+const ESCUDO_RADIOS_EXTERIORES: readonly PuntoLocal[] = [
+  { x: 0, y: 5.0 },
+  { x: -6.6, y: 2.6 },
+  { x: -6.9, y: -5.8 },
+  { x: 0, y: -9.2 },
+  { x: 6.9, y: -5.8 },
+  { x: 6.6, y: 2.6 },
+];
+
+function dibujarEscudos(ctx: ContextoDibujo, T: Transformador): void {
+  ctx.beginPath();
+  const vertices: PuntoLocal[] = [];
+  for (let k = 0; k < 6; k++) {
+    const a = Math.PI / 2 + (k * Math.PI) / 3; // vértice hacia la proa, luego en orden horario
+    vertices.push({
+      x: ESCUDO_CENTRO.x + ESCUDO_RADIO * Math.cos(a),
+      y: ESCUDO_CENTRO.y + ESCUDO_RADIO * Math.sin(a),
+    });
+  }
+  trazarPolilinea(ctx, T, vertices, true);
+  vertices.forEach((v, k) => {
+    trazarPolilinea(ctx, T, [v, ESCUDO_RADIOS_EXTERIORES[k]!], false);
+  });
+}
+
 function dibujarMarcaRumbo(ctx: ContextoDibujo, T: Transformador): void {
   // Asta.
   ctx.beginPath();
@@ -307,15 +377,30 @@ function dibujarCola(ctx: ContextoDibujo, T: Transformador): void {
   trazarPolilinea(ctx, T, [COLA_PUNTA, COLA_BASE_DER, espejo(COLA_BASE_DER)], true);
 }
 
-function dibujarKiro(ctx: ContextoDibujo, T: Transformador, inclinacion: number): void {
+/**
+ * Dibuja a Kiro: el cuerpo (domo y faldón de tres ondas), con relleno y contorno; la
+ * estela del fantasma, solo contorno; y los ojos, con su propio relleno. Cada pieza
+ * se pinta aquí mismo porque cada una abre su propio trayecto: pintar una sola vez al
+ * final, como se hacía antes, dejaba sin dibujar el cuerpo y la estela y solo
+ * asomaban los dos ojos.
+ */
+function dibujarKiro(
+  ctx: ContextoDibujo,
+  T: Transformador,
+  inclinacion: number,
+  estilo: EstiloPersonajes,
+): void {
   // El subtrazado de Kiro se gira SOLO en torno a su propio centro, por la
   // inclinación, antes de transformar al rumbo. Con inclinación 0 no gira.
   const K: Transformador = (p) => T(inclinacion === 0 ? p : girarLocal(p, CENTRO_KIRO, inclinacion));
 
-  // Domo: semicírculo de radio 4.9, de (−4.9, cy) por (0, cy+4.9) a (4.9, cy).
+  ctx.strokeStyle = estilo.kiroContorno;
+  ctx.fillStyle = estilo.kiroRelleno;
+
+  // Cuerpo. Domo: semicírculo de radio 4.9, de (4.9, cy) por (0, cy+4.9) a (−4.9, cy).
   ctx.beginPath();
-  const domo: PuntoLocal[] = [];
   const pasos = 24;
+  const domo: PuntoLocal[] = [];
   for (let i = 0; i <= pasos; i++) {
     const a = Math.PI * (i / pasos); // 0 a π: lado derecho por arriba al izquierdo
     domo.push({
@@ -323,11 +408,10 @@ function dibujarKiro(ctx: ContextoDibujo, T: Transformador, inclinacion: number)
       y: CENTRO_KIRO.y + KIRO_DOMO_RADIO * Math.sin(a),
     });
   }
-  // Faldón: tres ondas con cuadráticas, de (4.9, cy) a (−4.9, cy). El domo terminó
-  // en (−4.9, cy); cerramos por el faldón hasta (4.9, cy).
+  // Faldón: tres ondas con cuadráticas, de (−4.9, cy) a (4.9, cy). El domo terminó en
+  // (−4.9, cy); se cierra por el faldón hasta (4.9, cy).
   const inicioFaldon = { x: CENTRO_KIRO.x - KIRO_DOMO_RADIO, y: CENTRO_KIRO.y };
   const finFaldon = { x: CENTRO_KIRO.x + KIRO_DOMO_RADIO, y: CENTRO_KIRO.y };
-  // Trazamos domo y faldón como un solo contorno cerrado.
   const dPrim = K(domo[0]!);
   ctx.moveTo(dPrim.x, dPrim.y);
   for (let i = 1; i < domo.length; i++) {
@@ -346,6 +430,8 @@ function dibujarKiro(ctx: ContextoDibujo, T: Transformador, inclinacion: number)
     cursor = siguiente;
   }
   ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
 
   // Estela del fantasma: cúbica de (−1.7, −7.0) a (1.7, −7.0), ápice en y ≈ −10.0.
   ctx.beginPath();
@@ -355,11 +441,14 @@ function dibujarKiro(ctx: ContextoDibujo, T: Transformador, inclinacion: number)
   const estB = K({ x: 1.7, y: -7.0 });
   ctx.moveTo(estA.x, estA.y);
   ctx.bezierCurveTo(c1.x, c1.y, c2.x, c2.y, estB.x, estB.y);
+  ctx.stroke();
 
   // Ojos de Kiro: elipses en (±1.85, −1.5), semiejes 0.85 y 1.15.
+  ctx.fillStyle = estilo.kiroOjos ?? estilo.kiroContorno;
   ctx.beginPath();
   trazarElipseLocal(ctx, K, KIRO_OJO_DERECHO, KIRO_OJO_SEMI_X, KIRO_OJO_SEMI_Y);
   trazarElipseLocal(ctx, K, espejo(KIRO_OJO_DERECHO), KIRO_OJO_SEMI_X, KIRO_OJO_SEMI_Y);
+  ctx.fill();
 }
 
 /** Traza una elipse muestreada en el marco local y transformada. */
@@ -469,7 +558,11 @@ export function dibujarPersonajes(
   const sen = Math.sin(rad);
   const cx = tortuga.posicion.x;
   const cy = tortuga.posicion.y;
-  const T: Transformador = (p) => alRumbo(p, cos, sen, cx, cy);
+  const escala =
+    typeof estado.escala === 'number' && Number.isFinite(estado.escala) && estado.escala > 0
+      ? estado.escala
+      : 1;
+  const T: Transformador = (p) => alRumbo(p, cos, sen, cx, cy, escala);
 
   // Inclinación de Kiro acotada a [−20, 20].
   const inclinacion = Math.max(-INCLINACION_MAXIMA, Math.min(INCLINACION_MAXIMA, inclinacionKiro));
@@ -497,7 +590,8 @@ export function dibujarPersonajes(
   ctx.fill();
   ctx.stroke();
 
-  // 4. Caparazón, relleno y contorno.
+  // 4. Caparazón, relleno y contorno. Con un tono propio para la concha, si el tema lo da.
+  ctx.fillStyle = estilo.caparazon ?? estilo.relleno;
   dibujarCaparazon(ctx, T);
   ctx.fill();
   ctx.stroke();
@@ -506,10 +600,21 @@ export function dibujarPersonajes(
   dibujarMuesca(ctx, T);
   ctx.stroke();
 
-  // 6. Marca de rumbo (flecha de babor).
-  ctx.strokeStyle = estilo.marcaRumbo;
-  dibujarMarcaRumbo(ctx, T);
-  ctx.stroke();
+  // 5b. Escudos del caparazón, si el tema les da color; más finos que el contorno.
+  if (estilo.detalle !== undefined) {
+    ctx.strokeStyle = estilo.detalle;
+    ctx.lineWidth = estilo.grosor * 0.6;
+    dibujarEscudos(ctx, T);
+    ctx.stroke();
+    ctx.lineWidth = estilo.grosor;
+  }
+
+  // 6. Marca de rumbo (flecha de babor), salvo que el tema la quite.
+  if (estilo.mostrarMarcaRumbo !== false) {
+    ctx.strokeStyle = estilo.marcaRumbo;
+    dibujarMarcaRumbo(ctx, T);
+    ctx.stroke();
+  }
 
   // 7. Cuello, cabeza y ojos.
   ctx.strokeStyle = estilo.contorno;
@@ -521,17 +626,16 @@ export function dibujarPersonajes(
   dibujarOjos(ctx, T);
   ctx.fill();
 
-  // 8. Kiro, girado por la inclinación.
-  ctx.strokeStyle = estilo.kiroContorno;
-  ctx.fillStyle = estilo.kiroRelleno;
-  dibujarKiro(ctx, T, inclinacion);
-  ctx.fill();
-  ctx.stroke();
+  // 8. Kiro, girado por la inclinación. Se pinta a sí mismo, pieza por pieza.
+  dibujarKiro(ctx, T, inclinacion, estilo);
 
-  // 9. Lápiz, encima de Kiro.
-  ctx.strokeStyle = estilo.lapizContorno;
-  dibujarLapiz(ctx, T, tortuga.lapizAbajo);
-  ctx.stroke();
+  // 9. Lápiz, encima de Kiro. Con `solo-arriba` no se ve mientras escribe: levantarlo
+  // sigue siendo un cambio visible, que es lo que importa.
+  if (estilo.mostrarLapiz !== 'solo-arriba' || !tortuga.lapizAbajo) {
+    ctx.strokeStyle = estilo.lapizContorno;
+    dibujarLapiz(ctx, T, tortuga.lapizAbajo);
+    ctx.stroke();
+  }
 
   ctx.restore();
   return { valido: true };

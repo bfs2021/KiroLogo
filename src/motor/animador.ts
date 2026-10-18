@@ -54,6 +54,23 @@ export interface FinDeSecuencia {
 }
 
 // ============================================================================
+// Fotogramas: lo que se ve en un instante de la animación
+// ============================================================================
+
+/**
+ * Lo que hay que pintar en un instante: la tortuga en su posición y rumbo
+ * interpolados y, si la operación en curso es un `mover` con el lápiz abajo, el
+ * tramo recorrido hasta ahora. El tramo es provisional: no entra en la estela del
+ * lienzo hasta que la operación termina (así la estela final sigue siendo
+ * exactamente la de `extraerSegmentos`), y quien pinta lo dibuja en la capa de
+ * personajes, que se borra en cada fotograma.
+ */
+export interface Fotograma {
+  readonly estado: EstadoTortuga;
+  readonly tramo: Segmento | null;
+}
+
+// ============================================================================
 // Interfaz mínima del lienzo que el animador gobierna
 // ============================================================================
 
@@ -88,6 +105,12 @@ export interface Animador {
   alTerminar(escucha: (fin: FinDeSecuencia) => void): void;
   /** Registra un escucha que recibe cada operación aplicada. */
   alAplicar(escucha: (op: Operacion) => void): void;
+  /**
+   * Registra un escucha que recibe cada fotograma a pintar: los intermedios de
+   * una operación en curso y el final de cada operación aplicada. Sin escucha, el
+   * animador solo hace crecer la estela, como antes.
+   */
+  alFotograma(escucha: (fotograma: Fotograma) => void): void;
 }
 
 /**
@@ -105,6 +128,46 @@ function segmentoDeMover(op: Operacion): Segmento | null {
     paso: op.paso,
     linea: op.linea,
   };
+}
+
+/** Suaviza el arranque y la llegada sin salirse de [0, 1] ni dejar de crecer. */
+function suavizar(t: number): number {
+  return t * t * (3 - 2 * t);
+}
+
+/**
+ * Fotograma de una operación a una fracción `t` de su duración. Solo `mover` y
+ * `girar` tienen estados intermedios; el resto salta directo a su estado final.
+ * Usa los campos de la propia operación, sin invocar ninguna transformación de la
+ * tortuga: el giro avanza en el sentido que pidió el jugador, no por el camino
+ * más corto, para que un `GIRADERECHA 270` se vea como tres cuartos de vuelta.
+ */
+function fotogramaIntermedio(op: Operacion, t: number): Fotograma {
+  const e = suavizar(Math.min(1, Math.max(0, t)));
+  switch (op.tipo) {
+    case 'mover': {
+      const posicion = {
+        x: op.desde.x + (op.hasta.x - op.desde.x) * e,
+        y: op.desde.y + (op.hasta.y - op.desde.y) * e,
+      };
+      const estado: EstadoTortuga = { ...op.estadoAntes, posicion };
+      const largo = Math.hypot(posicion.x - op.desde.x, posicion.y - op.desde.y);
+      const tramo =
+        op.lapizAbajo && largo >= 0.0001
+          ? { desde: { x: op.desde.x, y: op.desde.y }, hasta: posicion, paso: op.paso, linea: op.linea }
+          : null;
+      return { estado, tramo };
+    }
+    case 'girar': {
+      const signo = op.sentido === 'derecha' ? 1 : -1;
+      return {
+        estado: { ...op.estadoAntes, rumbo: op.estadoAntes.rumbo + signo * op.grados * e },
+        tramo: null,
+      };
+    }
+    default:
+      return { estado: op.estadoAntes, tramo: null };
+  }
 }
 
 /**
@@ -134,9 +197,14 @@ export function crearAnimador(
 
   const escuchasFin: Array<(fin: FinDeSecuencia) => void> = [];
   const escuchasAplicar: Array<(op: Operacion) => void> = [];
+  const escuchasFotograma: Array<(f: Fotograma) => void> = [];
 
   function emitirAplicar(op: Operacion): void {
     for (const e of escuchasAplicar) e(op);
+  }
+
+  function emitirFotograma(f: Fotograma): void {
+    for (const e of escuchasFotograma) e(f);
   }
 
   function emitirFin(fin: FinDeSecuencia): void {
@@ -161,7 +229,7 @@ export function crearAnimador(
    * dibujado. No interpola: deja la estela y el estado en su valor final. Se usa
    * en el paso a paso, el modo inmediato y el reducido.
    */
-  function aplicarCompleta(op: Operacion): void {
+  function aplicarCompleta(op: Operacion, pintarFotograma = true): void {
     switch (op.tipo) {
       case 'mover': {
         const seg = segmentoDeMover(op);
@@ -180,6 +248,7 @@ export function crearAnimador(
         break;
     }
     estadoActual = op.estadoDespues;
+    if (pintarFotograma) emitirFotograma({ estado: op.estadoDespues, tramo: null });
     emitirAplicar(op);
   }
 
@@ -193,10 +262,14 @@ export function crearAnimador(
 
   /** Aplica de golpe todas las operaciones pendientes, sin posiciones intermedias. */
   function aplicarTodasPendientes(): FinDeSecuencia {
+    // Sin posiciones intermedias ni un fotograma por operación: se pinta una sola
+    // vez la tortuga en su estado final, que es lo único que se ve.
+    const huboPendientes = indice < operaciones.length;
     while (indice < operaciones.length) {
-      aplicarCompleta(operaciones[indice]!);
+      aplicarCompleta(operaciones[indice]!, false);
       indice += 1;
     }
+    if (huboPendientes && estadoActual) emitirFotograma({ estado: estadoActual, tramo: null });
     const fin: FinDeSecuencia = {
       motivo: 'finDeSecuencia',
       operacionesAplicadas: operacionesAplicadas(),
@@ -258,6 +331,10 @@ export function crearAnimador(
       }
       inicioOperacion = reloj.ahora();
     }
+    // Pinta la tortuga a medio camino de la operación en curso.
+    emitirFotograma(
+      fotogramaIntermedio(operaciones[indice]!, (reloj.ahora() - inicioOperacion) / Math.max(1, duracion)),
+    );
     // Programa el próximo fotograma (haya avanzado o no).
     idProgramado = reloj.programar(fotograma);
   }
@@ -284,7 +361,14 @@ export function crearAnimador(
     },
 
     detener(): void {
+      // Termina el tramo en curso, como promete la interfaz: parar a medias dejaría
+      // una estela distinta de la que se valida y la tortuga entre dos posiciones.
+      const enReproduccion = idProgramado !== null;
       detenerContinua();
+      if (enReproduccion && indice < operaciones.length) {
+        aplicarCompleta(operaciones[indice]!);
+        indice += 1;
+      }
       emitirFin({
         motivo: 'detenidoPorJugador',
         operacionesAplicadas: operacionesAplicadas(),
@@ -340,6 +424,10 @@ export function crearAnimador(
 
     alAplicar(escucha: (op: Operacion) => void): void {
       escuchasAplicar.push(escucha);
+    },
+
+    alFotograma(escucha: (f: Fotograma) => void): void {
+      escuchasFotograma.push(escucha);
     },
   };
 }

@@ -473,8 +473,14 @@ export interface Veredicto {
   readonly iou: number;                  // sin redondear
   readonly excesoPorcentaje: number;     // sin redondear
   readonly motivo: MotivoVeredicto;
-  readonly traslacion: Punto;            // aplicada, en posiciones enteras
-  readonly angulo: number;               // 0 a 359
+  readonly traslacion: Punto;            // aplicada a la figura del jugador, en posiciones enteras
+  /**
+   * Traslación aplicada a la figura OBJETIVO al centrarla, en posiciones enteras.
+   * Junto con `angulo` permite devolver la región de falta, que vive en el marco del
+   * objetivo girado, a la posición real de la estela de referencia.
+   */
+  readonly traslacionObjetivo: Punto;
+  readonly angulo: number;               // 0 a 359: lo que se giró el objetivo
   readonly mascaraObjetivo: Mascara;     // dilatada y ya girada al ángulo ganador
   readonly mascaraJugador: Mascara;      // dilatada
   readonly coincidencia: Mascara;
@@ -515,7 +521,7 @@ export function validar(
   const traslacionJugador = normalizacion.traslacion === 'libre'
     ? traslacionAlCentro(segmentosJugador)
     : { x: 0, y: 0 };
-  const traslacionObjetivo = normalizacion.traslacion === 'libre'
+  const traslacionObjetivo: Punto = normalizacion.traslacion === 'libre'
     ? traslacionAlCentro(segmentosObjetivo)
     : { x: 0, y: 0 };
 
@@ -538,6 +544,7 @@ export function validar(
       excesoPorcentaje: 0,
       motivo: 'sinEstelaDelJugador',
       traslacion: traslacionJugador,
+      traslacionObjetivo,
       angulo: 0,
       mascaraObjetivo: objetivoBase,
       mascaraJugador,
@@ -557,6 +564,7 @@ export function validar(
       excesoPorcentaje: c.excesoPorcentaje,
       motivo: c.motivo,
       traslacion: traslacionJugador,
+      traslacionObjetivo,
       angulo: mejor.angulo,
       mascaraObjetivo: mejor.adGirada,
       mascaraJugador,
@@ -574,6 +582,7 @@ export function validar(
     excesoPorcentaje: c.excesoPorcentaje,
     motivo: c.motivo,
     traslacion: traslacionJugador,
+    traslacionObjetivo,
     angulo: 0,
     mascaraObjetivo: objetivoBase,
     mascaraJugador,
@@ -581,4 +590,48 @@ export function validar(
     exceso: c.exceso,
     falta: c.falta,
   };
+}
+
+// ============================================================================
+// Qué comparación se le muestra al jugador
+// ============================================================================
+
+/** Las posiciones reales, tal como el jugador las vio dibujar: sin centrar ni girar nada. */
+const POSICIONES_REALES: NormalizacionNivel = { traslacion: 'fija', rotacion: 'fija', escala: 'exacta' };
+
+/**
+ * Elige el veredicto cuyas regiones se dibujan en el diff.
+ *
+ * Con traslación o rotación libres, el validador alinea las figuras antes de compararlas: centra
+ * cada una por su caja envolvente. Eso es lo justo para dar o negar la estrella, pero explica mal
+ * un dibujo incompleto. Si el jugador traza solo los dos primeros tramos de una figura de cuatro,
+ * su caja envolvente tiene otro centro que la de Kiro, el validador desplaza el dibujo, y los dos
+ * tramos que en pantalla están exactamente encima de los de Kiro salen como «lo que sobra».
+ *
+ * Así que se muestra la comparación que mejor explica el dibujo: la de las posiciones reales, si
+ * da más coincidencia que la alineada, y la alineada del validador si no (una figura bien hecha
+ * pero movida o girada, que en sus posiciones reales no se parece a nada). Empata a favor de las
+ * posiciones reales, que son las que el jugador está viendo. Las estrellas siguen saliendo del
+ * veredicto oficial: esta elección solo decide qué se pinta.
+ *
+ * @param oficial Veredicto del validador con la normalización del nivel
+ * @param segmentosJugador Segmentos de la estela del jugador
+ * @param segmentosObjetivo Segmentos del programa de referencia
+ * @param normalizacion Normalización declarada por el nivel
+ * @returns El veredicto oficial o el de las posiciones reales, el que tenga mayor IoU
+ */
+export function veredictoParaMostrar(
+  oficial: Veredicto,
+  segmentosJugador: readonly Segmento[],
+  segmentosObjetivo: readonly Segmento[],
+  normalizacion: NormalizacionNivel,
+): Veredicto {
+  // Con todo fijo el oficial ya es el de las posiciones reales, y sin estela no hay nada que alinear.
+  if (normalizacion.traslacion === 'fija' && normalizacion.rotacion === 'fija') return oficial;
+  if (oficial.motivo === 'sinEstelaDelJugador') return oficial;
+
+  const real = validar(segmentosJugador, segmentosObjetivo, POSICIONES_REALES);
+  // Nunca se muestra como «correcto» un dibujo al que el validador negó la precisión.
+  if (real.coincide || real.motivo === 'sinEstelaDelJugador') return oficial;
+  return real.iou >= oficial.iou ? real : oficial;
 }

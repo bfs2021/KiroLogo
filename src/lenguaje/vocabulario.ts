@@ -10,6 +10,7 @@ export interface EntradaVocabulario {
   readonly mundo: Mundo;
   readonly descripcion: string;                         // español, 1 línea, ≤ 120 caracteres
   readonly ejemplo: string;
+  readonly insercion: string;                           // texto que inserta el panel: nombre+' ', nombre, o ejemplo
   readonly ejecutable: boolean;                         // true solo para el mundo 0 en esta spec
 }
 
@@ -24,6 +25,7 @@ export const VOCABULARIO: readonly EntradaVocabulario[] = [
     mundo: 0,
     descripcion: 'La tortuga camina hacia adelante los pasos que le digas.',
     ejemplo: 'AVANZA 100',
+    insercion: 'AVANZA ',
     ejecutable: true,
   },
   {
@@ -34,6 +36,7 @@ export const VOCABULARIO: readonly EntradaVocabulario[] = [
     mundo: 0,
     descripcion: 'La tortuga camina hacia atrás sin cambiar de rumbo.',
     ejemplo: 'RETROCEDE 50',
+    insercion: 'RETROCEDE ',
     ejecutable: true,
   },
   {
@@ -44,6 +47,7 @@ export const VOCABULARIO: readonly EntradaVocabulario[] = [
     mundo: 0,
     descripcion: 'Gira a la derecha los grados que le digas.',
     ejemplo: 'GIRADERECHA 90',
+    insercion: 'GIRADERECHA ',
     ejecutable: true,
   },
   {
@@ -54,6 +58,7 @@ export const VOCABULARIO: readonly EntradaVocabulario[] = [
     mundo: 0,
     descripcion: 'Gira a la izquierda los grados que le digas.',
     ejemplo: 'GIRAIZQUIERDA 45',
+    insercion: 'GIRAIZQUIERDA ',
     ejecutable: true,
   },
   {
@@ -64,6 +69,7 @@ export const VOCABULARIO: readonly EntradaVocabulario[] = [
     mundo: 0,
     descripcion: 'Vuelve al centro del lienzo mirando hacia arriba.',
     ejemplo: 'CENTRO',
+    insercion: 'CENTRO',
     ejecutable: true,
   },
   {
@@ -74,6 +80,7 @@ export const VOCABULARIO: readonly EntradaVocabulario[] = [
     mundo: 0,
     descripcion: 'Limpia el lienzo y vuelve al centro mirando hacia arriba.',
     ejemplo: 'BORRAPANTALLA',
+    insercion: 'BORRAPANTALLA',
     ejecutable: true,
   },
 
@@ -86,6 +93,7 @@ export const VOCABULARIO: readonly EntradaVocabulario[] = [
     mundo: 1,
     descripcion: 'Repite una secuencia de comandos varias veces.',
     ejemplo: 'REPITE 4 [AVANZA 100 GIRADERECHA 90]',
+    insercion: 'REPITE 4 [AVANZA 100 GIRADERECHA 90]',
     ejecutable: false,
   },
 
@@ -98,6 +106,7 @@ export const VOCABULARIO: readonly EntradaVocabulario[] = [
     mundo: 2,
     descripcion: 'Levanta el lápiz para mover la tortuga sin dibujar.',
     ejemplo: 'SUBELAPIZ',
+    insercion: 'SUBELAPIZ',
     ejecutable: false,
   },
   {
@@ -108,6 +117,7 @@ export const VOCABULARIO: readonly EntradaVocabulario[] = [
     mundo: 2,
     descripcion: 'Baja el lápiz para dibujar al mover la tortuga.',
     ejemplo: 'BAJALAPIZ',
+    insercion: 'BAJALAPIZ',
     ejecutable: false,
   },
   {
@@ -118,6 +128,7 @@ export const VOCABULARIO: readonly EntradaVocabulario[] = [
     mundo: 2,
     descripcion: 'Cambia el color del trazo.',
     ejemplo: 'PONCOLOR "rojo"',
+    insercion: 'PONCOLOR "rojo"',
     ejecutable: false,
   },
   {
@@ -128,6 +139,7 @@ export const VOCABULARIO: readonly EntradaVocabulario[] = [
     mundo: 2,
     descripcion: 'Cambia el grosor del trazo.',
     ejemplo: 'PONGROSOR 3',
+    insercion: 'PONGROSOR ',
     ejecutable: false,
   },
   {
@@ -138,6 +150,7 @@ export const VOCABULARIO: readonly EntradaVocabulario[] = [
     mundo: 2,
     descripcion: 'Rellena la figura cerrada donde está la tortuga.',
     ejemplo: 'RELLENA',
+    insercion: 'RELLENA',
     ejecutable: false,
   },
   {
@@ -148,6 +161,7 @@ export const VOCABULARIO: readonly EntradaVocabulario[] = [
     mundo: 2,
     descripcion: 'Declara un procedimiento con nombre y parámetros.',
     ejemplo: 'PARA cuadrado :lado',
+    insercion: 'PARA cuadrado :lado',
     ejecutable: false,
   },
   {
@@ -158,6 +172,7 @@ export const VOCABULARIO: readonly EntradaVocabulario[] = [
     mundo: 2,
     descripcion: 'Marca el final de un procedimiento.',
     ejemplo: 'FIN',
+    insercion: 'FIN',
     ejecutable: false,
   },
   {
@@ -168,6 +183,7 @@ export const VOCABULARIO: readonly EntradaVocabulario[] = [
     mundo: 2,
     descripcion: 'Oculta la tortuga de la pantalla.',
     ejemplo: 'OCULTATORTUGA',
+    insercion: 'OCULTATORTUGA',
     ejecutable: false,
   },
   {
@@ -178,6 +194,7 @@ export const VOCABULARIO: readonly EntradaVocabulario[] = [
     mundo: 2,
     descripcion: 'Muestra la tortuga en la pantalla.',
     ejemplo: 'MUESTRATORTUGA',
+    insercion: 'MUESTRATORTUGA',
     ejecutable: false,
   },
 
@@ -192,6 +209,7 @@ export const VOCABULARIO: readonly EntradaVocabulario[] = [
     mundo: 4,
     descripcion: 'Suma dos números.',
     ejemplo: 'SUMA 5 3',
+    insercion: 'SUMA 5 3',
     ejecutable: false,
   },
   {
@@ -202,6 +220,7 @@ export const VOCABULARIO: readonly EntradaVocabulario[] = [
     mundo: 4,
     descripcion: 'Resta el segundo número del primero.',
     ejemplo: 'RESTA 10 4',
+    insercion: 'RESTA 10 4',
     ejecutable: false,
   },
   {
@@ -212,6 +231,7 @@ export const VOCABULARIO: readonly EntradaVocabulario[] = [
     mundo: 4,
     descripcion: 'Multiplica dos números.',
     ejemplo: 'PRODUCTO 7 8',
+    insercion: 'PRODUCTO 7 8',
     ejecutable: false,
   },
   {
@@ -222,6 +242,7 @@ export const VOCABULARIO: readonly EntradaVocabulario[] = [
     mundo: 4,
     descripcion: 'Divide el primer número por el segundo.',
     ejemplo: 'COCIENTE 20 5',
+    insercion: 'COCIENTE 20 5',
     ejecutable: false,
   },
   {
@@ -232,6 +253,7 @@ export const VOCABULARIO: readonly EntradaVocabulario[] = [
     mundo: 4,
     descripcion: 'Calcula el resto de la división.',
     ejemplo: 'RESTO 17 5',
+    insercion: 'RESTO 17 5',
     ejecutable: false,
   },
   {
@@ -242,6 +264,7 @@ export const VOCABULARIO: readonly EntradaVocabulario[] = [
     mundo: 4,
     descripcion: 'Elige un número al azar entre dos límites.',
     ejemplo: 'AZAR 1 10',
+    insercion: 'AZAR 1 10',
     ejecutable: false,
   },
   {
@@ -252,6 +275,7 @@ export const VOCABULARIO: readonly EntradaVocabulario[] = [
     mundo: 4,
     descripcion: 'Escribe texto en la pantalla.',
     ejemplo: 'ESCRIBE "Hola"',
+    insercion: 'ESCRIBE "Hola"',
     ejecutable: false,
   },
   {
@@ -262,6 +286,7 @@ export const VOCABULARIO: readonly EntradaVocabulario[] = [
     mundo: 4,
     descripcion: 'Escribe el valor de un número en la pantalla.',
     ejemplo: 'ROTULA 42',
+    insercion: 'ROTULA ',
     ejecutable: false,
   },
 
@@ -274,6 +299,7 @@ export const VOCABULARIO: readonly EntradaVocabulario[] = [
     mundo: 5,
     descripcion: 'Ejecuta comandos solo si una condición es verdadera.',
     ejemplo: 'SI 5 > 3 [AVANZA 100]',
+    insercion: 'SI 5 > 3 [AVANZA 100]',
     ejecutable: false,
   },
   {
@@ -284,6 +310,7 @@ export const VOCABULARIO: readonly EntradaVocabulario[] = [
     mundo: 5,
     descripcion: 'Ejecuta unos comandos si es verdadero, otros si es falso.',
     ejemplo: 'SINO [AVANZA 100] [RETROCEDE 50]',
+    insercion: 'SINO [AVANZA 100] [RETROCEDE 50]',
     ejecutable: false,
   },
   {
@@ -294,6 +321,7 @@ export const VOCABULARIO: readonly EntradaVocabulario[] = [
     mundo: 5,
     descripcion: 'Detiene la ejecución del programa.',
     ejemplo: 'ALTO',
+    insercion: 'ALTO',
     ejecutable: false,
   },
   {
@@ -304,6 +332,7 @@ export const VOCABULARIO: readonly EntradaVocabulario[] = [
     mundo: 5,
     descripcion: 'Devuelve un valor desde un procedimiento.',
     ejemplo: 'DEVUELVE 10',
+    insercion: 'DEVUELVE ',
     ejecutable: false,
   },
 ] as const;

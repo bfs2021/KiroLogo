@@ -1,0 +1,590 @@
+{
+  "pbtResults": {},
+  "executionHistory": {
+    "1.1 Añadir en `src/main.test.ts` la verificación de las 19 fichas y de «ningún color literal en derivadas»": [
+      {
+        "executionId": "d2c5d778-c8b4-4c76-8503-ff8e3e3570ca",
+        "chatSessionId": "sess_d96996c9-316e-4510-870d-3cb4fd5a80c9",
+        "timestamp": 1792264578013
+      },
+      {
+        "executionId": "d2c5d778-c8b4-4c76-8503-ff8e3e3570ca",
+        "chatSessionId": "sess_d96996c9-316e-4510-870d-3cb4fd5a80c9",
+        "timestamp": 1792265022357
+      }
+    ],
+    "1.2 Cerrar en `src/main.test.ts` los huecos de contraste de 8.3/8.4 que 21.4 aún no cubra": [
+      {
+        "executionId": "1990154a-f1a7-4e81-8dba-c841a2da05c5",
+        "chatSessionId": "sess_c84e9bd1-fd6b-4eb7-b553-921793d4da4f",
+        "timestamp": 1792265269958
+      },
+      {
+        "executionId": "1990154a-f1a7-4e81-8dba-c841a2da05c5",
+        "chatSessionId": "sess_c84e9bd1-fd6b-4eb7-b553-921793d4da4f",
+        "timestamp": 1792265869913
+      },
+      {
+        "executionId": "1990154a-f1a7-4e81-8dba-c841a2da05c5",
+        "chatSessionId": "sess_c84e9bd1-fd6b-4eb7-b553-921793d4da4f",
+        "timestamp": 1792266037235
+      }
+    ],
+    "1.3 Verificar en `src/main.test.ts` que las variables de reserva coinciden con la paleta Kiro": [
+      {
+        "executionId": "1990154a-f1a7-4e81-8dba-c841a2da05c5",
+        "chatSessionId": "sess_c84e9bd1-fd6b-4eb7-b553-921793d4da4f",
+        "timestamp": 1792265270038
+      },
+      {
+        "executionId": "1990154a-f1a7-4e81-8dba-c841a2da05c5",
+        "chatSessionId": "sess_c84e9bd1-fd6b-4eb7-b553-921793d4da4f",
+        "timestamp": 1792266372786
+      },
+      {
+        "executionId": "0c05c81c-c10a-435d-8934-6fc326df563d",
+        "chatSessionId": "sess_c3f33891-b343-4d00-88b8-ec92441883d0",
+        "timestamp": 1792299499294
+      },
+      {
+        "executionId": "0c05c81c-c10a-435d-8934-6fc326df563d",
+        "chatSessionId": "sess_c3f33891-b343-4d00-88b8-ec92441883d0",
+        "timestamp": 1792299507106
+      },
+      {
+        "executionId": "0c05c81c-c10a-435d-8934-6fc326df563d",
+        "chatSessionId": "sess_c3f33891-b343-4d00-88b8-ec92441883d0",
+        "timestamp": 1792299665968
+      }
+    ],
+    "2.1 Crear la prueba que recorre `src/motor/` y `src/ui/`": [
+      {
+        "executionId": "1990154a-f1a7-4e81-8dba-c841a2da05c5",
+        "chatSessionId": "sess_c84e9bd1-fd6b-4eb7-b553-921793d4da4f",
+        "timestamp": 1792265270082
+      },
+      {
+        "executionId": "1990154a-f1a7-4e81-8dba-c841a2da05c5",
+        "chatSessionId": "sess_c84e9bd1-fd6b-4eb7-b553-921793d4da4f",
+        "timestamp": 1792265279090
+      },
+      {
+        "executionId": "1990154a-f1a7-4e81-8dba-c841a2da05c5",
+        "chatSessionId": "sess_c84e9bd1-fd6b-4eb7-b553-921793d4da4f",
+        "timestamp": 1792265861799
+      }
+    ],
+    "3.1 Confirmar el dibujo gobernado por `--lapiz-mostrar` y `--marca-rumbo-mostrar`, y cerrar el hueco": [
+      {
+        "executionId": "1990154a-f1a7-4e81-8dba-c841a2da05c5",
+        "chatSessionId": "sess_c84e9bd1-fd6b-4eb7-b553-921793d4da4f",
+        "timestamp": 1792265270128
+      },
+      {
+        "executionId": "1990154a-f1a7-4e81-8dba-c841a2da05c5",
+        "chatSessionId": "sess_c84e9bd1-fd6b-4eb7-b553-921793d4da4f",
+        "timestamp": 1792265871306
+      },
+      {
+        "executionId": "1990154a-f1a7-4e81-8dba-c841a2da05c5",
+        "chatSessionId": "sess_c84e9bd1-fd6b-4eb7-b553-921793d4da4f",
+        "timestamp": 1792266034453
+      }
+    ],
+    "3.2 Confirmar la escala del conjunto y verificar el no solapamiento en el Nivel 0.1": [
+      {
+        "executionId": "1990154a-f1a7-4e81-8dba-c841a2da05c5",
+        "chatSessionId": "sess_c84e9bd1-fd6b-4eb7-b553-921793d4da4f",
+        "timestamp": 1792265270171
+      },
+      {
+        "executionId": "1990154a-f1a7-4e81-8dba-c841a2da05c5",
+        "chatSessionId": "sess_c84e9bd1-fd6b-4eb7-b553-921793d4da4f",
+        "timestamp": 1792266044223
+      },
+      {
+        "executionId": "1990154a-f1a7-4e81-8dba-c841a2da05c5",
+        "chatSessionId": "sess_c84e9bd1-fd6b-4eb7-b553-921793d4da4f",
+        "timestamp": 1792266368195
+      }
+    ],
+    "3.3 Verificar la evaluación al terminar de dibujarse y la vuelta al Estado inicial": [
+      {
+        "executionId": "1990154a-f1a7-4e81-8dba-c841a2da05c5",
+        "chatSessionId": "sess_c84e9bd1-fd6b-4eb7-b553-921793d4da4f",
+        "timestamp": 1792265270215
+      },
+      {
+        "executionId": "0c05c81c-c10a-435d-8934-6fc326df563d",
+        "chatSessionId": "sess_c3f33891-b343-4d00-88b8-ec92441883d0",
+        "timestamp": 1792299499364
+      },
+      {
+        "executionId": "0c05c81c-c10a-435d-8934-6fc326df563d",
+        "chatSessionId": "sess_c3f33891-b343-4d00-88b8-ec92441883d0",
+        "timestamp": 1792299668819
+      },
+      {
+        "executionId": "0c05c81c-c10a-435d-8934-6fc326df563d",
+        "chatSessionId": "sess_c3f33891-b343-4d00-88b8-ec92441883d0",
+        "timestamp": 1792300484978
+      }
+    ],
+    "3.4 Verificar la conducta con `prefers-reduced-motion: reduce`": [
+      {
+        "executionId": "1990154a-f1a7-4e81-8dba-c841a2da05c5",
+        "chatSessionId": "sess_c84e9bd1-fd6b-4eb7-b553-921793d4da4f",
+        "timestamp": 1792265270262
+      },
+      {
+        "executionId": "0c05c81c-c10a-435d-8934-6fc326df563d",
+        "chatSessionId": "sess_c3f33891-b343-4d00-88b8-ec92441883d0",
+        "timestamp": 1792299499413
+      },
+      {
+        "executionId": "0c05c81c-c10a-435d-8934-6fc326df563d",
+        "chatSessionId": "sess_c3f33891-b343-4d00-88b8-ec92441883d0",
+        "timestamp": 1792300527975
+      },
+      {
+        "executionId": "0c05c81c-c10a-435d-8934-6fc326df563d",
+        "chatSessionId": "sess_c3f33891-b343-4d00-88b8-ec92441883d0",
+        "timestamp": 1792301017337
+      }
+    ],
+    "4.1 Confirmar la selección de vistas, la apertura automática y las tres regiones del Diff": [
+      {
+        "executionId": "1990154a-f1a7-4e81-8dba-c841a2da05c5",
+        "chatSessionId": "sess_c84e9bd1-fd6b-4eb7-b553-921793d4da4f",
+        "timestamp": 1792265270333
+      },
+      {
+        "executionId": "1990154a-f1a7-4e81-8dba-c841a2da05c5",
+        "chatSessionId": "sess_c84e9bd1-fd6b-4eb7-b553-921793d4da4f",
+        "timestamp": 1792265872700
+      },
+      {
+        "executionId": "1990154a-f1a7-4e81-8dba-c841a2da05c5",
+        "chatSessionId": "sess_c84e9bd1-fd6b-4eb7-b553-921793d4da4f",
+        "timestamp": 1792266038186
+      }
+    ],
+    "5.1 Confirmar navegación por teclado y texto visible/accesible, y cerrar el hueco": [
+      {
+        "executionId": "1990154a-f1a7-4e81-8dba-c841a2da05c5",
+        "chatSessionId": "sess_c84e9bd1-fd6b-4eb7-b553-921793d4da4f",
+        "timestamp": 1792265270376
+      },
+      {
+        "executionId": "1990154a-f1a7-4e81-8dba-c841a2da05c5",
+        "chatSessionId": "sess_c84e9bd1-fd6b-4eb7-b553-921793d4da4f",
+        "timestamp": 1792265873713
+      },
+      {
+        "executionId": "1990154a-f1a7-4e81-8dba-c841a2da05c5",
+        "chatSessionId": "sess_c84e9bd1-fd6b-4eb7-b553-921793d4da4f",
+        "timestamp": 1792266035335
+      }
+    ],
+    "5.2 Confirmar vocabulario vacío e inserción al activar un botón, y cerrar el hueco": [
+      {
+        "executionId": "1990154a-f1a7-4e81-8dba-c841a2da05c5",
+        "chatSessionId": "sess_c84e9bd1-fd6b-4eb7-b553-921793d4da4f",
+        "timestamp": 1792265270421
+      },
+      {
+        "executionId": "1990154a-f1a7-4e81-8dba-c841a2da05c5",
+        "chatSessionId": "sess_c84e9bd1-fd6b-4eb7-b553-921793d4da4f",
+        "timestamp": 1792266045592
+      },
+      {
+        "executionId": "1990154a-f1a7-4e81-8dba-c841a2da05c5",
+        "chatSessionId": "sess_c84e9bd1-fd6b-4eb7-b553-921793d4da4f",
+        "timestamp": 1792266366816
+      }
+    ],
+    "6.1 Confirmar los Controles y la selección de velocidad, y cerrar el hueco": [
+      {
+        "executionId": "1990154a-f1a7-4e81-8dba-c841a2da05c5",
+        "chatSessionId": "sess_c84e9bd1-fd6b-4eb7-b553-921793d4da4f",
+        "timestamp": 1792265270466
+      },
+      {
+        "executionId": "1990154a-f1a7-4e81-8dba-c841a2da05c5",
+        "chatSessionId": "sess_c84e9bd1-fd6b-4eb7-b553-921793d4da4f",
+        "timestamp": 1792265874649
+      },
+      {
+        "executionId": "1990154a-f1a7-4e81-8dba-c841a2da05c5",
+        "chatSessionId": "sess_c84e9bd1-fd6b-4eb7-b553-921793d4da4f",
+        "timestamp": 1792266039298
+      }
+    ],
+    "6.2 Confirmar el Marcador de estrellas y el Panel de semilla, y cerrar el hueco": [
+      {
+        "executionId": "1990154a-f1a7-4e81-8dba-c841a2da05c5",
+        "chatSessionId": "sess_c84e9bd1-fd6b-4eb7-b553-921793d4da4f",
+        "timestamp": 1792265270510
+      },
+      {
+        "executionId": "1990154a-f1a7-4e81-8dba-c841a2da05c5",
+        "chatSessionId": "sess_c84e9bd1-fd6b-4eb7-b553-921793d4da4f",
+        "timestamp": 1792266046482
+      },
+      {
+        "executionId": "1990154a-f1a7-4e81-8dba-c841a2da05c5",
+        "chatSessionId": "sess_c84e9bd1-fd6b-4eb7-b553-921793d4da4f",
+        "timestamp": 1792266365790
+      }
+    ],
+    "7.1 Verificar el logo como `<img>` y la mascota como imagen de fondo CSS": [
+      {
+        "executionId": "1990154a-f1a7-4e81-8dba-c841a2da05c5",
+        "chatSessionId": "sess_c84e9bd1-fd6b-4eb7-b553-921793d4da4f",
+        "timestamp": 1792265270558
+      },
+      {
+        "executionId": "1990154a-f1a7-4e81-8dba-c841a2da05c5",
+        "chatSessionId": "sess_c84e9bd1-fd6b-4eb7-b553-921793d4da4f",
+        "timestamp": 1792266047607
+      },
+      {
+        "executionId": "1990154a-f1a7-4e81-8dba-c841a2da05c5",
+        "chatSessionId": "sess_c84e9bd1-fd6b-4eb7-b553-921793d4da4f",
+        "timestamp": 1792266369193
+      }
+    ],
+    "8.1 Escribir la verificación del documento servido que falla con el estado actual": [
+      {
+        "executionId": "1990154a-f1a7-4e81-8dba-c841a2da05c5",
+        "chatSessionId": "sess_c84e9bd1-fd6b-4eb7-b553-921793d4da4f",
+        "timestamp": 1792265270605
+      },
+      {
+        "executionId": "1990154a-f1a7-4e81-8dba-c841a2da05c5",
+        "chatSessionId": "sess_c84e9bd1-fd6b-4eb7-b553-921793d4da4f",
+        "timestamp": 1792265279736
+      },
+      {
+        "executionId": "1990154a-f1a7-4e81-8dba-c841a2da05c5",
+        "chatSessionId": "sess_c84e9bd1-fd6b-4eb7-b553-921793d4da4f",
+        "timestamp": 1792265862694
+      }
+    ],
+    "8.2 Pedir aprobación explícita del usuario antes de tocar `index.html` y `package.json`": [
+      {
+        "executionId": "1990154a-f1a7-4e81-8dba-c841a2da05c5",
+        "chatSessionId": "sess_c84e9bd1-fd6b-4eb7-b553-921793d4da4f",
+        "timestamp": 1792265270656
+      },
+      {
+        "executionId": "0c05c81c-c10a-435d-8934-6fc326df563d",
+        "chatSessionId": "sess_c3f33891-b343-4d00-88b8-ec92441883d0",
+        "timestamp": 1792299499501
+      },
+      {
+        "executionId": "0c05c81c-c10a-435d-8934-6fc326df563d",
+        "chatSessionId": "sess_c3f33891-b343-4d00-88b8-ec92441883d0",
+        "timestamp": 1792301434028
+      },
+      {
+        "executionId": "0c05c81c-c10a-435d-8934-6fc326df563d",
+        "chatSessionId": "sess_c3f33891-b343-4d00-88b8-ec92441883d0",
+        "timestamp": 1792301513996
+      }
+    ],
+    "8.3 Aplicar el reemplazo de fuentes (solo tras la aprobación de 8.2)": [
+      {
+        "executionId": "1990154a-f1a7-4e81-8dba-c841a2da05c5",
+        "chatSessionId": "sess_c84e9bd1-fd6b-4eb7-b553-921793d4da4f",
+        "timestamp": 1792265270699
+      },
+      {
+        "executionId": "0c05c81c-c10a-435d-8934-6fc326df563d",
+        "chatSessionId": "sess_c3f33891-b343-4d00-88b8-ec92441883d0",
+        "timestamp": 1792299499627
+      },
+      {
+        "executionId": "0c05c81c-c10a-435d-8934-6fc326df563d",
+        "chatSessionId": "sess_c3f33891-b343-4d00-88b8-ec92441883d0",
+        "timestamp": 1792301516905
+      },
+      {
+        "executionId": "0c05c81c-c10a-435d-8934-6fc326df563d",
+        "chatSessionId": "sess_c3f33891-b343-4d00-88b8-ec92441883d0",
+        "timestamp": 1792302136028
+      }
+    ],
+    "8.4 Verificar reserva del sistema y que la prueba de 8.1 ya pasa": [
+      {
+        "executionId": "1990154a-f1a7-4e81-8dba-c841a2da05c5",
+        "chatSessionId": "sess_c84e9bd1-fd6b-4eb7-b553-921793d4da4f",
+        "timestamp": 1792265270743
+      },
+      {
+        "executionId": "0c05c81c-c10a-435d-8934-6fc326df563d",
+        "chatSessionId": "sess_c3f33891-b343-4d00-88b8-ec92441883d0",
+        "timestamp": 1792299499688
+      },
+      {
+        "executionId": "0c05c81c-c10a-435d-8934-6fc326df563d",
+        "chatSessionId": "sess_c3f33891-b343-4d00-88b8-ec92441883d0",
+        "timestamp": 1792302138772
+      },
+      {
+        "executionId": "0c05c81c-c10a-435d-8934-6fc326df563d",
+        "chatSessionId": "sess_c3f33891-b343-4d00-88b8-ec92441883d0",
+        "timestamp": 1792302275477
+      }
+    ],
+    "9.1 Confirmar la estructura de `index.html` y `pantalla.css`, y cerrar el hueco": [
+      {
+        "executionId": "1990154a-f1a7-4e81-8dba-c841a2da05c5",
+        "chatSessionId": "sess_c84e9bd1-fd6b-4eb7-b553-921793d4da4f",
+        "timestamp": 1792265270787
+      },
+      {
+        "executionId": "0c05c81c-c10a-435d-8934-6fc326df563d",
+        "chatSessionId": "sess_c3f33891-b343-4d00-88b8-ec92441883d0",
+        "timestamp": 1792299499738
+      },
+      {
+        "executionId": "0c05c81c-c10a-435d-8934-6fc326df563d",
+        "chatSessionId": "sess_c3f33891-b343-4d00-88b8-ec92441883d0",
+        "timestamp": 1792301021596
+      },
+      {
+        "executionId": "0c05c81c-c10a-435d-8934-6fc326df563d",
+        "chatSessionId": "sess_c3f33891-b343-4d00-88b8-ec92441883d0",
+        "timestamp": 1792301420496
+      }
+    ],
+    "9.2 Verificación MANUAL del encuadre (no automatizable en jsdom)": [
+      {
+        "executionId": "1990154a-f1a7-4e81-8dba-c841a2da05c5",
+        "chatSessionId": "sess_c84e9bd1-fd6b-4eb7-b553-921793d4da4f",
+        "timestamp": 1792265270832
+      },
+      {
+        "executionId": "0c05c81c-c10a-435d-8934-6fc326df563d",
+        "chatSessionId": "sess_c3f33891-b343-4d00-88b8-ec92441883d0",
+        "timestamp": 1792299499792
+      },
+      {
+        "executionId": "0c05c81c-c10a-435d-8934-6fc326df563d",
+        "chatSessionId": "sess_c3f33891-b343-4d00-88b8-ec92441883d0",
+        "timestamp": 1792302279317
+      },
+      {
+        "executionId": "0c05c81c-c10a-435d-8934-6fc326df563d",
+        "chatSessionId": "sess_c3f33891-b343-4d00-88b8-ec92441883d0",
+        "timestamp": 1792302355170
+      }
+    ],
+    "11.1 Registrar cada enmienda y la decisión D11 en `docs/bitacora.md`": [
+      {
+        "executionId": "1990154a-f1a7-4e81-8dba-c841a2da05c5",
+        "chatSessionId": "sess_c84e9bd1-fd6b-4eb7-b553-921793d4da4f",
+        "timestamp": 1792265270882
+      },
+      {
+        "executionId": "0c05c81c-c10a-435d-8934-6fc326df563d",
+        "chatSessionId": "sess_c3f33891-b343-4d00-88b8-ec92441883d0",
+        "timestamp": 1792299499841
+      },
+      {
+        "executionId": "0c05c81c-c10a-435d-8934-6fc326df563d",
+        "chatSessionId": "sess_c3f33891-b343-4d00-88b8-ec92441883d0",
+        "timestamp": 1792302360769
+      },
+      {
+        "executionId": "0c05c81c-c10a-435d-8934-6fc326df563d",
+        "chatSessionId": "sess_c3f33891-b343-4d00-88b8-ec92441883d0",
+        "timestamp": 1792302552643
+      }
+    ],
+    "12.1 Documentar las pruebas del diseño y por qué": [
+      {
+        "executionId": "1990154a-f1a7-4e81-8dba-c841a2da05c5",
+        "chatSessionId": "sess_c84e9bd1-fd6b-4eb7-b553-921793d4da4f",
+        "timestamp": 1792265270933
+      },
+      {
+        "executionId": "0c05c81c-c10a-435d-8934-6fc326df563d",
+        "chatSessionId": "sess_c3f33891-b343-4d00-88b8-ec92441883d0",
+        "timestamp": 1792299499892
+      },
+      {
+        "executionId": "0c05c81c-c10a-435d-8934-6fc326df563d",
+        "chatSessionId": "sess_c3f33891-b343-4d00-88b8-ec92441883d0",
+        "timestamp": 1792302642866
+      },
+      {
+        "executionId": "0c05c81c-c10a-435d-8934-6fc326df563d",
+        "chatSessionId": "sess_c3f33891-b343-4d00-88b8-ec92441883d0",
+        "timestamp": 1792302779185
+      }
+    ],
+    "13.1 Ejecutar `npm run build` y `npm test` y dejar todo en verde": [
+      {
+        "executionId": "1990154a-f1a7-4e81-8dba-c841a2da05c5",
+        "chatSessionId": "sess_c84e9bd1-fd6b-4eb7-b553-921793d4da4f",
+        "timestamp": 1792265270972
+      },
+      {
+        "executionId": "0c05c81c-c10a-435d-8934-6fc326df563d",
+        "chatSessionId": "sess_c3f33891-b343-4d00-88b8-ec92441883d0",
+        "timestamp": 1792299499965
+      },
+      {
+        "executionId": "0c05c81c-c10a-435d-8934-6fc326df563d",
+        "chatSessionId": "sess_c3f33891-b343-4d00-88b8-ec92441883d0",
+        "timestamp": 1792302783767
+      },
+      {
+        "executionId": "0c05c81c-c10a-435d-8934-6fc326df563d",
+        "chatSessionId": "sess_c3f33891-b343-4d00-88b8-ec92441883d0",
+        "timestamp": 1792302873651
+      }
+    ],
+    "2. Prueba de literales de color en módulos TypeScript (artefacto nuevo)": [
+      {
+        "executionId": "1990154a-f1a7-4e81-8dba-c841a2da05c5",
+        "chatSessionId": "sess_c84e9bd1-fd6b-4eb7-b553-921793d4da4f",
+        "timestamp": 1792265861894
+      }
+    ],
+    "4. Verificación de comparación y diff": [
+      {
+        "executionId": "1990154a-f1a7-4e81-8dba-c841a2da05c5",
+        "chatSessionId": "sess_c84e9bd1-fd6b-4eb7-b553-921793d4da4f",
+        "timestamp": 1792266038248
+      }
+    ],
+    "6. Verificación de controles, estrellas y panel de semilla": [
+      {
+        "executionId": "1990154a-f1a7-4e81-8dba-c841a2da05c5",
+        "chatSessionId": "sess_c84e9bd1-fd6b-4eb7-b553-921793d4da4f",
+        "timestamp": 1792266365839
+      }
+    ],
+    "5. Verificación del Panel de comandos": [
+      {
+        "executionId": "1990154a-f1a7-4e81-8dba-c841a2da05c5",
+        "chatSessionId": "sess_c84e9bd1-fd6b-4eb7-b553-921793d4da4f",
+        "timestamp": 1792266366862
+      }
+    ],
+    "7. Verificación de la marca": [
+      {
+        "executionId": "1990154a-f1a7-4e81-8dba-c841a2da05c5",
+        "chatSessionId": "sess_c84e9bd1-fd6b-4eb7-b553-921793d4da4f",
+        "timestamp": 1792266369248
+      }
+    ],
+    "1. Pruebas del Tema dentro de `src/main.test.ts` (NO crear `tema.test.ts`)": [
+      {
+        "executionId": "0c05c81c-c10a-435d-8934-6fc326df563d",
+        "chatSessionId": "sess_c3f33891-b343-4d00-88b8-ec92441883d0",
+        "timestamp": 1792299666063
+      }
+    ],
+    "3. Verificación de personajes y movimiento de la tortuga": [
+      {
+        "executionId": "0c05c81c-c10a-435d-8934-6fc326df563d",
+        "chatSessionId": "sess_c3f33891-b343-4d00-88b8-ec92441883d0",
+        "timestamp": 1792301017450
+      }
+    ],
+    "8. Ajuste de fuentes — único cambio visible, requiere aprobación del usuario": [
+      {
+        "executionId": "0c05c81c-c10a-435d-8934-6fc326df563d",
+        "chatSessionId": "sess_c3f33891-b343-4d00-88b8-ec92441883d0",
+        "timestamp": 1792302275542
+      }
+    ],
+    "9. Verificación de la estructura de la pantalla": [
+      {
+        "executionId": "0c05c81c-c10a-435d-8934-6fc326df563d",
+        "chatSessionId": "sess_c3f33891-b343-4d00-88b8-ec92441883d0",
+        "timestamp": 1792302355245
+      }
+    ],
+    "11. Registro de enmiendas, excepción y decisión en la Bitácora": [
+      {
+        "executionId": "0c05c81c-c10a-435d-8934-6fc326df563d",
+        "chatSessionId": "sess_c3f33891-b343-4d00-88b8-ec92441883d0",
+        "timestamp": 1792302552718
+      }
+    ],
+    "12. Entregable: lista de pruebas reescritas o añadidas con su motivo": [
+      {
+        "executionId": "0c05c81c-c10a-435d-8934-6fc326df563d",
+        "chatSessionId": "sess_c3f33891-b343-4d00-88b8-ec92441883d0",
+        "timestamp": 1792302779264
+      }
+    ],
+    "13. Cierre — build y pruebas verdes": [
+      {
+        "executionId": "0c05c81c-c10a-435d-8934-6fc326df563d",
+        "chatSessionId": "sess_c3f33891-b343-4d00-88b8-ec92441883d0",
+        "timestamp": 1792302873734
+      }
+    ],
+    "4.2 Prueba de propiedad: el veredicto de presentación nunca empeora la coincidencia": [
+      {
+        "executionId": "0c05c81c-c10a-435d-8934-6fc326df563d",
+        "chatSessionId": "sess_c3f33891-b343-4d00-88b8-ec92441883d0",
+        "timestamp": 1792303644260
+      },
+      {
+        "executionId": "0c05c81c-c10a-435d-8934-6fc326df563d",
+        "chatSessionId": "sess_c3f33891-b343-4d00-88b8-ec92441883d0",
+        "timestamp": 1792304058837
+      }
+    ],
+    "4.3 Prueba de propiedad: idempotencia del repintado ante el mismo tema": [
+      {
+        "executionId": "0c05c81c-c10a-435d-8934-6fc326df563d",
+        "chatSessionId": "sess_c3f33891-b343-4d00-88b8-ec92441883d0",
+        "timestamp": 1792303646989
+      },
+      {
+        "executionId": "0c05c81c-c10a-435d-8934-6fc326df563d",
+        "chatSessionId": "sess_c3f33891-b343-4d00-88b8-ec92441883d0",
+        "timestamp": 1792304061591
+      }
+    ],
+    "10.1 Documentar en la Bitácora la regla de no debilitamiento de pruebas heredadas de 00/01": [
+      {
+        "executionId": "0c05c81c-c10a-435d-8934-6fc326df563d",
+        "chatSessionId": "sess_c3f33891-b343-4d00-88b8-ec92441883d0",
+        "timestamp": 1792304065467
+      },
+      {
+        "executionId": "0c05c81c-c10a-435d-8934-6fc326df563d",
+        "chatSessionId": "sess_c3f33891-b343-4d00-88b8-ec92441883d0",
+        "timestamp": 1792304136232
+      }
+    ],
+    "10. Documentar en la Bitácora las reglas de no debilitamiento e integración de mundos futuros": [
+      {
+        "executionId": "0c05c81c-c10a-435d-8934-6fc326df563d",
+        "chatSessionId": "sess_c3f33891-b343-4d00-88b8-ec92441883d0",
+        "timestamp": 1792304136299
+      }
+    ],
+    "10.2 Documentar en la Bitácora la regla de integración de un mundo nuevo": [
+      {
+        "executionId": "0c05c81c-c10a-435d-8934-6fc326df563d",
+        "chatSessionId": "sess_c3f33891-b343-4d00-88b8-ec92441883d0",
+        "timestamp": 1792304139351
+      },
+      {
+        "executionId": "0c05c81c-c10a-435d-8934-6fc326df563d",
+        "chatSessionId": "sess_c3f33891-b343-4d00-88b8-ec92441883d0",
+        "timestamp": 1792304213110
+      }
+    ]
+  }
+}

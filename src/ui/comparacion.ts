@@ -1,12 +1,18 @@
-// Comparación de KiroLogo: la estela de referencia y la del jugador lado a lado,
-// más una vista de superposición con un conmutador de dos estados. Cuando las
-// estrellas niegan la precisión, invoca el diff sobre la superposición sin que el
-// jugador active ningún control. Publica en la región `aria-live` el IoU y el
-// exceso redondeados. No ejecuta ningún programa.
+// Comparación de KiroLogo: tu figura contra la de Kiro, en un solo lienzo.
+//
+// La vista «lado a lado» es la propia pantalla: la figura de Kiro y la tuya, cada una en su
+// lienzo y con su rótulo. Este módulo añade la otra vista, la superposición, con un botón
+// conmutador de dos estados y una leyenda de lo que significa cada trazo. Cuando las
+// estrellas niegan la precisión, pasa solo a la superposición y pinta el diff, sin que el
+// jugador active ningún control. Publica en la región `aria-live` el IoU y el exceso
+// redondeados. No ejecuta ningún programa.
+//
+// No crea ningún lienzo ni decide dónde va cada pieza: el botón y la leyenda se cuelgan de
+// los contenedores que reciba (`main.ts` los coloca donde la pantalla los quiere).
 
 import type { Veredicto } from '../motor/validador.js';
 import type { Segmento } from '../motor/segmentos.js';
-import type { Diff, RegionesDiff } from './diff.js';
+import { NOMBRE_ESTADO, type Diff, type EstadoDiff } from './diff.js';
 
 // ============================================================================
 // Vista
@@ -14,12 +20,18 @@ import type { Diff, RegionesDiff } from './diff.js';
 
 export type Vista = 'ladoALado' | 'superposicion';
 
+/** Texto del conmutador. Es siempre el mismo: el estado lo dice `aria-pressed`. */
+export const TEXTO_CONMUTADOR = 'Comparar con Kiro';
+
 // ============================================================================
 // Dependencias inyectables
 // ============================================================================
 
 export interface DependenciasComparacion {
+  /** Donde se cuelga el botón conmutador. */
   readonly contenedor: HTMLElement;
+  /** Donde se cuelga la leyenda; por omisión, el mismo contenedor del botón. */
+  readonly contenedorLeyenda?: HTMLElement;
   /** Diff que dibuja las tres regiones sobre la superposición. */
   readonly diff: Diff;
   /**
@@ -29,6 +41,12 @@ export interface DependenciasComparacion {
   readonly dibujarSuperposicion: (referencia: readonly Segmento[], jugador: readonly Segmento[]) => void;
   /** Publica en la región `aria-live` `polite` del juego, sin mover el foco. */
   readonly anunciar: (texto: string) => void;
+  /**
+   * Avisa cada vez que se pinta una vista, para que quien tiene el lienzo de la
+   * superposición lo muestre u oculte. Opcional: sin él, la vista solo cambia el
+   * estado del conmutador y de la leyenda.
+   */
+  readonly alCambiarVista?: (vista: Vista) => void;
 }
 
 // ============================================================================
@@ -70,9 +88,12 @@ function tieneAlgo(m: Uint8Array): boolean {
 // ============================================================================
 
 export interface Comparacion {
+  /** Contiene el botón conmutador. */
   readonly raiz: HTMLElement;
   /** Botón conmutador de dos estados. */
   readonly conmutador: HTMLButtonElement;
+  /** Leyenda de las tres regiones del diff; solo se ve en la superposición. */
+  readonly leyenda: HTMLElement;
   /** Vista en curso. */
   vista(): Vista;
   /** Cambia de vista (lado a lado ↔ superposición). */
@@ -82,7 +103,14 @@ export interface Comparacion {
    * la precisión, pasa a superposición y dibuja el diff sin que el jugador actúe.
    */
   mostrar(datos: DatosComparacion): void;
+  /** Vuelve a lado a lado y olvida la comparación anterior (intento nuevo o nivel nuevo). */
+  restablecer(): void;
+  /** Vuelve a pintar la vista actual, p. ej. tras cambiar el tamaño del lienzo. */
+  redibujar(): void;
 }
+
+/** Orden de la leyenda: primero lo que está bien, luego lo que hay que corregir. */
+const ESTADOS_LEYENDA: readonly EstadoDiff[] = ['coincidencia', 'exceso', 'falta'];
 
 // ============================================================================
 // Creación
@@ -94,72 +122,68 @@ export function crearComparacion(deps: DependenciasComparacion): Comparacion {
   const raiz = doc.createElement('div');
   raiz.className = 'kl-comparacion';
 
-  // Rótulos en español que identifican de quién es cada figura.
-  const rotuloRef = doc.createElement('p');
-  rotuloRef.className = 'kl-comparacion-rotulo kl-rotulo-referencia';
-  rotuloRef.textContent = 'Figura de Kiro';
-  const rotuloJug = doc.createElement('p');
-  rotuloJug.className = 'kl-comparacion-rotulo kl-rotulo-jugador';
-  rotuloJug.textContent = 'Tu figura';
-
-  const zonaLado = doc.createElement('div');
-  zonaLado.className = 'kl-comparacion-lado';
-  zonaLado.setAttribute('aria-label', 'Figuras lado a lado');
-  const cajaRef = doc.createElement('div');
-  cajaRef.className = 'kl-comparacion-caja';
-  cajaRef.setAttribute('aria-label', 'Figura de Kiro');
-  cajaRef.appendChild(rotuloRef);
-  const cajaJug = doc.createElement('div');
-  cajaJug.className = 'kl-comparacion-caja';
-  cajaJug.setAttribute('aria-label', 'Tu figura');
-  cajaJug.appendChild(rotuloJug);
-  zonaLado.appendChild(cajaRef);
-  zonaLado.appendChild(cajaJug);
-
-  const zonaSuper = doc.createElement('div');
-  zonaSuper.className = 'kl-comparacion-superposicion';
-  zonaSuper.setAttribute('aria-label', 'Figuras superpuestas');
-  zonaSuper.hidden = true;
-
   const conmutador = doc.createElement('button');
   conmutador.type = 'button';
   conmutador.className = 'kl-comparacion-conmutador';
-  conmutador.setAttribute('aria-label', 'Cambiar entre lado a lado y superposición');
   conmutador.setAttribute('aria-pressed', 'false');
-  conmutador.textContent = 'Ver superpuestas';
-
+  conmutador.title = 'Pone tu figura y la de Kiro en un solo lienzo y marca lo que coincide, lo que sobra y lo que falta';
+  conmutador.textContent = TEXTO_CONMUTADOR;
   raiz.appendChild(conmutador);
-  raiz.appendChild(zonaLado);
-  raiz.appendChild(zonaSuper);
   deps.contenedor.appendChild(raiz);
+
+  // Leyenda de las tres regiones del diff. Cada una se nombra por lo que significa
+  // y la muestra lleva su patrón de trazo (continuo, grueso, punteado) además del
+  // color, igual que el diff del lienzo.
+  const leyenda = doc.createElement('ul');
+  leyenda.className = 'kl-leyenda';
+  leyenda.setAttribute('aria-label', 'Qué significa cada trazo');
+  leyenda.hidden = true;
+  for (const estado of ESTADOS_LEYENDA) {
+    const item = doc.createElement('li');
+    item.className = `kl-leyenda-item kl-leyenda-${estado}`;
+    const muestra = doc.createElement('span');
+    muestra.className = 'kl-leyenda-muestra';
+    muestra.setAttribute('aria-hidden', 'true');
+    item.appendChild(muestra);
+    item.appendChild(doc.createTextNode(NOMBRE_ESTADO[estado]));
+    leyenda.appendChild(item);
+  }
+  (deps.contenedorLeyenda ?? deps.contenedor).appendChild(leyenda);
 
   let vista: Vista = 'ladoALado';
   let ultimos: DatosComparacion = { segmentosReferencia: [], segmentosJugador: [], veredicto: null };
 
+  /** Pinta el diff de la comparación guardada sobre la superposición, sin anunciar. */
+  function pintarDiff(v: Veredicto): void {
+    deps.diff.dibujar(
+      {
+        coincidencia: v.coincidencia,
+        exceso: v.exceso,
+        falta: v.falta,
+        traslacion: v.traslacion,
+        traslacionObjetivo: v.traslacionObjetivo,
+        angulo: v.angulo,
+      },
+      { referencia: ultimos.segmentosReferencia, jugador: ultimos.segmentosJugador },
+    );
+  }
+
+  /**
+   * Pinta la vista en curso. En la superposición dibuja las dos estelas y, si la última
+   * ejecución no ganó la precisión, el diff encima: así sigue en pantalla aunque el
+   * jugador cambie de vista y vuelva (requisito 23.10).
+   */
   function pintarVista(): void {
     const superpuesta = vista === 'superposicion';
-    zonaLado.hidden = superpuesta;
-    zonaSuper.hidden = !superpuesta;
+    leyenda.hidden = !superpuesta;
     conmutador.setAttribute('aria-pressed', superpuesta ? 'true' : 'false');
-    conmutador.textContent = superpuesta ? 'Ver lado a lado' : 'Ver superpuestas';
     if (superpuesta) {
       // Dibuja las dos estelas alineadas en un solo lienzo, sin re-ejecutar.
       deps.dibujarSuperposicion(ultimos.segmentosReferencia, ultimos.segmentosJugador);
+      const v = ultimos.veredicto;
+      if (v !== null && !v.coincide) pintarDiff(v);
     }
-  }
-
-  function dibujarDiffSiNiega(): void {
-    const v = ultimos.veredicto;
-    if (v === null || v.coincide) return;
-    const regiones: RegionesDiff = {
-      coincidencia: v.coincidencia,
-      exceso: v.exceso,
-      falta: v.falta,
-      traslacion: v.traslacion,
-      angulo: v.angulo,
-    };
-    deps.diff.dibujar(regiones);
-    deps.anunciar(textoAnuncio(v));
+    deps.alCambiarVista?.(vista);
   }
 
   conmutador.addEventListener('click', () => alternarVista());
@@ -174,12 +198,23 @@ export function crearComparacion(deps: DependenciasComparacion): Comparacion {
   return {
     raiz,
     conmutador,
+    leyenda,
 
     vista(): Vista {
       return vista;
     },
 
     alternarVista,
+
+    restablecer(): void {
+      ultimos = { segmentosReferencia: [], segmentosJugador: [], veredicto: null };
+      vista = 'ladoALado';
+      pintarVista();
+    },
+
+    redibujar(): void {
+      pintarVista();
+    },
 
     mostrar(datos: DatosComparacion): void {
       ultimos = datos;
@@ -188,18 +223,9 @@ export function crearComparacion(deps: DependenciasComparacion): Comparacion {
       if (v === null || v.motivo === 'sinEstelaDelJugador') {
         // Sin estela del jugador: lienzo del jugador con cuadrícula y sin estela.
         // El conmutador sigue operable. Anuncia que no hay estela que comparar.
-        // El diff dibuja únicamente la falta si estamos en superposición.
+        // Si ya estamos en superposición, el diff dibuja únicamente la falta.
         deps.anunciar(textoAnuncio(v));
-        if (v !== null && vista === 'superposicion') {
-          const regiones: RegionesDiff = {
-            coincidencia: v.coincidencia,
-            exceso: v.exceso,
-            falta: v.falta,
-            traslacion: v.traslacion,
-            angulo: v.angulo,
-          };
-          deps.diff.dibujar(regiones);
-        }
+        if (v !== null && vista === 'superposicion') pintarVista();
         return;
       }
 
@@ -207,7 +233,10 @@ export function crearComparacion(deps: DependenciasComparacion): Comparacion {
         // Estrella de precisión negada: pasa a superposición y dibuja el diff.
         vista = 'superposicion';
         pintarVista();
-        dibujarDiffSiNiega();
+        deps.anunciar(textoAnuncio(v));
+      } else if (vista === 'superposicion') {
+        // Precisión otorgada con la superposición abierta: que no se quede con lo anterior.
+        pintarVista();
       }
     },
   };

@@ -9,6 +9,7 @@ import { crearPrng } from '../azar/prng.js';
 import {
   crearAnimador,
   DURACIONES,
+  type Fotograma,
   type Reloj,
   type LienzoAnimador,
   type Velocidad,
@@ -508,5 +509,244 @@ describe('Property 15A: lo dibujado es exactamente lo que se valida', () => {
       }),
       { seed: 150, numRuns: 200 },
     );
+  });
+});
+
+// ============================================================================
+// Fotogramas: la tortuga se mueve mientras la estela crece
+// ============================================================================
+
+describe('animador · fotogramas', () => {
+  /** Anima una sola operación `mover` de 100 unidades y devuelve todo lo observable. */
+  function animarUnMover(): {
+    reloj: RelojFalso;
+    lienzo: LienzoDoble;
+    fotogramas: Fotograma[];
+    op: Operacion;
+  } {
+    contadorPaso = 0;
+    const op = opMover(ESTADO_INICIAL, 100, true);
+    const lienzo = new LienzoDoble();
+    const reloj = new RelojFalso();
+    const animador = crearAnimador(lienzo, reloj, SIN_REDUCIR);
+    const fotogramas: Fotograma[] = [];
+    animador.alFotograma((f) => fotogramas.push(f));
+    animador.cargar([op], 'jugador');
+    animador.reproducir();
+    return { reloj, lienzo, fotogramas, op };
+  }
+
+  it('a medio camino de un mover, la tortuga está entre el origen y el destino con su tramo', () => {
+    const { reloj, fotogramas } = animarUnMover();
+    reloj.avanzar(DURACIONES.normal / 2);
+
+    const ultimo = fotogramas[fotogramas.length - 1]!;
+    // La suavización es simétrica: a la mitad del tiempo, la mitad del camino.
+    expect(ultimo.estado.posicion.x).toBeCloseTo(0, 6);
+    expect(ultimo.estado.posicion.y).toBeCloseTo(50, 6);
+    expect(ultimo.tramo).not.toBeNull();
+    expect(ultimo.tramo!.desde).toEqual({ x: 0, y: 0 });
+    expect(ultimo.tramo!.hasta.y).toBeCloseTo(50, 6);
+  });
+
+  it('la posición dibujada crece de forma monótona sin salirse del tramo', () => {
+    const { reloj, fotogramas } = animarUnMover();
+    reloj.avanzar(DURACIONES.normal * 1.5);
+
+    const ys = fotogramas.map((f) => f.estado.posicion.y);
+    expect(ys.length).toBeGreaterThan(5);
+    for (let i = 1; i < ys.length; i++) {
+      expect(ys[i]!).toBeGreaterThanOrEqual(ys[i - 1]!);
+    }
+    for (const y of ys) {
+      expect(y).toBeGreaterThanOrEqual(0);
+      expect(y).toBeLessThanOrEqual(100);
+    }
+  });
+
+  it('el tramo parcial no entra en la estela hasta que la operación termina', () => {
+    const { reloj, lienzo, fotogramas, op } = animarUnMover();
+    reloj.avanzar(DURACIONES.normal / 2);
+    expect(fotogramas.some((f) => f.tramo !== null)).toBe(true);
+    expect(lienzo.estelas.jugador).toEqual([]);
+
+    reloj.avanzar(DURACIONES.normal);
+    expect(lienzo.estelas.jugador).toEqual(extraerSegmentos([op]));
+  });
+
+  it('al terminar la operación, el último fotograma es su estado final y sin tramo', () => {
+    const { reloj, fotogramas, op } = animarUnMover();
+    reloj.avanzar(DURACIONES.normal * 2);
+
+    // Tras terminar no queda nada programado, y lo último pintado es la llegada.
+    const ultimo = fotogramas[fotogramas.length - 1]!;
+    expect(ultimo.estado).toEqual(op.estadoDespues);
+    expect(ultimo.tramo).toBeNull();
+    expect(reloj.hayPendientes()).toBe(false);
+  });
+
+  it('sin lápiz abajo la tortuga se mueve pero no lleva tramo', () => {
+    contadorPaso = 0;
+    const op = opMover(ESTADO_INICIAL, 100, false);
+    const reloj = new RelojFalso();
+    const animador = crearAnimador(new LienzoDoble(), reloj, SIN_REDUCIR);
+    const fotogramas: Fotograma[] = [];
+    animador.alFotograma((f) => fotogramas.push(f));
+    animador.cargar([op], 'jugador');
+    animador.reproducir();
+    reloj.avanzar(DURACIONES.normal / 2);
+
+    expect(fotogramas[fotogramas.length - 1]!.estado.posicion.y).toBeGreaterThan(0);
+    expect(fotogramas.every((f) => f.tramo === null)).toBe(true);
+  });
+
+  it('un giro avanza en el sentido pedido y no mueve a la tortuga', () => {
+    contadorPaso = 0;
+    // 270 a la derecha: por el camino corto serían 90 a la izquierda, pero se pidió el largo.
+    const op = opGirar(ESTADO_INICIAL, 270);
+    const reloj = new RelojFalso();
+    const animador = crearAnimador(new LienzoDoble(), reloj, SIN_REDUCIR);
+    const fotogramas: Fotograma[] = [];
+    animador.alFotograma((f) => fotogramas.push(f));
+    animador.cargar([op], 'jugador');
+    animador.reproducir();
+    reloj.avanzar(DURACIONES.normal / 2);
+
+    const medio = fotogramas[fotogramas.length - 1]!;
+    expect(medio.estado.rumbo).toBeCloseTo(135, 6); // la mitad de 270, creciendo
+    expect(medio.estado.posicion).toEqual({ x: 0, y: 0 });
+    expect(medio.tramo).toBeNull();
+  });
+
+  it('un giro a la izquierda resta rumbo', () => {
+    contadorPaso = 0;
+    const op: Operacion = {
+      tipo: 'girar',
+      paso: contadorPaso++,
+      linea: 1,
+      profundidad: 0,
+      estadoAntes: { ...ESTADO_INICIAL, rumbo: 90 },
+      estadoDespues: { ...ESTADO_INICIAL, rumbo: 0 },
+      grados: 90,
+      sentido: 'izquierda',
+    };
+    const reloj = new RelojFalso();
+    const animador = crearAnimador(new LienzoDoble(), reloj, SIN_REDUCIR);
+    const fotogramas: Fotograma[] = [];
+    animador.alFotograma((f) => fotogramas.push(f));
+    animador.cargar([op], 'jugador');
+    animador.reproducir();
+    reloj.avanzar(DURACIONES.normal / 2);
+
+    expect(fotogramas[fotogramas.length - 1]!.estado.rumbo).toBeCloseTo(45, 6);
+  });
+
+  it('con velocidad inmediata pinta una sola vez la tortuga en su estado final', () => {
+    const ops = secuenciaSimple();
+    const animador = crearAnimador(new LienzoDoble(), new RelojFalso(), SIN_REDUCIR);
+    const fotogramas: Fotograma[] = [];
+    animador.alFotograma((f) => fotogramas.push(f));
+    animador.cargar(ops, 'jugador');
+    animador.ponerVelocidad('inmediata');
+    animador.reproducir();
+
+    expect(fotogramas.length).toBe(1);
+    expect(fotogramas[0]!.estado).toEqual(ops[ops.length - 1]!.estadoDespues);
+    expect(fotogramas[0]!.tramo).toBeNull();
+  });
+
+  it('con movimiento reducido pinta una sola vez la tortuga en su estado final', () => {
+    const ops = secuenciaSimple();
+    const animador = crearAnimador(new LienzoDoble(), new RelojFalso(), () => true);
+    const fotogramas: Fotograma[] = [];
+    animador.alFotograma((f) => fotogramas.push(f));
+    animador.cargar(ops, 'jugador');
+    animador.reproducir();
+
+    expect(fotogramas.length).toBe(1);
+    expect(fotogramas[0]!.estado).toEqual(ops[ops.length - 1]!.estadoDespues);
+  });
+
+  it('el paso a paso pinta la tortuga en el estado final de cada operación', () => {
+    const ops = secuenciaSimple();
+    const animador = crearAnimador(new LienzoDoble(), new RelojFalso(), SIN_REDUCIR);
+    const fotogramas: Fotograma[] = [];
+    animador.alFotograma((f) => fotogramas.push(f));
+    animador.cargar(ops, 'jugador');
+
+    animador.paso();
+    animador.paso();
+    animador.paso();
+
+    expect(fotogramas.map((f) => f.estado)).toEqual(ops.slice(0, 3).map((o) => o.estadoDespues));
+    expect(fotogramas.every((f) => f.tramo === null)).toBe(true);
+  });
+
+  it('sin ningún escucha de fotogramas el animador funciona igual que antes', () => {
+    const ops = secuenciaSimple();
+    const lienzo = new LienzoDoble();
+    const animador = crearAnimador(lienzo, new RelojFalso(), SIN_REDUCIR);
+    animador.cargar(ops, 'jugador');
+    animador.ponerVelocidad('inmediata');
+    expect(() => animador.reproducir()).not.toThrow();
+    expect(lienzo.estelas.jugador).toEqual(extraerSegmentos(ops));
+  });
+
+  it('al pasar a la operación siguiente retoma desde la llegada de la anterior, sin saltos atrás', () => {
+    contadorPaso = 0;
+    const primera = opMover(ESTADO_INICIAL, 100, true);
+    const segunda = opMover(primera.estadoDespues, 100, true);
+    const reloj = new RelojFalso();
+    const animador = crearAnimador(new LienzoDoble(), reloj, SIN_REDUCIR);
+    const fotogramas: Fotograma[] = [];
+    animador.alFotograma((f) => fotogramas.push(f));
+    animador.cargar([primera, segunda], 'jugador');
+    animador.reproducir();
+    reloj.avanzar(DURACIONES.normal * 3);
+
+    const ys = fotogramas.map((f) => f.estado.posicion.y);
+    for (let i = 1; i < ys.length; i++) {
+      expect(ys[i]!).toBeGreaterThanOrEqual(ys[i - 1]!);
+    }
+    expect(ys[ys.length - 1]).toBeCloseTo(200, 6);
+  });
+});
+
+describe('animador · detener termina el tramo en curso', () => {
+  it('deja la estela y la tortuga en el final de la operación que estaba en marcha', () => {
+    contadorPaso = 0;
+    const op = opMover(ESTADO_INICIAL, 100, true);
+    const lienzo = new LienzoDoble();
+    const reloj = new RelojFalso();
+    const animador = crearAnimador(lienzo, reloj, SIN_REDUCIR);
+    const fotogramas: Fotograma[] = [];
+    let fin: unknown = null;
+    animador.alFotograma((f) => fotogramas.push(f));
+    animador.alTerminar((f) => (fin = f));
+    animador.cargar([op], 'jugador');
+    animador.reproducir();
+    reloj.avanzar(DURACIONES.normal / 2);
+    expect(lienzo.estelas.jugador).toEqual([]);
+
+    animador.detener();
+
+    expect(lienzo.estelas.jugador).toEqual(extraerSegmentos([op]));
+    expect(fotogramas[fotogramas.length - 1]!.estado).toEqual(op.estadoDespues);
+    expect(fin).toEqual({
+      motivo: 'detenidoPorJugador',
+      operacionesAplicadas: 1,
+      estadoFinal: op.estadoDespues,
+    });
+    expect(reloj.hayPendientes()).toBe(false);
+  });
+
+  it('detener sin reproducción en marcha no aplica nada', () => {
+    contadorPaso = 0;
+    const op = opMover(ESTADO_INICIAL, 100, true);
+    const lienzo = new LienzoDoble();
+    const animador = crearAnimador(lienzo, new RelojFalso(), SIN_REDUCIR);
+    animador.cargar([op], 'jugador');
+    animador.detener();
+    expect(lienzo.estelas.jugador).toEqual([]);
   });
 });

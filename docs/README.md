@@ -1,6 +1,7 @@
 # Plan de specs de KiroLogo
 
-El proyecto se aborda en **ocho specs**: una de cimientos y una por mundo. Cada archivo de
+El proyecto se aborda en **ocho specs**: una de cimientos y una por mundo, más dos specs
+transversales (08 y 09) que cambian la presentación y no son un mundo. Cada archivo de
 `docs/prompts/` es el texto listo para pegar al iniciar la spec correspondiente.
 
 Para entender **por qué** el proyecto es como es, y qué se descartó en el camino, está la
@@ -32,6 +33,19 @@ cada uno agrega vocabulario al lenguaje y niveles al catálogo.
 | 05 | [Mundo 4 · Parámetros](prompts/05-mundo-4-parametros.md) | variables y aritmética, insignia *Generalización* | 04 |
 | 06 | [Mundo 5 · Fractales](prompts/06-mundo-5-fractales.md) | condicionales y recursión, insignia *Recursión* | 05 |
 | 07 | [Mundo bonus · Arquitectura](prompts/07-mundo-bonus-arquitectura.md) | 5 niveles de diagramas, mapa de insignias, insignia *Arquitecto* | 06 |
+
+## Specs transversales
+
+Dos specs que no agregan mundo ni vocabulario: ordenan la presentación de lo que ya existe. Necesitan
+el juego jugable, así que van después de la 01, y no bloquean ni dependen de los mundos 02 a 07. Se
+hacen en este orden, porque la 09 parte de la pantalla que documenta la 08.
+
+| # | Spec | Qué entrega | Depende de |
+|---|---|---|---|
+| 08 | [Diseño visual](prompts/08-diseno-visual.md) | el diseño visual como requisitos verificables; concilia con las specs 00 y 01 los puntos en que se aparta | 01 |
+| 09 | [Ajustes de interfaz](prompts/09-ajustes-de-interfaz.md) | atajos sin números, colores planos, menú de mundos desplegable | 08 |
+
+No son rebanadas verticales: la regla de abajo no les aplica, pero la definición de terminado sí.
 
 ## La regla que se repite en todas
 

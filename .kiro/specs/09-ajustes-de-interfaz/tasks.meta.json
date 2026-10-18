@@ -1,0 +1,261 @@
+{
+  "pbtResults": {},
+  "executionHistory": {
+    "1.1 Ampliar `EntradaVocabulario` con `insercion` y poblar las 28 entradas": [
+      {
+        "executionId": "550fd8dd-8918-4e26-af6d-dec81bb86f1e",
+        "chatSessionId": "sess_19a80216-5930-4eef-b81a-4149068747a1",
+        "timestamp": 1792305376191
+      },
+      {
+        "executionId": "550fd8dd-8918-4e26-af6d-dec81bb86f1e",
+        "chatSessionId": "sess_19a80216-5930-4eef-b81a-4149068747a1",
+        "timestamp": 1792305517501
+      }
+    ],
+    "3.2 Revisar `tema.css` para color plano": [
+      {
+        "executionId": "550fd8dd-8918-4e26-af6d-dec81bb86f1e",
+        "chatSessionId": "sess_19a80216-5930-4eef-b81a-4149068747a1",
+        "timestamp": 1792305528582
+      },
+      {
+        "executionId": "550fd8dd-8918-4e26-af6d-dec81bb86f1e",
+        "chatSessionId": "sess_19a80216-5930-4eef-b81a-4149068747a1",
+        "timestamp": 1792305705022
+      }
+    ],
+    "5.1 Crear `src/ui/menu-mundos.ts`": [
+      {
+        "executionId": "550fd8dd-8918-4e26-af6d-dec81bb86f1e",
+        "chatSessionId": "sess_19a80216-5930-4eef-b81a-4149068747a1",
+        "timestamp": 1792305529347
+      },
+      {
+        "executionId": "550fd8dd-8918-4e26-af6d-dec81bb86f1e",
+        "chatSessionId": "sess_19a80216-5930-4eef-b81a-4149068747a1",
+        "timestamp": 1792305706001
+      }
+    ],
+    "1.2 Escribir la prueba P1 de la regla de `insercion` (exhaustiva)": [
+      {
+        "executionId": "550fd8dd-8918-4e26-af6d-dec81bb86f1e",
+        "chatSessionId": "sess_19a80216-5930-4eef-b81a-4149068747a1",
+        "timestamp": 1792305709726
+      },
+      {
+        "executionId": "550fd8dd-8918-4e26-af6d-dec81bb86f1e",
+        "chatSessionId": "sess_19a80216-5930-4eef-b81a-4149068747a1",
+        "timestamp": 1792306187263
+      }
+    ],
+    "1.3 Adaptar `panel-comandos.ts` para insertar `insercion` y exponer `data-insercion`": [
+      {
+        "executionId": "550fd8dd-8918-4e26-af6d-dec81bb86f1e",
+        "chatSessionId": "sess_19a80216-5930-4eef-b81a-4149068747a1",
+        "timestamp": 1792305710667
+      },
+      {
+        "executionId": "550fd8dd-8918-4e26-af6d-dec81bb86f1e",
+        "chatSessionId": "sess_19a80216-5930-4eef-b81a-4149068747a1",
+        "timestamp": 1792306188632
+      }
+    ],
+    "5.2 Crear `src/ui/menu-mundos.test.ts` migrando las 24 pruebas del selector y añadiendo las nuevas": [
+      {
+        "executionId": "550fd8dd-8918-4e26-af6d-dec81bb86f1e",
+        "chatSessionId": "sess_19a80216-5930-4eef-b81a-4149068747a1",
+        "timestamp": 1792305711956
+      },
+      {
+        "executionId": "550fd8dd-8918-4e26-af6d-dec81bb86f1e",
+        "chatSessionId": "sess_19a80216-5930-4eef-b81a-4149068747a1",
+        "timestamp": 1792306189721
+      }
+    ],
+    "3.1 Retirar degradados y resplandores difuminados de `pantalla.css`": [
+      {
+        "executionId": "550fd8dd-8918-4e26-af6d-dec81bb86f1e",
+        "chatSessionId": "sess_19a80216-5930-4eef-b81a-4149068747a1",
+        "timestamp": 1792306193190
+      },
+      {
+        "executionId": "550fd8dd-8918-4e26-af6d-dec81bb86f1e",
+        "chatSessionId": "sess_19a80216-5930-4eef-b81a-4149068747a1",
+        "timestamp": 1792306334654
+      }
+    ],
+    "5.5 Cablear el menú en `main.ts`": [
+      {
+        "executionId": "550fd8dd-8918-4e26-af6d-dec81bb86f1e",
+        "chatSessionId": "sess_19a80216-5930-4eef-b81a-4149068747a1",
+        "timestamp": 1792306194061
+      },
+      {
+        "executionId": "550fd8dd-8918-4e26-af6d-dec81bb86f1e",
+        "chatSessionId": "sess_19a80216-5930-4eef-b81a-4149068747a1",
+        "timestamp": 1792306332340
+      }
+    ],
+    "1.4 Actualizar las pruebas afectadas de `panel-comandos.test.ts` sin debilitarlas": [
+      {
+        "executionId": "550fd8dd-8918-4e26-af6d-dec81bb86f1e",
+        "chatSessionId": "sess_19a80216-5930-4eef-b81a-4149068747a1",
+        "timestamp": 1792306195283
+      },
+      {
+        "executionId": "550fd8dd-8918-4e26-af6d-dec81bb86f1e",
+        "chatSessionId": "sess_19a80216-5930-4eef-b81a-4149068747a1",
+        "timestamp": 1792306333713
+      }
+    ],
+    "3. Ajuste 2 · Colores planos": [
+      {
+        "executionId": "550fd8dd-8918-4e26-af6d-dec81bb86f1e",
+        "chatSessionId": "sess_19a80216-5930-4eef-b81a-4149068747a1",
+        "timestamp": 1792306334723
+      }
+    ],
+    "5.6 Migrar las 11 referencias de `main.test.ts` a la API del menú": [
+      {
+        "executionId": "550fd8dd-8918-4e26-af6d-dec81bb86f1e",
+        "chatSessionId": "sess_19a80216-5930-4eef-b81a-4149068747a1",
+        "timestamp": 1792306339492
+      },
+      {
+        "executionId": "550fd8dd-8918-4e26-af6d-dec81bb86f1e",
+        "chatSessionId": "sess_19a80216-5930-4eef-b81a-4149068747a1",
+        "timestamp": 1792306511856
+      }
+    ],
+    "1.5 Hacer visible `insercion` por CSS en `pantalla.css`": [
+      {
+        "executionId": "550fd8dd-8918-4e26-af6d-dec81bb86f1e",
+        "chatSessionId": "sess_19a80216-5930-4eef-b81a-4149068747a1",
+        "timestamp": 1792306340418
+      },
+      {
+        "executionId": "550fd8dd-8918-4e26-af6d-dec81bb86f1e",
+        "chatSessionId": "sess_19a80216-5930-4eef-b81a-4149068747a1",
+        "timestamp": 1792306510933
+      }
+    ],
+    "5.4 Retirar `selector-nivel.ts` y migrar el CSS a `.kl-menu-*`": [
+      {
+        "executionId": "550fd8dd-8918-4e26-af6d-dec81bb86f1e",
+        "chatSessionId": "sess_19a80216-5930-4eef-b81a-4149068747a1",
+        "timestamp": 1792306515792
+      },
+      {
+        "executionId": "550fd8dd-8918-4e26-af6d-dec81bb86f1e",
+        "chatSessionId": "sess_19a80216-5930-4eef-b81a-4149068747a1",
+        "timestamp": 1792306734779
+      }
+    ],
+    "1.6 Escribir la prueba P2 (panel muestra `insercion` sin dígitos en el mundo 0)": [
+      {
+        "executionId": "550fd8dd-8918-4e26-af6d-dec81bb86f1e",
+        "chatSessionId": "sess_19a80216-5930-4eef-b81a-4149068747a1",
+        "timestamp": 1792306517188
+      },
+      {
+        "executionId": "550fd8dd-8918-4e26-af6d-dec81bb86f1e",
+        "chatSessionId": "sess_19a80216-5930-4eef-b81a-4149068747a1",
+        "timestamp": 1792306732772
+      }
+    ],
+    "1.7 Añadir el flujo de intento del atajo en `main.test.ts`": [
+      {
+        "executionId": "550fd8dd-8918-4e26-af6d-dec81bb86f1e",
+        "chatSessionId": "sess_19a80216-5930-4eef-b81a-4149068747a1",
+        "timestamp": 1792306518048
+      },
+      {
+        "executionId": "550fd8dd-8918-4e26-af6d-dec81bb86f1e",
+        "chatSessionId": "sess_19a80216-5930-4eef-b81a-4149068747a1",
+        "timestamp": 1792306733699
+      }
+    ],
+    "1. Ajuste 1 · Campo `insercion` en el Vocabulario y atajos sin números": [
+      {
+        "executionId": "550fd8dd-8918-4e26-af6d-dec81bb86f1e",
+        "chatSessionId": "sess_19a80216-5930-4eef-b81a-4149068747a1",
+        "timestamp": 1792306733753
+      }
+    ],
+    "5. Ajuste 3 · Menú de mundos desplegable": [
+      {
+        "executionId": "550fd8dd-8918-4e26-af6d-dec81bb86f1e",
+        "chatSessionId": "sess_19a80216-5930-4eef-b81a-4149068747a1",
+        "timestamp": 1792306734840
+      }
+    ],
+    "5.3 Escribir P3 y P4 con fast-check en `menu-mundos.test.ts`": [
+      {
+        "executionId": "9c3ecdd0-76de-4c1c-b7f4-ace29a7b3e61",
+        "chatSessionId": "sess_7fbaf2cb-ead9-430e-a571-657394f320f1",
+        "timestamp": 1792307843339
+      },
+      {
+        "executionId": "9c3ecdd0-76de-4c1c-b7f4-ace29a7b3e61",
+        "chatSessionId": "sess_7fbaf2cb-ead9-430e-a571-657394f320f1",
+        "timestamp": 1792308029126
+      }
+    ],
+    "6. Checkpoint · Ajuste 3 completo": [
+      {
+        "executionId": "f810d04b-e1e2-401d-bf2a-a6a01193f7c4",
+        "chatSessionId": "sess_3e400925-80c9-4a65-bd9f-7d9c90fe7e20",
+        "timestamp": 1792308120961
+      },
+      {
+        "executionId": "f810d04b-e1e2-401d-bf2a-a6a01193f7c4",
+        "chatSessionId": "sess_3e400925-80c9-4a65-bd9f-7d9c90fe7e20",
+        "timestamp": 1792308213921
+      }
+    ],
+    "7.1 Escribir la Prueba_Color_Plano completa (P5) en `main.test.ts`": [
+      {
+        "executionId": "a9decf92-2284-4e37-ab15-ae2771c190ab",
+        "chatSessionId": "sess_6e53da3a-ee9a-4400-8f30-74c62beeab1e",
+        "timestamp": 1792308255236
+      },
+      {
+        "executionId": "a9decf92-2284-4e37-ab15-ae2771c190ab",
+        "chatSessionId": "sess_6e53da3a-ee9a-4400-8f30-74c62beeab1e",
+        "timestamp": 1792308467731
+      }
+    ],
+    "7.2 Registrar las decisiones en `docs/bitacora.md`": [
+      {
+        "executionId": "a9decf92-2284-4e37-ab15-ae2771c190ab",
+        "chatSessionId": "sess_6e53da3a-ee9a-4400-8f30-74c62beeab1e",
+        "timestamp": 1792308470575
+      },
+      {
+        "executionId": "a9decf92-2284-4e37-ab15-ae2771c190ab",
+        "chatSessionId": "sess_6e53da3a-ee9a-4400-8f30-74c62beeab1e",
+        "timestamp": 1792308609074
+      }
+    ],
+    "7.3 Verificación final de cierre": [
+      {
+        "executionId": "a9decf92-2284-4e37-ab15-ae2771c190ab",
+        "chatSessionId": "sess_6e53da3a-ee9a-4400-8f30-74c62beeab1e",
+        "timestamp": 1792308611564
+      },
+      {
+        "executionId": "a9decf92-2284-4e37-ab15-ae2771c190ab",
+        "chatSessionId": "sess_6e53da3a-ee9a-4400-8f30-74c62beeab1e",
+        "timestamp": 1792308855800
+      }
+    ],
+    "7. Cierre · Prueba_Color_Plano, Bitácora y verificación": [
+      {
+        "executionId": "a9decf92-2284-4e37-ab15-ae2771c190ab",
+        "chatSessionId": "sess_6e53da3a-ee9a-4400-8f30-74c62beeab1e",
+        "timestamp": 1792308855860
+      }
+    ]
+  }
+}

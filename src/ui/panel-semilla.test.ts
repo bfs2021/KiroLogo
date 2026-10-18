@@ -112,3 +112,52 @@ describe('panel-semilla · acciones', () => {
     expect(codigosReproducidos).toEqual(['xyz 123']);
   });
 });
+
+// ============================================================================
+// 7.5 · el código vive en un <output> seleccionable por teclado
+//
+// El requisito 7.5 pide explícitamente un elemento <output> y que sea
+// seleccionable por teclado. Los casos existentes confirman el nombre
+// accesible y que es de solo lectura, pero no el tipo de elemento ni el foco.
+// ============================================================================
+
+describe('panel-semilla · 7.5 elemento del código', () => {
+  it('el código vive en un elemento <output>', () => {
+    const panel = crear();
+    panel.presentarReto({ codigoSemilla: 'ABC2345', generado: true });
+    expect(panel.salidaCodigo.tagName).toBe('OUTPUT');
+  });
+
+  it('el código es seleccionable con el teclado (entra en el orden de foco)', () => {
+    const panel = crear();
+    panel.presentarReto({ codigoSemilla: 'ABC2345', generado: true });
+    expect(panel.salidaCodigo.tabIndex).toBe(0);
+    panel.salidaCodigo.focus();
+    expect(panel.salidaCodigo.ownerDocument.activeElement).toBe(panel.salidaCodigo);
+  });
+});
+
+// ============================================================================
+// 7.6 · el nivel autorado deshabilita AMBAS acciones
+//
+// El requisito 7.6 pide deshabilitar las dos acciones: pedir otro reto y
+// reproducir un código. El caso existente verifica «otro reto» y el campo;
+// este cierra el hueco del botón de reproducir.
+// ============================================================================
+
+describe('panel-semilla · 7.6 ambas acciones deshabilitadas en autorado', () => {
+  it('en autorado también deshabilita «reproducir código», no solo «otro reto»', () => {
+    const panel = crear();
+    panel.presentarReto({ codigoSemilla: 'ZZZ2345', generado: false });
+    expect(panel.botonReproducir.disabled).toBe(true);
+    expect(panel.botonReproducir.getAttribute('aria-disabled')).toBe('true');
+  });
+
+  it('en autorado, pulsar «reproducir código» no invoca el callback', () => {
+    const panel = crear();
+    panel.presentarReto({ codigoSemilla: 'ZZZ2345', generado: false });
+    panel.campoCodigo.value = 'abc 123';
+    panel.botonReproducir.click();
+    expect(codigosReproducidos).toEqual([]);
+  });
+});
