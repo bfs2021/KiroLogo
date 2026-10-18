@@ -155,6 +155,43 @@ describe('demostracion · estado inicial y espera', () => {
   });
 });
 
+describe('demostracion · escala de los personajes', () => {
+  /** Monta una demostración, con o sin escala, y devuelve los puntos del primer dibujo. */
+  function puntosIniciales(escalaPersonajes?: number): number[][] {
+    const lienzo = new LienzoDoble();
+    const demo = crearDemostracion({
+      lienzo,
+      animador: crearAnimador(lienzo, relojFalso(), () => false),
+      operaciones: operacionesDelReto(),
+      estadoInicial: ESTADO_INICIAL,
+      leerTemaPersonajes: estiloPersonajes,
+      relojEspera: esperaFalsa(),
+      anunciar: () => {},
+      avisarSinDemostracion: () => {},
+      ...(escalaPersonajes !== undefined ? { escalaPersonajes } : {}),
+    });
+    demo.reproducir();
+    return lienzo.personajes.llamadas
+      .filter((l) => l.metodo === 'moveTo' || l.metodo === 'lineTo')
+      .map((l) => l.args as number[]);
+  }
+
+  it('sin escala dibuja a tamaño de diseño', () => {
+    expect(puntosIniciales()).toEqual(puntosIniciales(1));
+  });
+
+  it('con escala agranda a Kiro y su tortuga en torno a su posición', () => {
+    const sin = puntosIniciales();
+    const con = puntosIniciales(2.5);
+    expect(con.length).toBe(sin.length);
+    // La tortuga arranca en el origen: escalar en torno a ella multiplica por la escala.
+    sin.forEach((p, i) => {
+      expect(con[i]![0]!).toBeCloseTo(p[0]! * 2.5, 9);
+      expect(con[i]![1]!).toBeCloseTo(p[1]! * 2.5, 9);
+    });
+  });
+});
+
 describe('demostracion · reproducción sobre la referencia', () => {
   it('dibuja la secuencia sobre la capa de referencia y no toca la del jugador', () => {
     const m = montar(operacionesDelReto());

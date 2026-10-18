@@ -80,6 +80,57 @@ describe('controles · seis acciones y cuatro velocidades', () => {
   });
 });
 
+describe('controles · texto visible y nombre accesible', () => {
+  /** Texto visible sin el ícono decorativo (que va aria-hidden). */
+  function textoVisible(b: HTMLElement): string {
+    const copia = b.cloneNode(true) as HTMLElement;
+    copia.querySelectorAll('[aria-hidden="true"]').forEach((n) => n.remove());
+    return (copia.textContent ?? '').trim();
+  }
+
+  it('el nombre accesible de cada botón contiene su texto visible (quien dicta «Ejecutar» lo activa)', () => {
+    const { controles } = montar();
+    for (const a of ['ejecutar', 'detener', 'paso', 'reiniciar', 'demostracion'] as AccionId[]) {
+      const b = controles.boton(a);
+      const visible = textoVisible(b).toLowerCase();
+      expect(visible.length, a).toBeGreaterThan(0);
+      expect(b.getAttribute('aria-label')!.toLowerCase(), a).toContain(visible);
+    }
+    for (const v of ['lenta', 'normal', 'rapida', 'inmediata'] as Velocidad[]) {
+      const b = controles.botonVelocidad(v);
+      const visible = textoVisible(b).toLowerCase();
+      expect(b.getAttribute('aria-label')!.toLowerCase(), v).toContain(visible);
+    }
+  });
+
+  it('los textos visibles son cortos y en español', () => {
+    const { controles } = montar();
+    expect(textoVisible(controles.boton('ejecutar'))).toBe('Ejecutar');
+    expect(textoVisible(controles.boton('detener'))).toBe('Detener');
+    expect(textoVisible(controles.boton('paso'))).toBe('Paso');
+    expect(textoVisible(controles.boton('reiniciar'))).toBe('Reiniciar');
+    expect(textoVisible(controles.boton('demostracion'))).toBe('Ver la demostración');
+    expect(controles.botonVelocidad('rapida').textContent).toBe('Rápida');
+  });
+
+  it('el ícono de cada acción es decorativo: va oculto a los lectores de pantalla', () => {
+    const { controles } = montar();
+    for (const a of ['ejecutar', 'detener', 'paso', 'reiniciar', 'demostracion'] as AccionId[]) {
+      const icono = controles.boton(a).querySelector('.kl-control-icono')!;
+      expect(icono.getAttribute('aria-hidden')).toBe('true');
+    }
+  });
+
+  it('el rótulo visible «Velocidad» está oculto a los lectores: el grupo ya tiene nombre', () => {
+    const { controles } = montar();
+    const grupo = controles.raiz.querySelector('.kl-control-velocidades')!;
+    expect(grupo.getAttribute('aria-label')).toBe('Cambiar la velocidad');
+    const rotulo = grupo.querySelector('.kl-control-velocidades-rotulo')!;
+    expect(rotulo.textContent).toBe('Velocidad');
+    expect(rotulo.getAttribute('aria-hidden')).toBe('true');
+  });
+});
+
 describe('controles · pide la ejecución por callback', () => {
   it('activar ejecutar llama al callback, no al intérprete', () => {
     const { controles, reg } = montar();
@@ -152,5 +203,105 @@ describe('controles · el foco se mueve al deshabilitarse', () => {
     controles.boton('detener').focus();
     controles.marcarFinDeSecuencia();
     expect(document.activeElement).toBe(controles.boton('ejecutar'));
+  });
+});
+
+// ===========================================================================
+// Huecos de la tarea 6.1 (spec 08): confirmar 7.1, 7.2 y 7.3.
+//
+// Lo heredado ya cubre: las seis acciones como botones interactivos, la
+// velocidad normal seleccionada al entrar (por aria-pressed), nombres
+// accesibles distintos, el texto visible corto contenido en el nombre
+// accesible, íconos decorativos y los estados durante/después de ejecutar.
+//
+// Faltaban tres cosas que los requisitos piden de forma explícita:
+//  - 7.2: el grupo de velocidad marca a UNO SOLO como seleccionado a la vez,
+//    y lo marca por estado presionado Y por clase, nunca solo por color.
+//  - 7.3: al entrar, la normal es la ÚNICA seleccionada (las otras tres, no).
+//  - 7.1: cada acción es alcanzable por teclado en el orden visual.
+// ===========================================================================
+
+describe('controles · 7.2/7.3 · exactamente una velocidad seleccionada por estado y por clase', () => {
+  const VELOCIDADES: Velocidad[] = ['lenta', 'normal', 'rapida', 'inmediata'];
+
+  /** Velocidades marcadas por aria-pressed="true". */
+  function presionadas(controles: Controles): Velocidad[] {
+    return VELOCIDADES.filter((v) => controles.botonVelocidad(v).getAttribute('aria-pressed') === 'true');
+  }
+
+  /** Velocidades marcadas por la clase de selección. */
+  function conClase(controles: Controles): Velocidad[] {
+    return VELOCIDADES.filter((v) => controles.botonVelocidad(v).classList.contains('kl-seleccionada'));
+  }
+
+  it('al entrar, la normal es la única seleccionada por estado presionado y por clase', () => {
+    const { controles } = montar();
+    // Exactamente una por cada canal, y es la misma: la normal.
+    expect(presionadas(controles)).toEqual(['normal']);
+    expect(conClase(controles)).toEqual(['normal']);
+    // Las otras tres no están presionadas y no tienen la clase.
+    for (const v of ['lenta', 'rapida', 'inmediata'] as Velocidad[]) {
+      expect(controles.botonVelocidad(v).getAttribute('aria-pressed'), v).toBe('false');
+      expect(controles.botonVelocidad(v).classList.contains('kl-seleccionada'), v).toBe(false);
+    }
+  });
+
+  it('al cambiar de velocidad sigue habiendo exactamente una seleccionada, por ambos canales', () => {
+    const { controles } = montar();
+    for (const destino of ['lenta', 'rapida', 'inmediata', 'normal'] as Velocidad[]) {
+      click(controles.botonVelocidad(destino));
+      // Un solo botón presionado y una sola clase, y coinciden en el mismo botón.
+      expect(presionadas(controles)).toEqual([destino]);
+      expect(conClase(controles)).toEqual([destino]);
+      expect(controles.velocidadSeleccionada()).toBe(destino);
+    }
+  });
+
+  it('seleccionar por programa también deja exactamente una marcada por estado y por clase', () => {
+    const { controles } = montar();
+    controles.seleccionarVelocidad('inmediata');
+    expect(presionadas(controles)).toEqual(['inmediata']);
+    expect(conClase(controles)).toEqual(['inmediata']);
+  });
+
+  it('la selección no depende solo del color: todo botón declara su estado presionado explícito', () => {
+    const { controles } = montar();
+    // Todo botón de velocidad, seleccionado o no, expone aria-pressed (true/false),
+    // de modo que un lector de pantalla conoce el estado sin ver el color.
+    for (const v of VELOCIDADES) {
+      const pressed = controles.botonVelocidad(v).getAttribute('aria-pressed');
+      expect(pressed === 'true' || pressed === 'false', v).toBe(true);
+    }
+  });
+});
+
+describe('controles · 7.1 · acciones alcanzables por teclado en orden visual', () => {
+  it('las cinco acciones y las cuatro velocidades son botones nativos en el orden de tabulación', () => {
+    const { controles } = montar();
+    // Un botón nativo sin tabindex negativo participa del orden de tabulación.
+    const todos = Array.from(controles.raiz.querySelectorAll('button')) as HTMLButtonElement[];
+    expect(todos.length).toBe(9);
+    for (const b of todos) {
+      expect(b.tagName).toBe('BUTTON');
+      // Ningún control se saca del recorrido por teclado con tabindex="-1".
+      expect(b.getAttribute('tabindex')).not.toBe('-1');
+    }
+  });
+
+  it('el orden en el DOM de las acciones es el orden visual esperado', () => {
+    const { controles } = montar();
+    const accionesEnDom = Array.from(controles.raiz.querySelectorAll<HTMLButtonElement>('.kl-control')).map((b) =>
+      b.getAttribute('data-accion'),
+    );
+    expect(accionesEnDom).toEqual(['ejecutar', 'detener', 'paso', 'reiniciar', 'demostracion']);
+    const velEnDom = Array.from(controles.raiz.querySelectorAll<HTMLButtonElement>('.kl-velocidad')).map((b) =>
+      b.getAttribute('data-velocidad'),
+    );
+    expect(velEnDom).toEqual(['lenta', 'normal', 'rapida', 'inmediata']);
+    // El grupo de velocidad va después de las cinco acciones en el orden del DOM.
+    const hijosBoton = Array.from(controles.raiz.querySelectorAll('button')) as HTMLButtonElement[];
+    const idxUltimaAccion = hijosBoton.findIndex((b) => b.getAttribute('data-accion') === 'demostracion');
+    const idxPrimeraVel = hijosBoton.findIndex((b) => b.getAttribute('data-velocidad') === 'lenta');
+    expect(idxUltimaAccion).toBeLessThan(idxPrimeraVel);
   });
 });

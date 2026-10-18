@@ -85,6 +85,8 @@ export interface DependenciasDemostracion {
   readonly estadoInicial: EstadoTortuga;
   /** Lector del tema de personajes para dibujar la tortuga y Kiro. */
   readonly leerTemaPersonajes: LectorTemaPersonajes;
+  /** Agrandado visual de los personajes (ver `EstadoPersonajes.escala`); 1 si falta. */
+  readonly escalaPersonajes?: number;
   /** Reloj de la espera inicial. */
   readonly relojEspera: RelojEspera;
   /** Publica en la región `aria-live` `polite`, sin mover el foco. */
@@ -133,6 +135,7 @@ export function crearDemostracion(deps: DependenciasDemostracion): Demostracion 
       inclinacionKiro: 0,
       identidad: 'kiro',
       celebracion: false,
+      ...(deps.escalaPersonajes !== undefined ? { escala: deps.escalaPersonajes } : {}),
     };
     dibujarPersonajes(lienzo.capaPersonajes(), personajes, deps.leerTemaPersonajes);
   }

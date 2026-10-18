@@ -51,6 +51,27 @@ const NOMBRE_VELOCIDAD: Readonly<Record<Velocidad, string>> = {
   inmediata: 'Velocidad inmediata',
 };
 
+/**
+ * Texto visible de cada botón: corto, para que quepa un panel de controles
+ * compacto. El nombre accesible sigue siendo el largo de arriba y SIEMPRE contiene
+ * el texto visible («Ejecutar» está en «Ejecutar el programa»), de modo que quien
+ * dicta «pulsar Ejecutar» activa el botón correcto.
+ */
+const TEXTO_ACCION: Readonly<Record<AccionId, { readonly icono: string; readonly texto: string }>> = {
+  ejecutar: { icono: '▶', texto: 'Ejecutar' },
+  detener: { icono: '■', texto: 'Detener' },
+  paso: { icono: '⏭', texto: 'Paso' },
+  reiniciar: { icono: '↺', texto: 'Reiniciar' },
+  demostracion: { icono: '👁', texto: 'Ver la demostración' },
+};
+
+const TEXTO_VELOCIDAD: Readonly<Record<Velocidad, string>> = {
+  lenta: 'Lenta',
+  normal: 'Normal',
+  rapida: 'Rápida',
+  inmediata: 'Inmediata',
+};
+
 /** Orden visual de las velocidades. */
 const VELOCIDADES: readonly Velocidad[] = ['lenta', 'normal', 'rapida', 'inmediata'];
 
@@ -137,7 +158,12 @@ export function crearControles(deps: DependenciasControles): Controles {
     b.type = 'button';
     b.className = `kl-control kl-control-${accion}`;
     b.setAttribute('data-accion', accion);
-    b.textContent = NOMBRE_ACCION[accion];
+    const icono = doc.createElement('span');
+    icono.className = 'kl-control-icono';
+    icono.setAttribute('aria-hidden', 'true');
+    icono.textContent = TEXTO_ACCION[accion].icono;
+    b.appendChild(icono);
+    b.appendChild(doc.createTextNode(TEXTO_ACCION[accion].texto));
     b.setAttribute('aria-label', NOMBRE_ACCION[accion]);
     b.addEventListener('click', () => invocar(accion));
     raiz.appendChild(b);
@@ -149,6 +175,12 @@ export function crearControles(deps: DependenciasControles): Controles {
   grupoVel.className = 'kl-control-velocidades';
   grupoVel.setAttribute('role', 'group');
   grupoVel.setAttribute('aria-label', 'Cambiar la velocidad');
+  // Rótulo visible del grupo; el grupo ya tiene su nombre accesible.
+  const rotuloVel = doc.createElement('span');
+  rotuloVel.className = 'kl-control-velocidades-rotulo';
+  rotuloVel.setAttribute('aria-hidden', 'true');
+  rotuloVel.textContent = 'Velocidad';
+  grupoVel.appendChild(rotuloVel);
   const botonesVel = new Map<Velocidad, HTMLButtonElement>();
   let velocidad: Velocidad = 'normal';
 
@@ -166,7 +198,7 @@ export function crearControles(deps: DependenciasControles): Controles {
     b.type = 'button';
     b.className = `kl-velocidad kl-velocidad-${v}`;
     b.setAttribute('data-velocidad', v);
-    b.textContent = NOMBRE_VELOCIDAD[v];
+    b.textContent = TEXTO_VELOCIDAD[v];
     b.setAttribute('aria-label', NOMBRE_VELOCIDAD[v]);
     b.addEventListener('click', () => {
       if (b.disabled) return;

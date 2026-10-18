@@ -12,19 +12,35 @@
 // guarda `typeof document !== 'undefined'`, de modo que importar este módulo en
 // Node no arranca nada.
 
+// Tipografías autoalojadas (OFL-1.1), empaquetadas por Vite como activos con hash del
+// propio origen: así el documento servido no pide nada a un host de fuentes externo
+// (requisito 6.4) y una CSP sin `unsafe-eval` ni orígenes de terceros sigue intacta.
+// Bricolage Grotesque conserva el eje de peso (`index.css`, 200–800, cubre 400–800) y
+// el eje de tamaño óptico (`opsz.css`); JetBrains Mono conserva el eje de peso
+// (100–800, cubre 400/500/700). Los nombres de familia que declaran estos paquetes
+// llevan sufijo «Variable» y tema.css los nombra así al frente de la pila de reserva.
+import '@fontsource-variable/bricolage-grotesque/index.css';
+import '@fontsource-variable/bricolage-grotesque/opsz.css';
+import '@fontsource-variable/jetbrains-mono/index.css';
+
 import type { Programa } from './lenguaje/ast.js';
 import { analizarLexico } from './lenguaje/lexer.js';
 import { analizar } from './lenguaje/parser.js';
 import { esErrorParaJugador, crearError, type ErrorKiroLogo } from './lenguaje/errores.js';
 import { comandosDelMundo } from './lenguaje/vocabulario.js';
-import { ejecutar, type Operacion } from './lenguaje/interprete.js';
+import { ejecutar, type Operacion, type ResultadoEjecucion } from './lenguaje/interprete.js';
 
 import { ESTADO_INICIAL } from './motor/tortuga.js';
 import { extraerSegmentos, type Segmento } from './motor/segmentos.js';
-import { validar, type Veredicto } from './motor/validador.js';
+import { validar, veredictoParaMostrar, type Veredicto } from './motor/validador.js';
 import {
   crearLienzo,
   calcularEscalado,
+  aplicarTransformacion,
+  dibujarCuadricula,
+  dibujarEstela,
+  LADO_LOGICO,
+  SEMILADO_LOGICO,
   type ContextoDibujo,
   type CapasLienzo,
   type EstiloLienzo,
@@ -34,13 +50,20 @@ import {
   type Lienzo,
   type Escalado,
 } from './motor/lienzo.js';
-import { crearAnimador, type Reloj, type Velocidad, type FinDeSecuencia } from './motor/animador.js';
+import {
+  crearAnimador,
+  type Reloj,
+  type Velocidad,
+  type FinDeSecuencia,
+  type Fotograma,
+} from './motor/animador.js';
 import {
   dibujarPersonajes,
-  type EstadoPersonajes,
   type EstiloPersonajes,
+  type IdentidadTortuga,
   type LectorTemaPersonajes,
 } from './motor/personajes.js';
+import type { EstadoTortuga } from './motor/tortuga.js';
 
 import { resolverReto, type Reto } from './juego/reto.js';
 import { calificar, type Calificacion } from './juego/estrellas.js';
@@ -56,11 +79,34 @@ import { crearPanelComandos } from './ui/panel-comandos.js';
 import { crearGloboKiro, type GloboKiro } from './ui/globo-kiro.js';
 import { crearControles, type Controles } from './ui/controles.js';
 import { crearDemostracion, type Demostracion, type RelojEspera } from './ui/demostracion.js';
+import { crearPanelSemilla, type PanelSemilla } from './ui/panel-semilla.js';
+import { crearMenuMundos, type MenuMundos } from './ui/menu-mundos.js';
+import { crearGuia, type Guia } from './ui/guia.js';
+import { crearMarcadorEstrellas, type MarcadorEstrellas } from './ui/marcador-estrellas.js';
 import { crearDiff, type EstiloDiff, type LectorTemaDiff } from './ui/diff.js';
 import { crearComparacion, type Comparacion } from './ui/comparacion.js';
-import { crearPanelSemilla, type PanelSemilla } from './ui/panel-semilla.js';
-import { crearSelectorNivel, type SelectorNivel } from './ui/selector-nivel.js';
-import { crearGuia, type Guia } from './ui/guia.js';
+
+// ============================================================================
+// Constantes visuales
+// ============================================================================
+
+/**
+ * Agrandado de la tortuga y Kiro sobre el lienzo. La geometría de `personajes.ts`
+ * mide unas 25 unidades de largo en un espacio de 800: a tamaño de diseño la
+ * tortuga queda en unos 13 px y no se lee como personaje. Es una decisión de
+ * presentación, por eso vive aquí y no en el dibujo de los personajes.
+ */
+const ESCALA_PERSONAJES = 2.4;
+
+/**
+ * Cómo se dibujan, en la superposición, las estelas de fondo sobre las que el diff resalta:
+ * finas, tenues y la de Kiro a trazos, para que lo que importa —lo que coincide, lo que sobra
+ * y lo que falta— se lea encima sin que todo se amontone. Es una decisión de presentación,
+ * por eso vive aquí y no en el tema.
+ */
+const GROSOR_ESTELA_DE_FONDO = 2.5;
+const GUIONES_ESTELA_DE_FONDO_REFERENCIA: readonly number[] = [10, 8];
+const OPACIDAD_ESTELA_DE_FONDO = 55; // por ciento
 
 // ============================================================================
 // Estado de la aplicación
@@ -136,8 +182,8 @@ export interface Aplicacion {
   readonly editor: Editor;
   /** Globo, para inspección en pruebas. */
   readonly globo: GloboKiro;
-  /** Selector de nivel, para inspección en pruebas. */
-  readonly selectorNivel: SelectorNivel;
+  /** Menú de mundos, para inspección en pruebas. */
+  readonly menuMundos: MenuMundos;
   /** Panel de semilla, para inspección en pruebas. */
   readonly panelSemilla: PanelSemilla;
   /** Cancela las suscripciones (movimiento reducido). */
@@ -216,7 +262,23 @@ function leerGrosor(estilo: CSSStyleDeclaration | null, nombre: string, reserva:
 }
 
 /**
- * Fabrica los lectores de tema del lienzo, del diff y de los personajes a partir
+ * Lee un patrón de guiones del tema: `solid` (línea continua) o una palabra seguida del
+ * largo del guion y del hueco en unidades lógicas, como `dashed 6 9`.
+ */
+function leerGuiones(
+  estilo: CSSStyleDeclaration | null,
+  nombre: string,
+  reserva: readonly number[],
+): readonly number[] {
+  const bruto = leerVar(estilo, nombre, '');
+  if (bruto.length === 0) return reserva;
+  if (bruto === 'solid') return [];
+  const largos = bruto.split(/\s+/).slice(1).map(Number);
+  return largos.length >= 2 && largos.every((n) => Number.isFinite(n) && n > 0) ? largos : reserva;
+}
+
+/**
+ * Fabrica los lectores de tema del lienzo y de los personajes a partir
  * del `getComputedStyle` del `:root`. Se invocan en cada redibujado, así que un
  * cambio de tema se refleja al redibujar.
  */
@@ -268,25 +330,34 @@ function crearLectoresTema(documento: Document): {
     return {
       coincidencia: trazo(
         leerVar(e, '--color-diff-coincidencia', '#2e8b57'),
-        leerGrosor(e, '--grosor-diff-coincidencia', 3),
-        [],
+        leerGrosor(e, '--grosor-diff-coincidencia', 5),
+        leerGuiones(e, '--patron-diff-coincidencia', []),
       ),
       exceso: trazo(
         leerVar(e, '--color-diff-exceso', '#c53030'),
-        leerGrosor(e, '--grosor-diff-exceso', 4),
-        [4, 12],
+        leerGrosor(e, '--grosor-diff-exceso', 10),
+        leerGuiones(e, '--patron-diff-exceso', []),
       ),
       falta: trazo(
         leerVar(e, '--color-diff-falta', '#5a6268'),
-        leerGrosor(e, '--grosor-diff-falta', 2),
-        [2, 6],
+        leerGrosor(e, '--grosor-diff-falta', 5),
+        leerGuiones(e, '--patron-diff-falta', [6, 9]),
       ),
     };
   };
 
   const personajes: LectorTemaPersonajes = (): EstiloPersonajes => {
     const e = raiz();
+    // Opciones de presentación: si el tema no las define, el dibujo es el del diseño.
+    const caparazon = leerVar(e, '--color-tortuga-caparazon', '');
+    const detalle = leerVar(e, '--color-tortuga-detalle', '');
+    const kiroOjos = leerVar(e, '--color-kiro-ojos', '');
     return {
+      ...(caparazon.length > 0 ? { caparazon } : {}),
+      ...(detalle.length > 0 ? { detalle } : {}),
+      ...(kiroOjos.length > 0 ? { kiroOjos } : {}),
+      mostrarLapiz: leerVar(e, '--lapiz-mostrar', 'siempre') === 'arriba' ? 'solo-arriba' : 'siempre',
+      mostrarMarcaRumbo: leerVar(e, '--marca-rumbo-mostrar', 'si') !== 'no',
       contorno: leerVar(e, '--color-tortuga-contorno', '#000000'),
       relleno: leerVar(e, '--color-tortuga-relleno', '#ffffff'),
       cabeza: leerVar(e, '--color-tortuga-cabeza', '#343a40'),
@@ -399,21 +470,20 @@ function tamanoDe(canvas: HTMLCanvasElement | null): TamanoLienzo {
 
 /**
  * Sincroniza el búfer de dibujo del canvas con el escalado: el atributo
- * width/height pasa a ser el búfer (lado · dpr) y el tamaño en pantalla queda
- * en píxeles CSS. Así la transformación del motor, que centra en búfer/2,
- * coincide con el canvas real. Los canvas inertes o nulos se ignoran.
+ * width/height pasa a ser el búfer (lado · dpr). Así la transformación del motor,
+ * que centra en búfer/2, coincide con el canvas real. Los canvas inertes o nulos
+ * se ignoran.
+ *
+ * No toca el tamaño en pantalla: lo manda el CSS (`.kl-capa` llena su cuadro). Fijar
+ * aquí un ancho en píxeles congelaba el tamaño medido en el arranque, y al cambiar
+ * la ventana el canvas quedaba más grande que su cuadro con el centro lógico fuera
+ * de vista (la tortuga «en la esquina»).
  */
 function ajustarBuffer(canvas: HTMLCanvasElement | null, escalado: Escalado): void {
   if (!canvas) return;
   const bufer = Math.round(escalado.bufer);
   if (canvas.width !== bufer) canvas.width = bufer;
   if (canvas.height !== bufer) canvas.height = bufer;
-  // El elemento se estira a su tamaño CSS; el CSS ya lo hace con width/height 100%,
-  // pero fijamos el lado lógico para lados sin CSS explícito (p. ej. pruebas).
-  if (canvas.style) {
-    canvas.style.width = `${escalado.lado}px`;
-    canvas.style.height = `${escalado.lado}px`;
-  }
 }
 
 // ============================================================================
@@ -445,6 +515,16 @@ function textoLapiz(abajo: boolean): string {
   return abajo ? 'lápiz abajo' : 'lápiz arriba';
 }
 
+/**
+ * Estado de la tortuga en palabras: posición redondeada al entero, rumbo redondeado
+ * y reducido a 0–359 (un 359,6 no se anuncia como 360) y lápiz abajo o arriba.
+ */
+function textoEstadoTortuga(e: EstadoTortuga): string {
+  const pos = `posición (${Math.round(e.posicion.x)}, ${Math.round(e.posicion.y)})`;
+  const rumbo = `rumbo ${Math.round(e.rumbo) % 360}°`;
+  return `${pos}, ${rumbo}, ${textoLapiz(e.lapizAbajo)}`;
+}
+
 /** Compone el anuncio final: motivo, nº de operaciones y estado de la tortuga. */
 function componerAnuncioFin(fin: FinDeSecuencia): string {
   const motivo =
@@ -453,10 +533,7 @@ function componerAnuncioFin(fin: FinDeSecuencia): string {
       : fin.motivo === 'detenidoPorJugador'
         ? 'Detuviste tu programa'
         : 'Detuve tu programa por seguridad';
-  const e = fin.estadoFinal;
-  const pos = `posición (${Math.round(e.posicion.x)}, ${Math.round(e.posicion.y)})`;
-  const rumbo = `rumbo ${Math.round(e.rumbo)}°`;
-  return `${motivo}: ${fin.operacionesAplicadas} operación(es) aplicada(s); ${pos}, ${rumbo}, ${textoLapiz(e.lapizAbajo)}.`;
+  return `${motivo}: ${fin.operacionesAplicadas} operación(es) aplicada(s); ${textoEstadoTortuga(fin.estadoFinal)}.`;
 }
 
 // ============================================================================
@@ -504,6 +581,11 @@ export function crearAplicacion(deps: DependenciasAplicacion): Aplicacion {
   const documento = deps.documento;
   const contenedor = deps.contenedor ?? (documento.getElementById('aplicacion') as HTMLElement | null) ?? documento.body;
 
+  // Ranuras que declara index.html para colocar cada pieza de ui/ donde el diseño
+  // la quiere. Sin la ranura (pruebas, otros HTML) la pieza cae en el contenedor.
+  const ranura = (id: string): HTMLElement => documento.getElementById(id) ?? contenedor;
+  const centro = ranura('programa');
+
   const reloj = deps.reloj ?? relojAnimacionReal();
   const relojEspera = deps.relojEspera ?? relojEsperaReal();
   const movimiento = deps.movimiento ?? consultaMovimientoReal(documento);
@@ -544,21 +626,21 @@ export function crearAplicacion(deps: DependenciasAplicacion): Aplicacion {
   // Elementos canvas por capa y lado (para dimensionar sus búferes).
   const canvasReferencia = q('lienzo-referencia');
   const canvasJugador = q('lienzo-jugador');
-  const canvasSuperposicion = q('lienzo-superposicion');
   const canvasPersonajesReferencia = q('lienzo-personajes-referencia');
   const canvasPersonajesJugador = q('lienzo-personajes-jugador');
   const canvasFondoReferencia = q('lienzo-fondo-referencia');
   const canvasFondoJugador = q('lienzo-fondo-jugador');
+  // La superposición cubre la figura del jugador cuando se compara con la de Kiro.
+  const canvasSuperposicion = q('lienzo-superposicion');
 
   const canvasLado = {
     referencia: [canvasFondoReferencia, canvasReferencia, canvasPersonajesReferencia],
-    jugador: [canvasFondoJugador, canvasJugador, canvasPersonajesJugador],
-    superposicion: [canvasSuperposicion],
+    jugador: [canvasFondoJugador, canvasJugador, canvasPersonajesJugador, canvasSuperposicion],
   } as const;
 
   const ctxReferencia = contextoDe(canvasReferencia);
-  const ctxJugador = contextoDe(canvasJugador);
   const ctxSuperposicion = contextoDe(canvasSuperposicion);
+  const ctxJugador = contextoDe(canvasJugador);
   const ctxPersonajesReferencia = contextoDe(canvasPersonajesReferencia);
   const ctxPersonajesJugador = contextoDe(canvasPersonajesJugador);
 
@@ -567,8 +649,6 @@ export function crearAplicacion(deps: DependenciasAplicacion): Aplicacion {
   // usamos capas de fondo dedicadas cuando existan, o inertes en su defecto.
   const fondoReferencia = contextoDe(canvasFondoReferencia);
   const fondoJugador = contextoDe(canvasFondoJugador);
-
-  const tamano = tamanoDe(canvasJugador);
 
   // Sincroniza el búfer de cada canvas con el escalado ANTES del primer dibujo:
   // sin esto, con densidad de píxeles > 1, el centro lógico queda descolocado y
@@ -579,7 +659,6 @@ export function crearAplicacion(deps: DependenciasAplicacion): Aplicacion {
   }
   ajustarBuferesDeLado('referencia', canvasReferencia);
   ajustarBuferesDeLado('jugador', canvasJugador);
-  ajustarBuferesDeLado('superposicion', canvasSuperposicion);
 
   // Lienzo del lado de la referencia (Kiro): estela en `referencia`, personajes
   // en `personajes`; la capa `jugador` no se usa aquí.
@@ -603,15 +682,83 @@ export function crearAplicacion(deps: DependenciasAplicacion): Aplicacion {
   // Animador del jugador: gobierna la capa `jugador` del lienzo del jugador.
   const animador = crearAnimador(lienzoJugador, reloj, () => movimiento.reducido());
 
-  // Diff sobre el lienzo de superposición.
-  const diff = crearDiff({ ctx: ctxSuperposicion, leerTema: lectores.diff });
+  // Lo último que se pintó de la tortuga del jugador, para repintarla igual cuando
+  // el lienzo cambia de tamaño (al cambiar el búfer del canvas se borra).
+  let estadoTortugaJugador: EstadoTortuga = ESTADO_INICIAL;
+
+  /**
+   * Pinta un fotograma de la animación sobre la capa de personajes: primero el
+   * tramo de estela que la tortuga lleva recorrido en la operación en curso (esa
+   * capa se borra en cada fotograma, así que no deja rastro; la estela definitiva
+   * la crece el animador al terminar la operación) y encima la tortuga.
+   */
+  function pintarFotograma(
+    lienzo: Lienzo,
+    f: Fotograma,
+    identidad: IdentidadTortuga,
+    trazo: TrazoTema,
+  ): void {
+    lienzo.limpiarPersonajes();
+    const ctx = lienzo.capaPersonajes();
+    if (f.tramo !== null) {
+      ctx.save();
+      // Mismo recorte que la estela definitiva, para que el tramo no asome por
+      // fuera del cuadrado lógico y luego desaparezca.
+      ctx.beginPath();
+      ctx.rect(-SEMILADO_LOGICO, -SEMILADO_LOGICO, LADO_LOGICO, LADO_LOGICO);
+      ctx.clip();
+      ctx.strokeStyle = trazo.color;
+      ctx.lineWidth = trazo.grosor;
+      ctx.setLineDash([]);
+      ctx.beginPath();
+      ctx.moveTo(f.tramo.desde.x, f.tramo.desde.y);
+      ctx.lineTo(f.tramo.hasta.x, f.tramo.hasta.y);
+      ctx.stroke();
+      ctx.restore();
+    }
+    dibujarPersonajes(
+      ctx,
+      {
+        tortuga: f.estado,
+        kiroMontado: true,
+        inclinacionKiro: 0,
+        identidad,
+        celebracion: false,
+        escala: ESCALA_PERSONAJES,
+      },
+      lectores.personajes,
+    );
+  }
+
+  animador.alFotograma((f) => {
+    estadoTortugaJugador = f.estado;
+    pintarFotograma(lienzoJugador, f, 'jugador', lectores.lienzo().estelaJugador);
+  });
+
+  // La línea que se está ejecutando se resalta en el editor, así el jugador ve
+  // qué instrucción produce cada movimiento de la tortuga. Se evita reconstruir la
+  // canaleta cuando la línea no cambia (un bucle repite la misma muchas veces).
+  let lineaResaltada = 0;
+  function resaltarLinea(linea: number): void {
+    if (linea === lineaResaltada) return;
+    lineaResaltada = linea;
+    editor.resaltarLinea(linea);
+  }
+
+  // Solo el paso a paso anuncia cada operación (requisito 28.2): una reproducción
+  // continua anuncia únicamente su final (28.9), no cada paso intermedio.
+  let modoPaso = false;
+  animador.alAplicar((op) => {
+    resaltarLinea(op.linea);
+    if (modoPaso) anunciar(`Línea ${op.linea}: ${textoEstadoTortuga(op.estadoDespues)}.`);
+  });
 
   // Globo de Kiro.
-  const globo: GloboKiro = crearGloboKiro({ contenedor, anunciar });
+  const globo: GloboKiro = crearGloboKiro({ contenedor: centro, anunciar });
 
   // Editor.
   const editor: Editor = crearEditor({
-    contenedor,
+    contenedor: centro,
     mundo: reto.nivel.mundo,
     presupuestoEstrella: reto.presupuestoEstrella,
     pedirMensajeLimite: (limite: LimiteAlcanzado, _valor: number) => {
@@ -625,60 +772,23 @@ export function crearAplicacion(deps: DependenciasAplicacion): Aplicacion {
     reloj: deps.relojRebote,
   });
 
-  // Panel de comandos: inserta ejemplos en el editor.
+
+  // Panel de comandos: inserta el texto de inserción de cada comando en el editor.
   const panel = crearPanelComandos({
-    contenedor,
+    contenedor: centro,
     mundo: reto.nivel.mundo,
-    insertarEjemplo: (ejemplo: string) => editor.insertarEnCursor(ejemplo),
+    insertarTexto: (t: string) => editor.insertarEnCursor(t),
     anunciar,
   });
   void panel;
 
-  // Comparación: dibuja las dos estelas superpuestas y el diff.
-  function dibujarSuperposicion(referencia: readonly Segmento[], jugador: readonly Segmento[]): void {
-    const estilo = lectores.lienzo();
-    // Limpia y redibuja las dos estelas en el lienzo de superposición.
-    ctxSuperposicion.save();
-    ctxSuperposicion.setTransform(1, 0, 0, 1, 0, 0);
-    ctxSuperposicion.clearRect(0, 0, tamano.anchoCss * tamano.devicePixelRatio, tamano.altoCss * tamano.devicePixelRatio);
-    ctxSuperposicion.restore();
-    dibujarEstelaEn(ctxSuperposicion, referencia, estilo.estelaReferencia);
-    dibujarEstelaEn(ctxSuperposicion, jugador, estilo.estelaJugador);
-  }
-  const comparacion: Comparacion = crearComparacion({
-    contenedor,
-    diff,
-    dibujarSuperposicion,
-    anunciar,
-  });
-
-  // Demostración de la referencia. Se (re)crea en `montarReto`, porque captura
-  // las operaciones del reto en curso; aquí solo se declara la referencia.
-  let demostracion: Demostracion | null = null;
-
-  /** Crea una demostración para el reto en curso sobre el lienzo de la referencia. */
-  function crearDemostracionDelReto(): Demostracion {
-    return crearDemostracion({
-      lienzo: {
-        capaPersonajes: () => lienzoReferencia.capaPersonajes(),
-        limpiarPersonajes: () => lienzoReferencia.limpiarPersonajes(),
-        limpiarEstela: (capa) => lienzoReferencia.limpiarEstela(capa),
-      },
-      animador: crearAnimador(lienzoReferencia, reloj, () => movimiento.reducido()),
-      operaciones: reto.operaciones,
-      estadoInicial: ESTADO_INICIAL,
-      leerTemaPersonajes: lectores.personajes,
-      relojEspera,
-      anunciar,
-      avisarSinDemostracion: () => {
-        globo.celebrar('Este reto no tiene demostración que mostrar.');
-      },
-    });
-  }
-
+  // El panel de comandos se crea ANTES que los controles: va junto al editor (a su
+  // derecha) y los controles debajo, y el orden del DOM es el orden de Tab. El panel es
+  // una sola parada de Tab (flechas dentro), así «Ejecutar» queda a 2 Tabs del editor
+  // (requisitos 24.5 y 28.1).
   // Controles.
   const controles: Controles = crearControles({
-    contenedor,
+    contenedor: centro,
     callbacks: {
       ejecutar: () => ejecutarPrograma(),
       detener: () => detener(),
@@ -689,19 +799,104 @@ export function crearAplicacion(deps: DependenciasAplicacion): Aplicacion {
     },
   });
 
+  // ---- Comparación con Kiro: superposición y diff (requisitos 23 y 27.5) ----
+  // «Lado a lado» es la propia pantalla (la figura de Kiro y la tuya). La otra vista pone las
+  // dos estelas en un solo lienzo, que cubre la figura del jugador, y encima el diff.
+
+  /**
+   * Pinta la superposición: el fondo y la cuadrícula (que tapan la figura del jugador) y las
+   * dos estelas como guía, finas y tenues, la de Kiro a trazos y la tuya continua. El diff va
+   * encima, más grueso, así lo que importa se lee sin que todo se amontone.
+   */
+  function dibujarSuperposicion(referencia: readonly Segmento[], jugador: readonly Segmento[]): void {
+    const estilo = lectores.lienzo();
+    const ctx = ctxSuperposicion;
+    // El búfer de este canvas es el mismo cuadrado lógico que el de las demás capas.
+    aplicarTransformacion(ctx, lienzoJugador.escaladoActual());
+    ctx.save();
+    ctx.fillStyle = estilo.fondo.color;
+    ctx.beginPath();
+    ctx.rect(-SEMILADO_LOGICO, -SEMILADO_LOGICO, LADO_LOGICO, LADO_LOGICO);
+    ctx.fill();
+    ctx.restore();
+    dibujarCuadricula(ctx, estilo);
+    const tenue = (color: string): string =>
+      `color-mix(in srgb, ${color} ${OPACIDAD_ESTELA_DE_FONDO}%, transparent)`;
+    dibujarEstela(ctx, referencia, {
+      color: tenue(estilo.estelaReferencia.color),
+      grosor: GROSOR_ESTELA_DE_FONDO,
+      guiones: GUIONES_ESTELA_DE_FONDO_REFERENCIA,
+    });
+    dibujarEstela(ctx, jugador, {
+      color: tenue(estilo.estelaJugador.color),
+      grosor: GROSOR_ESTELA_DE_FONDO,
+      guiones: [],
+    });
+  }
+
+  // El anuncio de la comparación (23.7) y el del fin del programa (28.9) van por la misma
+  // región aria-live, y el segundo borraría al primero. La comparación deja aquí su texto y
+  // `concluirIntento` lo publica junto con el del fin, en un solo anuncio.
+  let anuncioComparacion = '';
+
+  const diff = crearDiff({ ctx: ctxSuperposicion, leerTema: lectores.diff });
+  const comparacion: Comparacion = crearComparacion({
+    contenedor: ranura('ranura-comparacion'),
+    contenedorLeyenda: ranura('ranura-leyenda'),
+    diff,
+    dibujarSuperposicion,
+    anunciar: (texto) => {
+      anuncioComparacion = texto;
+    },
+    alCambiarVista: (vista) => {
+      if (canvasSuperposicion) canvasSuperposicion.hidden = vista !== 'superposicion';
+    },
+  });
+
+  // Marcador de las tres estrellas del intento, bajo el lienzo del jugador.
+  const marcador: MarcadorEstrellas = crearMarcadorEstrellas({ contenedor: ranura('ranura-marcador') });
+
+  // Demostración de la referencia. Se (re)crea en `montarReto`, porque captura
+  // las operaciones del reto en curso; aquí solo se declara la referencia.
+  let demostracion: Demostracion | null = null;
+
+  /** Crea una demostración para el reto en curso sobre el lienzo de la referencia. */
+  function crearDemostracionDelReto(): Demostracion {
+    const animadorDemo = crearAnimador(lienzoReferencia, reloj, () => movimiento.reducido());
+    animadorDemo.alFotograma((f) =>
+      pintarFotograma(lienzoReferencia, f, 'kiro', lectores.lienzo().estelaReferencia),
+    );
+    return crearDemostracion({
+      lienzo: {
+        capaPersonajes: () => lienzoReferencia.capaPersonajes(),
+        limpiarPersonajes: () => lienzoReferencia.limpiarPersonajes(),
+        limpiarEstela: (capa) => lienzoReferencia.limpiarEstela(capa),
+      },
+      animador: animadorDemo,
+      operaciones: reto.operaciones,
+      estadoInicial: ESTADO_INICIAL,
+      leerTemaPersonajes: lectores.personajes,
+      escalaPersonajes: ESCALA_PERSONAJES,
+      relojEspera,
+      anunciar,
+      avisarSinDemostracion: () => {
+        globo.celebrar('Este reto no tiene demostración que mostrar.');
+      },
+    });
+  }
+
   // Panel de semilla: pide otro reto o reproduce un código, por callbacks.
   const panelSemilla: PanelSemilla = crearPanelSemilla({
-    contenedor,
+    contenedor: ranura('ranura-reto'),
     callbacks: {
       pedirOtroReto: () => pedirOtroReto(),
       reproducirCodigo: (codigo: string) => reproducirCodigo(codigo),
     },
   });
 
-  // Selector de nivel: navega entre los niveles del mundo del reto en curso.
-  const selectorNivel: SelectorNivel = crearSelectorNivel({
-    contenedor,
-    mundo: reto.nivel.mundo,
+  // Menú de mundos: navega entre los seis mundos y sus niveles.
+  const menuMundos: MenuMundos = crearMenuMundos({
+    contenedor: ranura('ranura-ruta'),
     progreso,
     callbacks: { alElegirNivel: (id: string) => cambiarANivel(id) },
   });
@@ -718,6 +913,48 @@ export function crearAplicacion(deps: DependenciasAplicacion): Aplicacion {
     calificacion: null,
   };
   let ejecutando = false;
+
+  // El intento que se está dibujando. Se evalúa —segmentos, validación, estrellas,
+  // progreso y comentario de Kiro— cuando el animador devuelve el fin de secuencia
+  // (diseño 12.5, requisito 24.8), no antes: calificar al ejecutar anunciaría la
+  // respuesta mientras la tortuga aún camina, y obligaría a otorgar estrellas de
+  // un intento que el jugador va a detener.
+  interface IntentoEnCurso {
+    readonly reto: Reto;
+    readonly programa: Programa;
+    readonly resultado: ResultadoEjecucion;
+  }
+  let intento: IntentoEnCurso | null = null;
+
+  animador.alTerminar((fin) => {
+    const actual = intento;
+    resaltarLinea(0);
+    ejecutando = false;
+    controles.marcarFinDeSecuencia();
+    // Al terminar la tortuga vuelve al punto inicial, como la de Kiro al acabar su
+    // demostración (requisito 22.2). Agrandada, si se quedara en el final taparía la
+    // punta del trazo, que es lo que el jugador quiere ver. El anuncio del final
+    // sigue diciendo dónde terminó (`fin.estadoFinal`). Esto cambia lo que dice el
+    // requisito 14.8 para la ejecución del jugador (dejarla en el estado final).
+    dibujarPersonajesEnInicial();
+
+    if (fin.motivo === 'detenidoPorJugador') {
+      // Requisito 24.7: detener no otorga ninguna estrella de ese intento ni muestra
+      // ningún mensaje del catálogo, porque la detención la pidió el jugador. Solo
+      // se anuncia (28.9) que se detuvo y cómo quedó la tortuga.
+      intento = null;
+      anunciar(componerAnuncioFin(fin));
+      return;
+    }
+    if (actual === null) {
+      // Un paso a paso sobre un intento ya evaluado: no hay nada que evaluar de nuevo,
+      // pero llegar al final se anuncia igual (28.9).
+      anunciar(componerAnuncioFin(fin));
+      return;
+    }
+    intento = null;
+    concluirIntento(actual, fin);
+  });
 
   // ---- Montar el reto inicial y lanzar su demostración una vez (paso 5) ----
   // Si es el 0.1 y la guía no se completó, se instancia y arranca la guía, que
@@ -752,10 +989,14 @@ export function crearAplicacion(deps: DependenciasAplicacion): Aplicacion {
   function reajustarPorTamano(): void {
     ajustarBuferesDeLado('referencia', canvasReferencia);
     ajustarBuferesDeLado('jugador', canvasJugador);
-    ajustarBuferesDeLado('superposicion', canvasSuperposicion);
     lienzoReferencia.redimensionar(tamanoDe(canvasReferencia));
     lienzoJugador.redimensionar(tamanoDe(canvasJugador));
-    dibujarPersonajesEnInicial();
+    // Cambiar el búfer borra el canvas: se repinta la tortuga del jugador donde
+    // estaba y la de Kiro en el inicio (si una demostración está en marcha, su
+    // siguiente fotograma la coloca en su sitio), y la superposición si está a la vista.
+    pintarTortugaJugador(estadoTortugaJugador);
+    pintarTortugaReferenciaEnInicial();
+    comparacion.redibujar();
   }
   function alRedimensionar(): void {
     // Coalesce con requestAnimationFrame para no reajustar en cada evento.
@@ -771,6 +1012,18 @@ export function crearAplicacion(deps: DependenciasAplicacion): Aplicacion {
   }
   if (vistaGlobal && typeof vistaGlobal.addEventListener === 'function') {
     vistaGlobal.addEventListener('resize', alRedimensionar);
+  }
+  // El tamaño de un cuadro de lienzo puede cambiar sin que cambie la ventana (al
+  // reacomodarse la cuadrícula, al cargar la tipografía), y el zoom del navegador
+  // lo cambia aunque `resize` no se entere a tiempo: se observan los cuadros.
+  const observadorTamano =
+    vistaGlobal && typeof vistaGlobal.ResizeObserver === 'function'
+      ? new vistaGlobal.ResizeObserver(() => alRedimensionar())
+      : null;
+  if (observadorTamano) {
+    for (const c of [canvasReferencia, canvasJugador]) {
+      if (c?.parentElement) observadorTamano.observe(c.parentElement);
+    }
   }
 
   // ========================================================================
@@ -788,10 +1041,15 @@ export function crearAplicacion(deps: DependenciasAplicacion): Aplicacion {
     if (demostracion && demostracion.enCurso()) demostracion.cederAEjecucion();
     demostracion = crearDemostracionDelReto();
 
-    // Figura de referencia y capa del jugador en limpio.
-    lienzoReferencia.ponerEstela('referencia', reto.segmentos);
+    // Con demostración, la figura de Kiro se dibuja en vivo desde un lienzo vacío:
+    // si ya estuviera completa, la demostración no mostraría nada nuevo. Sin ella
+    // (un reto sin operaciones que reproducir), se pone la figura de una vez.
+    if (opciones.lanzarDemostracion) lienzoReferencia.limpiarEstela('referencia');
+    else lienzoReferencia.ponerEstela('referencia', reto.segmentos);
     animador.reiniciar(ESTADO_INICIAL);
+    resaltarLinea(0);
     dibujarPersonajesEnInicial();
+    pintarTortugaReferenciaEnInicial();
 
     // Pistas rellenadas con los parámetros reales del reto (generados) o fijas
     // (autorados), y presupuesto en el editor.
@@ -808,6 +1066,8 @@ export function crearAplicacion(deps: DependenciasAplicacion): Aplicacion {
       codigoSemilla: reto.codigoSemilla,
       generado: reto.nivel.origen.tipo === 'generado',
     });
+
+    menuMundos.marcarActual(reto.nivel.id);
 
     if (opciones.saludar && globo.texto().trim().length === 0) {
       globo.celebrar(`${reto.nivel.titulo}: escribe un programa que reproduzca la figura de Kiro.`);
@@ -834,10 +1094,17 @@ export function crearAplicacion(deps: DependenciasAplicacion): Aplicacion {
       console.error('No se pudo resolver el nivel', idNivel, r.error.mensaje);
       return;
     }
+    // Un intento a medio dibujar del nivel anterior se descarta: ni se evalúa ni
+    // revela nada en el nivel nuevo. `montarReto` reinicia el animador, que corta la
+    // reproducción sin avisar de ningún fin.
+    intento = null;
+    modoPaso = false;
     reto = r.reto;
     estadoApp = { reto, astJugador: null, operacionesJugador: [], veredicto: null, calificacion: null };
     ejecutando = false;
     controles.marcarFinDeSecuencia();
+    marcador.restablecer();
+    comparacion.restablecer();
     // Entrar a un nivel lo hace el «último reto», para que una recarga lo reanude.
     try {
       progreso.marcarUltimoReto(reto.nivel.id, reto.semillaEfectiva);
@@ -845,7 +1112,7 @@ export function crearAplicacion(deps: DependenciasAplicacion): Aplicacion {
       console.error('No se pudo registrar el último reto.', e);
     }
     montarReto({ lanzarDemostracion: true, saludar: true });
-    selectorNivel.refrescar();
+    menuMundos.refrescar();
   }
 
   /** Pide otro reto del mismo nivel (solo tiene efecto en niveles generados). */
@@ -886,17 +1153,25 @@ export function crearAplicacion(deps: DependenciasAplicacion): Aplicacion {
     return ((t % dominio) + dominio) % dominio;
   }
 
+  /** Pinta la tortuga del jugador en un estado, sin tramo de estela en curso. */
+  function pintarTortugaJugador(estado: EstadoTortuga): void {
+    estadoTortugaJugador = estado;
+    pintarFotograma(lienzoJugador, { estado, tramo: null }, 'jugador', lectores.lienzo().estelaJugador);
+  }
+
   /** Dibuja los personajes en el estado inicial sobre el lado del jugador. */
   function dibujarPersonajesEnInicial(): void {
-    lienzoJugador.limpiarPersonajes();
-    const personajes: EstadoPersonajes = {
-      tortuga: ESTADO_INICIAL,
-      kiroMontado: true,
-      inclinacionKiro: 0,
-      identidad: 'jugador',
-      celebracion: false,
-    };
-    dibujarPersonajes(lienzoJugador.capaPersonajes(), personajes, lectores.personajes);
+    pintarTortugaJugador(ESTADO_INICIAL);
+  }
+
+  /** Pinta a Kiro y su tortuga en el inicio del lado de la referencia. */
+  function pintarTortugaReferenciaEnInicial(): void {
+    pintarFotograma(
+      lienzoReferencia,
+      { estado: ESTADO_INICIAL, tramo: null },
+      'kiro',
+      lectores.lienzo().estelaReferencia,
+    );
   }
 
   /** Analiza el texto del jugador con el mundo del nivel. */
@@ -938,6 +1213,11 @@ export function crearAplicacion(deps: DependenciasAplicacion): Aplicacion {
     if (demostracion && demostracion.enCurso()) demostracion.cederAEjecucion();
 
     animador.reiniciar(ESTADO_INICIAL); // borra solo la capa del jugador
+    resaltarLinea(0);
+    marcador.restablecer();
+    // Un intento nuevo vuelve a la vista normal para que se vea caminar a la tortuga.
+    comparacion.restablecer();
+    dibujarPersonajesEnInicial();
 
     // Ejecuta con el intérprete (consumiendo el generador hasta el final).
     const permitidos = comandosDelMundo(reto.nivel.mundo);
@@ -951,33 +1231,58 @@ export function crearAplicacion(deps: DependenciasAplicacion): Aplicacion {
     const resultadoEjecucion = paso.value;
     const operaciones = resultadoEjecucion.operaciones;
 
-    // Extrae segmentos y valida UNA sola vez.
-    const segmentos = extraerSegmentos(operaciones);
+    // El intento queda pendiente de evaluación hasta que termine de dibujarse. Lo que
+    // ya se sabe de él (programa y operaciones) se publica en el estado desde ahora;
+    // el veredicto y las estrellas, solo al concluir.
+    intento = { reto, programa, resultado: resultadoEjecucion };
+    estadoApp = {
+      reto,
+      astJugador: programa,
+      operacionesJugador: operaciones,
+      veredicto: null,
+      calificacion: null,
+    };
+    modoPaso = false;
 
-    let veredicto: Veredicto | null = null;
-    let calificacion: Calificacion;
-    if (resultadoEjecucion.guardaActivada !== null) {
-      // Una guarda impide dibujar: se califica sin veredicto por causa de guarda.
-      calificacion = calificar(programa, null, reto, 'guarda');
-    } else {
-      veredicto = validar(segmentos, reto.segmentos, reto.nivel.normalizacion);
-      // Ejecuta y califica aunque supere el presupuesto.
-      calificacion = calificar(programa, veredicto, reto);
-    }
-
-    // Anima la estela del jugador desde las operaciones ejecutadas.
+    // Anima el intento. Con movimiento reducido, velocidad inmediata o sin
+    // operaciones el animador termina aquí mismo y el intento se concluye al
+    // instante; si no, `ejecutando` y los controles siguen «en curso» hasta el
+    // último fotograma, así «Detener» sirve mientras la tortuga camina.
     animador.cargar(operaciones, 'jugador');
     animador.reproducir();
+  }
+
+  /**
+   * Concluye un intento cuando el animador devolvió el fin de secuencia (diseño 12.5):
+   * extrae los segmentos, valida UNA vez, califica, guarda el progreso y lo muestra.
+   * Si una guarda cortó la ejecución no hay veredicto ni estrellas: se muestra el
+   * mensaje de la guarda y no se guarda nada (requisito 24.9).
+   */
+  function concluirIntento(actual: IntentoEnCurso, fin: FinDeSecuencia): void {
+    if (actual.reto !== reto) return;
+    const { programa, resultado } = actual;
+    const operaciones = resultado.operaciones;
+
+    if (resultado.guardaActivada !== null) {
+      if (resultado.error !== null) globo.mostrarMensajes([resultado.error]);
+      anunciar(componerAnuncioFin({ ...fin, motivo: 'guarda', operacionesAplicadas: operaciones.length }));
+      return;
+    }
+
+    // Extrae segmentos y valida UNA sola vez.
+    const segmentos = extraerSegmentos(operaciones);
+    const veredicto: Veredicto = validar(segmentos, reto.segmentos, reto.nivel.normalizacion);
+    // Califica aunque supere el presupuesto: ese programa corrió y se vio.
+    const calificacion: Calificacion = calificar(programa, veredicto, reto);
 
     // ¿Estaba la insignia Secuencia otorgada ANTES de este guardado? Para saber
     // si este intento es el que la completa.
     const insigniaAntes = insigniaSecuenciaOtorgada(progreso);
-    const siguienteAntes = idSiguienteNivel(reto.nivel.id);
-    const siguienteDesbloqueadoAntes =
-      siguienteAntes !== null && nivelDesbloqueado(siguienteAntes, progreso);
+    const siguiente = idSiguienteNivel(reto.nivel.id);
+    const siguienteDesbloqueadoAntes = siguiente !== null && nivelDesbloqueado(siguiente, progreso);
 
-    // Guarda el progreso ANTES de admitir otra ejecución. El conteo del jugador
-    // alimenta el mejor conteo del nivel (solo baja, y solo con precisión).
+    // Guarda el progreso. El conteo del jugador alimenta el mejor conteo del nivel
+    // (solo baja, y solo con precisión).
     try {
       progreso.guardar(reto.nivel.id, reto.semillaEfectiva, calificacion, calificacion.conteoJugador);
     } catch (e) {
@@ -989,25 +1294,26 @@ export function crearAplicacion(deps: DependenciasAplicacion): Aplicacion {
       guia.alPrimerAcierto();
     }
 
-    // Comenta la calificación y, si niega la precisión, muestra el diff.
+    // Actualiza el estado (veredicto y estrellas ya calculados, sin recalcular).
+    estadoApp = { reto, astJugador: programa, operacionesJugador: operaciones, veredicto, calificacion };
+
+    // Muestra las estrellas y el comentario de Kiro.
+    marcador.mostrar(calificacion);
     globo.comentarCalificacion(calificacion);
+
+    // Compara con la figura de Kiro: si la precisión se niega, pasa solo a la superposición y
+    // pinta el diff (requisitos 23.3 y 27.5). Las estrellas salieron del veredicto oficial; el
+    // diff pinta la comparación que mejor explica el dibujo (en su sitio o alineada), para no
+    // marcar como sobrante lo que en pantalla coincide con Kiro.
+    anuncioComparacion = '';
     comparacion.mostrar({
       segmentosReferencia: reto.segmentos,
       segmentosJugador: segmentos,
-      veredicto,
+      veredicto: veredictoParaMostrar(veredicto, segmentos, reto.segmentos, reto.nivel.normalizacion),
     });
 
-    // Actualiza el estado (veredicto y estrellas ya calculados, sin recalcular).
-    estadoApp = {
-      reto,
-      astJugador: programa,
-      operacionesJugador: operaciones,
-      veredicto,
-      calificacion,
-    };
-
-    // Refresca el selector (estados e insignia) con el progreso ya guardado.
-    selectorNivel.refrescar();
+    // Refresca el menú (estados e insignia) con el progreso ya guardado.
+    menuMundos.refrescar();
 
     // Si este intento completó la insignia Secuencia, lo comunica por el globo.
     if (!insigniaAntes && insigniaSecuenciaOtorgada(progreso)) {
@@ -1015,7 +1321,6 @@ export function crearAplicacion(deps: DependenciasAplicacion): Aplicacion {
     }
 
     // Si al aprobar se desbloqueó el nivel siguiente, ofrece avanzar (sin forzar).
-    const siguiente = idSiguienteNivel(reto.nivel.id);
     if (
       calificacion.precision.otorgada &&
       siguiente !== null &&
@@ -1025,34 +1330,42 @@ export function crearAplicacion(deps: DependenciasAplicacion): Aplicacion {
       anunciar(`Desbloqueaste el nivel ${siguiente}. Elígelo en la lista cuando quieras continuar.`);
     }
 
-    // Un único anuncio aria-live al terminar, con motivo, nº de ops y estado.
-    const fin: FinDeSecuencia = {
-      motivo: resultadoEjecucion.guardaActivada !== null ? 'guarda' : 'finDeSecuencia',
-      operacionesAplicadas: operaciones.length,
-      estadoFinal:
-        operaciones.length > 0 ? operaciones[operaciones.length - 1]!.estadoDespues : ESTADO_INICIAL,
-    };
-    anunciar(componerAnuncioFin(fin));
-
-    controles.marcarFinDeSecuencia();
-    ejecutando = false;
+    // Un único anuncio aria-live al terminar, con motivo, nº de ops y estado y, si hay
+    // comparación, el IoU y el exceso (28.9 y 23.7 comparten la misma región).
+    anunciar(
+      [componerAnuncioFin({ ...fin, operacionesAplicadas: operaciones.length }), anuncioComparacion]
+        .filter((texto) => texto.length > 0)
+        .join(' '),
+    );
+    anuncioComparacion = '';
   }
 
   function detener(): void {
+    // El animador avisa del fin con el motivo «detenido por el jugador»; el aviso
+    // descarta el intento sin otorgar estrellas (ver `animador.alTerminar`).
     animador.detener();
     ejecutando = false;
     controles.marcarDetenido();
   }
 
   function darPaso(): void {
+    // Desde aquí cada operación aplicada se anuncia por aria-live (28.2). Si el paso
+    // llega a la última operación, el animador avisa del fin y el intento pendiente
+    // se concluye como cualquier otro (24.8).
+    modoPaso = true;
     animador.paso();
   }
 
   function reiniciar(): void {
     animador.reiniciar(ESTADO_INICIAL);
+    resaltarLinea(0);
     dibujarPersonajesEnInicial();
+    modoPaso = false;
     ejecutando = false;
     controles.marcarFinDeSecuencia();
+    // El intento pendiente se conserva, como la secuencia de operaciones (14.5): si
+    // el jugador la recorre otra vez, paso a paso, hasta el final, se evalúa. Reiniciar
+    // por sí solo no otorga nada.
   }
 
   function verDemostracion(): void {
@@ -1063,21 +1376,6 @@ export function crearAplicacion(deps: DependenciasAplicacion): Aplicacion {
     animador.ponerVelocidad(v);
     if (demostracion) demostracion.ponerVelocidad(v);
     controles.seleccionarVelocidad(v);
-  }
-
-  /** Dibuja una estela en un contexto que ya tiene la transformación aplicada. */
-  function dibujarEstelaEn(ctx: ContextoDibujo, segmentos: readonly Segmento[], trazo: TrazoTema): void {
-    ctx.save();
-    ctx.strokeStyle = trazo.color;
-    ctx.lineWidth = trazo.grosor;
-    ctx.setLineDash(trazo.guiones.length > 0 ? [...trazo.guiones] : []);
-    ctx.beginPath();
-    for (const s of segmentos) {
-      ctx.moveTo(s.desde.x, s.desde.y);
-      ctx.lineTo(s.hasta.x, s.hasta.y);
-    }
-    ctx.stroke();
-    ctx.restore();
   }
 
   return {
@@ -1092,10 +1390,11 @@ export function crearAplicacion(deps: DependenciasAplicacion): Aplicacion {
     textoGlobo: () => globo.texto(),
     editor,
     globo,
-    selectorNivel,
+    menuMundos,
     panelSemilla,
     destruir: () => {
       cancelarSuscripcion();
+      observadorTamano?.disconnect();
       if (vistaGlobal && typeof vistaGlobal.removeEventListener === 'function') {
         vistaGlobal.removeEventListener('resize', alRedimensionar);
       }

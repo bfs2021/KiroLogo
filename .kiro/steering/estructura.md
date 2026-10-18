@@ -58,6 +58,7 @@ KiroLogo/
     │   ├── mundo-4-parametros.ts
     │   ├── mundo-5-fractales.ts
     │   ├── mundo-bonus-arquitectura.ts
+    │   ├── mundos.ts            nombre e insignia de cada mundo, para mostrarlos al jugador
     │   └── catalogo.ts          reúne y ordena todos los mundos
     ├── ui/
     │   ├── editor.ts            área de escritura con números de línea
@@ -67,10 +68,15 @@ KiroLogo/
     │   ├── globo-kiro.ts        diálogos, pistas y celebración
     │   ├── controles.ts         ejecutar, paso a paso, velocidad, reiniciar, otro reto
     │   ├── diff.ts              comparación visual al fallar
+    │   ├── marcador-estrellas.ts  las tres estrellas del intento, por forma, texto y color
+    │   ├── menu-mundos.ts       menú desplegable de los seis mundos en acordeón, con el nivel en curso marcado
+    │   ├── panel-semilla.ts     código del reto, otro reto y reproducir un código
+    │   ├── guia.ts              primeros pasos del nivel 0.1
     │   ├── mapa-insignias.ts    progreso como mapa de habilidades
     │   └── modo-libre.ts        sandbox y galería
     └── estilos/
-        └── *.css
+        ├── tema.css             fichas de color de la paleta Kiro (la única) y variables derivadas de ellas
+        └── pantalla.css         la presentación; lee los colores del tema, nunca los repite
 ```
 
 ## Reglas

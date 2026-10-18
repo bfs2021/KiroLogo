@@ -16,6 +16,7 @@ import {
   comparar,
   buscarMejorGiro,
   validar,
+  veredictoParaMostrar,
   type Mascara,
   type NormalizacionNivel,
 } from './validador.js';
@@ -421,6 +422,31 @@ describe('validador · validar', () => {
     expect(contar(v.exceso)).toBe(0);
   });
 
+  it('devuelve la traslación que centró al objetivo, aparte de la del jugador', () => {
+    // El objetivo (0,0)→(0,100) tiene el centro de su caja en (0, 50): se traslada (0, −50).
+    // El jugador, desplazado 200 a la derecha, tiene su centro en (200, 50): se traslada (−200, −50).
+    const jugador: Segmento[] = [
+      { desde: { x: 200, y: 0 }, hasta: { x: 200, y: 100 }, paso: 0, linea: 1 },
+    ];
+    const v = validar(jugador, REFERENCIA_0_1, NORM_0_1);
+    expect(v.traslacion).toEqual({ x: -200, y: -50 });
+    expect(v.traslacionObjetivo).toEqual({ x: -0, y: -50 });
+  });
+
+  it('con traslación fija las dos traslaciones son cero', () => {
+    const jugador: Segmento[] = [
+      { desde: { x: 200, y: 0 }, hasta: { x: 200, y: 100 }, paso: 0, linea: 1 },
+    ];
+    const v = validar(jugador, REFERENCIA_0_1, NORM_FIJA);
+    expect(v.traslacion).toEqual({ x: 0, y: 0 });
+    expect(v.traslacionObjetivo).toEqual({ x: 0, y: 0 });
+  });
+
+  it('sin estela del jugador igual informa la traslación del objetivo', () => {
+    const v = validar([], REFERENCIA_0_1, NORM_0_1);
+    expect(v.traslacionObjetivo).toEqual({ x: -0, y: -50 });
+  });
+
   it('es determinista y no modifica las listas recibidas', () => {
     const jugador = REFERENCIA_0_1.map((s) => ({ ...s }));
     const objetivo = REFERENCIA_0_1.map((s) => ({ ...s }));
@@ -523,4 +549,214 @@ describe('Property 16C: veredicto geométrico', () => {
       { seed: 17, numRuns: 40 },
     );
   }, 30_000);
+});
+
+// ============================================================================
+// Qué comparación se le muestra al jugador
+// ============================================================================
+
+describe('validador · veredictoParaMostrar', () => {
+  const seg = (a: number, b: number, c: number, d: number, paso: number): Segmento => ({
+    desde: { x: a, y: b },
+    hasta: { x: c, y: d },
+    paso,
+    linea: 1,
+  });
+  const LIBRE: NormalizacionNivel = { traslacion: 'libre', rotacion: 'libre', escala: 'exacta' };
+  const FIJA: NormalizacionNivel = { traslacion: 'fija', rotacion: 'fija', escala: 'exacta' };
+
+  // El zigzag de Kiro: arriba 100, derecha 80, arriba 120, derecha 120.
+  const ZIGZAG = [seg(0, 0, 0, 100, 0), seg(0, 100, 80, 100, 1), seg(80, 100, 80, 220, 2), seg(80, 220, 200, 220, 3)];
+
+  /** Cuántas posiciones de una región coinciden con las de otra (para saber si es «la misma»). */
+  const mismaMascara = (a: Mascara, b: Mascara): boolean => contar(a) === contar(b) && a.every((v, i) => v === b[i]);
+
+  it('un dibujo que sigue a Kiro en su sitio pero está incompleto se compara en su sitio, no desplazado', () => {
+    // El jugador traza solo los dos primeros tramos, exactamente sobre los de Kiro.
+    const jugador = ZIGZAG.slice(0, 2);
+    const oficial = validar(jugador, ZIGZAG, LIBRE);
+    const mostrado = veredictoParaMostrar(oficial, jugador, ZIGZAG, LIBRE);
+
+    // El oficial centra las cajas envolventes (distintas) y desplaza el dibujo: no es el de su sitio.
+    expect(oficial.traslacion.x !== 0 || oficial.traslacion.y !== 0 || oficial.angulo !== 0).toBe(true);
+    // Lo que se muestra es la comparación en las posiciones reales: nada se mueve ni se gira.
+    expect(mostrado.traslacion).toEqual({ x: 0, y: 0 });
+    expect(mostrado.traslacionObjetivo).toEqual({ x: 0, y: 0 });
+    expect(mostrado.angulo).toBe(0);
+    // Y explica mejor el dibujo: más coincidencia y nada que sobre.
+    expect(mostrado.iou).toBeGreaterThan(oficial.iou);
+    expect(mostrado.excesoPorcentaje).toBeLessThan(1);
+    // Pero sigue negando la precisión: es un dibujo incompleto.
+    expect(mostrado.coincide).toBe(false);
+  });
+
+  it('en su sitio, lo que falta es lo que Kiro dibuja después y lo dibujado no sobra en ninguna parte', () => {
+    const jugador = ZIGZAG.slice(0, 2);
+    const mostrado = veredictoParaMostrar(validar(jugador, ZIGZAG, LIBRE), jugador, ZIGZAG, LIBRE);
+    expect(contar(mostrado.exceso)).toBe(0);
+    expect(contar(mostrado.falta)).toBeGreaterThan(0);
+    expect(contar(mostrado.coincidencia)).toBeGreaterThan(0);
+  });
+
+  it('un tramo de más sí sobra: la L contra una línea deja la pierna vertical como coincidencia y la horizontal como sobrante', () => {
+    const linea = [seg(0, 0, 0, 100, 0)];
+    const ele = [seg(0, 0, 0, 100, 0), seg(0, 100, 100, 100, 1)];
+    const oficial = validar(ele, linea, LIBRE);
+    const mostrado = veredictoParaMostrar(oficial, ele, linea, LIBRE);
+    expect(mostrado.traslacion).toEqual({ x: 0, y: 0 });
+    expect(mostrado.iou).toBeGreaterThan(oficial.iou);
+    expect(contar(mostrado.coincidencia)).toBeGreaterThan(0);
+    expect(contar(mostrado.exceso)).toBeGreaterThan(0);
+    // Lo que sobra queda a la derecha de la línea de Kiro (la pierna horizontal), no sobre ella.
+    for (let iy = 0; iy < LADO; iy++) {
+      for (let ix = 0; ix < LADO; ix++) {
+        if (encendida(mostrado.exceso, ix, iy)) expect(ix - 400).toBeGreaterThan(-10);
+      }
+    }
+  });
+
+  it('una figura bien hecha pero movida y girada se sigue comparando alineada, porque en su sitio no se parece a nada', () => {
+    // El mismo zigzag girado 90° y corrido, con el último tramo sin dibujar.
+    const girado = ZIGZAG.map((s) => seg(s.desde.y + 300, -s.desde.x - 200, s.hasta.y + 300, -s.hasta.x - 200, s.paso));
+    const jugador = girado.slice(0, 3);
+    const oficial = validar(jugador, ZIGZAG, LIBRE);
+    const mostrado = veredictoParaMostrar(oficial, jugador, ZIGZAG, LIBRE);
+    expect(mostrado).toBe(oficial);
+    expect(mostrado.angulo).not.toBe(0);
+  });
+
+  it('con traslación y rotación fijas devuelve el oficial tal cual: ya es el de las posiciones reales', () => {
+    const jugador = ZIGZAG.slice(0, 2);
+    const oficial = validar(jugador, ZIGZAG, FIJA);
+    expect(veredictoParaMostrar(oficial, jugador, ZIGZAG, FIJA)).toBe(oficial);
+  });
+
+  it('sin estela del jugador devuelve el oficial: no hay nada que alinear', () => {
+    const oficial = validar([], ZIGZAG, LIBRE);
+    expect(oficial.motivo).toBe('sinEstelaDelJugador');
+    expect(veredictoParaMostrar(oficial, [], ZIGZAG, LIBRE)).toBe(oficial);
+  });
+
+  it('un dibujo que coincide devuelve el oficial: nunca se muestra como fallo uno que lo ganó', () => {
+    const oficial = validar(ZIGZAG, ZIGZAG, LIBRE);
+    expect(oficial.coincide).toBe(true);
+    expect(veredictoParaMostrar(oficial, ZIGZAG, ZIGZAG, LIBRE)).toBe(oficial);
+  });
+
+  it('nunca explica peor que el oficial: el IoU mostrado no baja del oficial', () => {
+    const casos: Array<[Segmento[], Segmento[]]> = [
+      [ZIGZAG.slice(0, 2), ZIGZAG],
+      [ZIGZAG.slice(0, 3), ZIGZAG],
+      [[seg(0, 0, 0, 100, 0), seg(0, 100, 100, 100, 1)], [seg(0, 0, 0, 100, 0)]],
+      [[seg(50, 50, 50, 150, 0)], ZIGZAG],
+      [[seg(0, 0, 0, 100, 0), seg(0, 100, -80, 100, 1)], ZIGZAG],
+    ];
+    for (const [jugador, objetivo] of casos) {
+      const oficial = validar(jugador, objetivo, LIBRE);
+      const mostrado = veredictoParaMostrar(oficial, jugador, objetivo, LIBRE);
+      expect(mostrado.iou).toBeGreaterThanOrEqual(oficial.iou);
+      // Y es siempre uno de los dos: ni uno inventado ni modificado.
+      expect(mostrado === oficial || mismaMascara(mostrado.exceso, validar(jugador, objetivo, FIJA).exceso)).toBe(true);
+    }
+  });
+
+  it('empata a favor de las posiciones reales, que son las que el jugador está viendo', () => {
+    // Un solo tramo exactamente sobre el de Kiro pero corto: en su sitio y alineado dan lo mismo.
+    const objetivo = [seg(0, 0, 0, 100, 0)];
+    const jugador = [seg(0, 0, 0, 60, 0)];
+    const oficial = validar(jugador, objetivo, LIBRE);
+    const real = validar(jugador, objetivo, FIJA);
+    const mostrado = veredictoParaMostrar(oficial, jugador, objetivo, LIBRE);
+    if (real.iou >= oficial.iou) expect(mostrado.traslacion).toEqual({ x: 0, y: 0 });
+    expect(mostrado.iou).toBeGreaterThanOrEqual(oficial.iou);
+  });
+});
+
+// ============================================================================
+// Feature: 08-diseno-visual, Property 1: el veredicto de presentación nunca
+// empeora la coincidencia.
+// Valida: Requisitos 4.3, 4.5
+//
+// Para toda figura del jugador y de referencia, el IoU de `veredictoParaMostrar`
+// es mayor o igual que el del veredicto oficial, y las Estrellas no cambian: la
+// calificación sale siempre del veredicto oficial. La elección del veredicto de
+// presentación solo decide qué se pinta en el diff, no la nota.
+// ============================================================================
+
+describe('Feature: 08-diseno-visual, Property 1: el veredicto de presentación nunca empeora la coincidencia', () => {
+  const NORM_LIBRE: NormalizacionNivel = { traslacion: 'libre', rotacion: 'libre', escala: 'exacta' };
+
+  /**
+   * La estrella de precisión es función pura de los campos de calificación del
+   * veredicto (`coincide` y `motivo`), tal como la deriva `estrellas.calificar`.
+   * Se reproduce aquí a propósito, sin construir un Reto completo, para comparar
+   * la nota que saldría del veredicto oficial contra la que saldría del de
+   * presentación: si coinciden, la calificación no depende de la elección.
+   */
+  function precisionDeVeredicto(v: {
+    coincide: boolean;
+    motivo: 'coincide' | 'excesoDeTrazo' | 'iouInsuficiente' | 'sinEstelaDelJugador';
+  }): 'otorgada' | 'excesoDeTrazo' | 'sinCoincidenciaGeometrica' {
+    if (v.coincide) return 'otorgada';
+    return v.motivo === 'excesoDeTrazo' ? 'excesoDeTrazo' : 'sinCoincidenciaGeometrica';
+  }
+
+  /**
+   * Un arbitrario de figura: polilínea conexa de 1 a 4 tramos con coordenadas
+   * enteras en [-150, 150], el mismo marco que ya usan las pruebas de este
+   * módulo. Pocos tramos para que la búsqueda de giro (barrido de 360 + afinado)
+   * no dispare el tiempo con 100 iteraciones y rotación libre.
+   */
+  const figuraArb = fc
+    .record({
+      inicio: fc.record({ x: fc.integer({ min: -150, max: 150 }), y: fc.integer({ min: -150, max: 150 }) }),
+      saltos: fc.array(
+        fc.record({ x: fc.integer({ min: -150, max: 150 }), y: fc.integer({ min: -150, max: 150 }) }),
+        { minLength: 1, maxLength: 4 },
+      ),
+    })
+    .map(({ inicio, saltos }): Segmento[] => {
+      const segs: Segmento[] = [];
+      let x = inicio.x;
+      let y = inicio.y;
+      saltos.forEach((s, i) => {
+        segs.push({ desde: { x, y }, hasta: { x: s.x, y: s.y }, paso: i, linea: i + 1 });
+        x = s.x;
+        y = s.y;
+      });
+      return segs;
+    });
+
+  it('el IoU mostrado nunca baja del oficial y la calificación no cambia (≥ 100 iteraciones)', () => {
+    fc.assert(
+      fc.property(figuraArb, figuraArb, (jugador, objetivo) => {
+        const oficial = validar(jugador, objetivo, NORM_LIBRE);
+        const mostrado = veredictoParaMostrar(oficial, jugador, objetivo, NORM_LIBRE);
+
+        // 1) La coincidencia (IoU) del veredicto de presentación nunca empeora.
+        expect(mostrado.iou).toBeGreaterThanOrEqual(oficial.iou);
+
+        // 2) El veredicto de presentación es siempre uno de los dos reales (el
+        //    oficial o el de las posiciones reales): nunca uno inventado.
+        const esElOficial = mostrado === oficial;
+        const real = validar(jugador, objetivo, { traslacion: 'fija', rotacion: 'fija', escala: 'exacta' });
+        const esElReal =
+          mostrado.iou === real.iou &&
+          mostrado.excesoPorcentaje === real.excesoPorcentaje &&
+          mostrado.coincide === real.coincide &&
+          mostrado.motivo === real.motivo;
+        expect(esElOficial || esElReal).toBe(true);
+
+        // 3) Nunca se muestra como «correcto» un dibujo al que el oficial negó la
+        //    precisión: el veredicto de presentación no puede subir la nota.
+        if (!oficial.coincide) expect(mostrado.coincide).toBe(false);
+
+        // 4) Las Estrellas no cambian: la precisión que saldría del veredicto de
+        //    presentación es la misma que la del oficial. La calificación sale
+        //    siempre del veredicto oficial, con independencia de lo que se pinte.
+        expect(precisionDeVeredicto(mostrado)).toBe(precisionDeVeredicto(oficial));
+      }),
+      { seed: 804, numRuns: 100 },
+    );
+  }, 60_000);
 });

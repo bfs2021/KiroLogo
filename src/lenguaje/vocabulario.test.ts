@@ -336,4 +336,20 @@ describe('vocabulario.ts', () => {
       expect(todasCadenas.length).toBe(unicas.size);
     });
   });
+
+  describe('Campo insercion', () => {
+    // Feature: 09-ajustes-de-interfaz, Property 1: insercion cumple su regla derivada de los campos
+    it('insercion cumple su regla derivada en las 28 entradas', () => {
+      for (const entrada of VOCABULARIO) {
+        const esperado =
+          entrada.aridad === 1 && entrada.tiposArgumento[0] === 'numero'
+            ? entrada.nombre + ' '
+            : entrada.aridad === 0
+              ? entrada.nombre
+              : entrada.ejemplo;
+
+        expect(entrada.insercion, `insercion de ${entrada.nombre}`).toBe(esperado);
+      }
+    });
+  });
 });

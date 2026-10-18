@@ -1,196 +1,301 @@
-/* 
- * tema.css - Variables de color y grosor, única fuente de verdad
- * 
+/*
+ * tema.css - Variables de color, grosor y tipografía, única fuente de verdad
+ *
  * Este archivo define todas las variables CSS que controlan los colores,
  * grosores y patrones de trazo del juego. Es la única fuente de verdad
- * para la apariencia visual.
- * 
+ * para la apariencia visual: el motor lee las del lienzo y los personajes por
+ * getComputedStyle, y pantalla.css lee las de la interfaz.
+ *
  * Cada variable tiene un valor de reserva (fallback) para garantizar que
  * el juego sea jugable incluso si el tema no está completamente definido.
+ *
+ * Idea visual: una mesa de trazado de noche, en tonos suaves para jugar mucho rato
+ * sin cansar la vista. Fondo casi negro con un matiz violeta (como la web de Kiro),
+ * lienzos como pantallas oscuras con cuadrícula tenue, la estela de Kiro en
+ * lavanda casi blanca y la tuya en el color de acento, que es el que manda en toda
+ * la interfaz (lo que se pulsa y lo que acabas de dibujar). Todos los pares
+ * texto/fondo y trazo/lienzo cumplen WCAG 2.1 AA; main.test.ts lo verifica leyendo
+ * este archivo.
+ *
+ * PALETA. Hay una sola, la de Kiro. Sus colores son las fichas del primer bloque
+ * (`--tinta-*`, `--acento`, `--texto`…); todo lo demás se deriva de ellas en el segundo
+ * bloque. Se probó otra paleta (Océano) con un selector de colores y se retiraron las dos
+ * cosas; los selectores `[data-paleta]` se dejaron tal cual y no hacen falta para nada.
  */
 
-:root {
+/* ========== FICHAS DE COLOR DE LA PALETA «KIRO» ========== */
+:root,
+[data-paleta="kiro"] {
+  /* Superficies, de la más oscura a la más clara */
+  --tinta-950: #0f0d16;       /* fondo de la página */
+  --tinta-900: #14111d;       /* fondo de los lienzos */
+  --tinta-850: #181522;       /* paneles */
+  --tinta-800: #1f1b2d;       /* ítems, globo, cuadrícula fina */
+  --tinta-700: #2a253d;       /* botones secundarios */
+  --tinta-600: #3b3454;       /* bordes, cuadrícula gruesa */
+  --tinta-editor: #0c0a12;    /* fondo del editor */
+  --tinta-canaleta: #100e18;  /* canaleta de números de línea */
+
+  /* Colores con significado */
+  --acento: #a78bfa;          /* la acción principal y tu estela */
+  --sobre-acento: #150f26;    /* texto sobre el acento */
+  --secundario: #7c68c9;      /* bordes de tarjetas y de Kiro */
+  --suave: #e6e0f7;           /* la estela de Kiro */
+  --coincide: #6fd0b0;        /* lo que coincide, lo que sale bien */
+  --peligro: #f08a9b;         /* lo que sobra, detener */
+  --aviso: #f0c36f;           /* foco, estrellas */
+
+  /* Texto */
+  --texto: #ebe8f4;
+  --texto-2: #aaa4c0;
+  --texto-3: #8b84a5;
+  --texto-error: #f59aa9;
+}
+
+/* ========== VARIABLES DERIVADAS DE LA PALETA ========== */
+/*
+ * Las que lee el lienzo por getComputedStyle (estelas, cuadrícula, personajes) apuntan
+ * directo a una ficha, sin mezclas: el lienzo recibe el texto tal cual, con `var()`
+ * sustituido, y un color de 2D context mezclado no lo entienden todos los navegadores.
+ */
+:root,
+[data-paleta] {
+  /* Sombras y variantes de las fichas */
+  --acento-sombra: color-mix(in srgb, var(--acento) 55%, #000);
+  --secundario-intenso: color-mix(in srgb, var(--secundario) 55%, #000);
+
   /* ========== FONDOS ========== */
-  --color-fondo-primario: #ffffff;
-  --color-fondo-secundario: #f8f9fa;
-  --color-fondo-lienzo: #ffffff;
-  --color-fondo-editor: #ffffff;
-  --color-fondo-panel: #f8f9fa;
-  
-  /* Valores de reserva */
-  --color-fondo-lienzo-reserva: #ffffff;
-  --color-fondo-editor-reserva: #ffffff;
+  --color-fondo-primario: var(--tinta-950);
+  --color-fondo-secundario: var(--tinta-850);
+  --color-fondo-lienzo: var(--tinta-900);
+  --color-fondo-editor: var(--tinta-editor);
+  --color-fondo-panel: var(--tinta-850);
 
   /* ========== TEXTO ========== */
-  --color-texto-primario: #212529;
-  --color-texto-secundario: #495057;
-  --color-texto-deshabilitado: #868e96;
-  --color-texto-enlace: #0d6efd;
-  --color-texto-error: #dc3545;
-  --color-texto-exito: #198754;
-  
+  --color-texto-primario: var(--texto);
+  --color-texto-secundario: var(--texto-2);
+  --color-texto-deshabilitado: var(--texto-3);
+  --color-texto-enlace: var(--acento);
+  --color-texto-error: var(--texto-error);
+  --color-texto-exito: var(--coincide);
+
+  /* ========== CUADRÍCULA DEL LIENZO ========== */
+  --color-cuadricula-20: var(--tinta-800);
+  --color-cuadricula-100: var(--tinta-600);
+
+  /* ========== ESTELAS ========== */
+  --color-estela-referencia: var(--suave);
+  --color-estela-jugador: var(--acento);
+
+  /* ========== ESTADOS DEL DIFF ========== */
+  --color-diff-coincidencia: var(--coincide);
+  --color-diff-exceso: var(--peligro);
+  --color-diff-falta: var(--texto-2);
+
+  /* ========== PERSONAJES ========== */
+  --color-kiro-contorno: var(--secundario);
+  --color-lapiz-contorno: var(--peligro);
+  --color-marca-rumbo: var(--aviso);
+
+  /* ========== INTERFAZ Y CONTROLES ========== */
+  /* Botón principal: el acento con tinta encima */
+  --color-boton-fondo: var(--acento);
+  --color-boton-texto: var(--sobre-acento);
+  --color-boton-fondo-hover: color-mix(in srgb, var(--acento) 80%, #fff);
+  --color-boton-fondo-active: color-mix(in srgb, var(--acento) 85%, #000);
+  --color-boton-fondo-deshabilitado: var(--tinta-600);
+  --color-boton-sombra: var(--acento-sombra);
+
+  /* Botones secundarios */
+  --color-boton-secundario-fondo: var(--tinta-700);
+  --color-boton-secundario-texto: var(--texto);
+  --color-boton-secundario-fondo-hover: var(--tinta-600);
+  --color-boton-secundario-sombra: var(--tinta-950);
+
+  /* Botón de peligro (detener) */
+  --color-boton-peligro-fondo: var(--peligro);
+  --color-boton-peligro-texto: var(--sobre-acento);
+  --color-boton-peligro-sombra: color-mix(in srgb, var(--peligro) 55%, #000);
+
+  /* Botones de vista activa */
+  --color-boton-vista-activa-fondo: var(--acento);
+  --color-boton-vista-activa-texto: var(--sobre-acento);
+
+  /* Indicador de foco (requerido: 2px o más, contraste ≥ 3:1) */
+  --color-indicador-foco: var(--aviso);
+
+  /* ========== EDITOR ========== */
+  --color-borde-editor: var(--tinta-600);
+  --color-borde-editor-focus: var(--acento);
+
+  /* Números de línea */
+  --color-numeros-linea: var(--texto-3);
+  --color-numeros-linea-activa: var(--sobre-acento);
+
+  /* Resaltado de línea activa (paso a paso) */
+  --color-linea-activa-fondo: var(--acento);
+  --color-linea-activa-borde: var(--acento);
+
+  /* Marcas de error en la canaleta */
+  --color-marca-error: var(--texto-error);
+  --color-marca-error-fondo: color-mix(in srgb, var(--peligro) 14%, transparent);
+
+  /* ========== PANEL DE COMANDOS ========== */
+  --color-borde-panel: var(--tinta-600);
+  --color-item-comando-fondo: var(--tinta-800);
+  --color-item-comando-fondo-hover: var(--tinta-700);
+  --color-item-comando-fondo-active: var(--tinta-600);
+
+  /* ========== GLOBO DE KIRO ========== */
+  --color-globo-fondo: var(--tinta-800);
+  --color-globo-borde: var(--secundario);
+  --color-globo-texto: var(--texto);
+  --color-globo-sombra: var(--secundario-intenso);
+
+  /* ========== ESTADOS DE INTERFAZ ========== */
+  /* Estados de las estrellas */
+  --color-estrella-otorgada: var(--aviso);
+  --color-estrella-negada: var(--tinta-600);
+
+  /* Contador de instrucciones */
+  --color-contador-normal: var(--texto);
+  --color-contador-excede: var(--texto-error);
+  --color-contador-provisional: var(--texto-2);
+}
+
+/* ========== LO QUE NO SALE DE LAS FICHAS ========== */
+:root {
+  color-scheme: dark;
+
+  /* Valores de reserva (los de la paleta Kiro): se leen si falta la variable principal.
+     Una prueba (main.test.ts) comprueba que coinciden con lo que la paleta resuelve. */
+  --color-fondo-lienzo-reserva: #14111d;
+  --color-fondo-editor-reserva: #0c0a12;
+
   /* Contraste mínimo WCAG 2.1 AA: 4.5:1 */
-  /* Los valores actuales garantizan al menos 15:1 sobre fondo blanco */
+  /* Los valores actuales dan al menos 7:1 sobre los fondos de la interfaz */
 
   /* ========== CUADRÍCULA DEL LIENZO ========== */
   /* Líneas de 20 unidades (menos prominentes) */
-  --color-cuadricula-20: #e9ecef;
   --grosor-cuadricula-20: 0.5px;
-  
+
   /* Líneas de 100 unidades (más prominentes) */
-  --color-cuadricula-100: #ced4da;
   --grosor-cuadricula-100: 1px;
-  
-  /* Valores de reserva - garantizan contraste mínimo 3:1 */
-  --color-cuadricula-20-reserva: #dee2e6;
-  --color-cuadricula-100-reserva: #adb5bd;
+
+  --color-cuadricula-20-reserva: #1f1b2d;
+  --color-cuadricula-100-reserva: #3b3454;
   --grosor-cuadricula-20-reserva: 0.75px;
   --grosor-cuadricula-100-reserva: 1.5px;
 
   /* ========== ESTELAS ========== */
-  /* Estela de referencia (Kiro) - menos prominente que la del jugador */
-  --color-estela-referencia: #6c757d;
-  --grosor-estela-referencia: 2px;
+  /* Estela de referencia (Kiro): más fina que la del jugador */
+  --grosor-estela-referencia: 4px;
   --patron-estela-referencia: solid;
-  
-  /* Estela del jugador - más prominente que la de referencia */
-  --color-estela-jugador: #0d6efd;
-  --grosor-estela-jugador: 3px;
+
+  /* Estela del jugador: más gruesa que la de referencia */
+  --grosor-estela-jugador: 5.5px;
   --patron-estela-jugador: solid;
-  
+
   /* Valores de reserva - garantizan contraste mínimo 3:1 y distinción visual */
-  --color-estela-referencia-reserva: #495057;
-  --color-estela-jugador-reserva: #0a58ca;
-  --grosor-estela-referencia-reserva: 2.5px;
-  --grosor-estela-jugador-reserva: 3.5px;
+  --color-estela-referencia-reserva: #e6e0f7;
+  --color-estela-jugador-reserva: #a78bfa;
+  --grosor-estela-referencia-reserva: 4px;
+  --grosor-estela-jugador-reserva: 5.5px;
 
   /* ========== ESTADOS DEL DIFF ========== */
-  /* Región de coincidencia (verde) */
-  --color-diff-coincidencia: #198754;
-  --grosor-diff-coincidencia: 3px;
+  /*
+   * Los tres estados se distinguen por grosor y por patrón además de por color: lo que
+   * sobra es al menos el doble de grueso que lo que coincide (requisito 23.3) y lo que
+   * falta es el único punteado, con guiones y huecos de entre 4 y 12 unidades. Los
+   * grosores están en unidades lógicas: el lienzo los escala.
+   */
+
+  /* Región de coincidencia - lo que sigue a Kiro */
+  --grosor-diff-coincidencia: 5px;
   --patron-diff-coincidencia: solid;
-  
-  /* Región de exceso (rojo) - lo que el jugador dibujó de más */
-  --color-diff-exceso: #dc3545;
-  --grosor-diff-exceso: 3px;
-  --patron-diff-exceso: dashed 4 12; /* guiones de 4 unidades, huecos de 12 */
-  
-  /* Región de falta (gris) - lo que le falta al jugador */
-  --color-diff-falta: #6c757d;
-  --grosor-diff-falta: 2px;
-  --patron-diff-falta: dotted 2 6; /* puntos de 2 unidades, huecos de 6 */
-  
+
+  /* Región de exceso - lo que el jugador dibujó de más */
+  --grosor-diff-exceso: 10px;
+  --patron-diff-exceso: solid;
+
+  /* Región de falta - lo que le falta al jugador */
+  --grosor-diff-falta: 5px;
+  --patron-diff-falta: dashed 6 9; /* guiones de 6 unidades, huecos de 9 */
+
   /* Valores de reserva - distinguibles por patrón y grosor sin color */
-  --color-diff-coincidencia-reserva: #2e8b57;
-  --color-diff-exceso-reserva: #c53030;
-  --color-diff-falta-reserva: #5a6268;
-  --grosor-diff-coincidencia-reserva: 3.5px;
-  --grosor-diff-exceso-reserva: 4px;
-  --grosor-diff-falta-reserva: 2.5px;
+  --color-diff-coincidencia-reserva: #6fd0b0;
+  --color-diff-exceso-reserva: #f08a9b;
+  --color-diff-falta-reserva: #aaa4c0;
+  --grosor-diff-coincidencia-reserva: 5px;
+  --grosor-diff-exceso-reserva: 10px;
+  --grosor-diff-falta-reserva: 5px;
 
   /* ========== PERSONAJES ========== */
-  /* Tortuga con Kiro montado */
-  --color-tortuga-contorno: #212529;
-  --grosor-tortuga-contorno: 2px;
-  --color-tortuga-relleno: #ffffff;
-  --color-tortuga-cabeza: #343a40;
-  
-  /* Kiro (fantasma) */
-  --color-kiro-contorno: #0d6efd;
+  /* Tortuga con Kiro montado: caparazón verde, contorno casi blanco. La tortuga es la
+     mascota: su verde no sale de las fichas de la paleta. */
+  --color-tortuga-contorno: #eafff6;
+  --grosor-tortuga-contorno: 2.2px;
+  --color-tortuga-relleno: #5fdca6;     /* piel: cabeza, patas y cola */
+  --color-tortuga-caparazon: #12936b;   /* concha */
+  --color-tortuga-detalle: #0a5c45;     /* escudos de la concha */
+  --color-tortuga-cabeza: #0d0620;      /* ojos */
+
+  /* Kiro (fantasma): sábana clara y ojos oscuros */
   --grosor-kiro-contorno: 1.5px;
-  --color-kiro-relleno: rgba(13, 110, 253, 0.1);
-  
+  --color-kiro-relleno: rgba(248, 244, 255, 0.97);
+  --color-kiro-ojos: #14082b;
+
+  /* Qué se dibuja sobre la tortuga. El lápiz solo se ve cuando está levantado (con
+     el lápiz abajo la estela ya dice que escribe) y la flecha de rumbo no se dibuja:
+     la cabeza ya dice hacia dónde mira. Valores: lápiz «siempre» o «arriba»;
+     flecha «si» o «no». */
+  --lapiz-mostrar: arriba;
+  --marca-rumbo-mostrar: no;
+
   /* Lápiz */
-  --color-lapiz-contorno: #dc3545;
   --grosor-lapiz-contorno: 1.5px;
   --color-lapiz-relleno: #ffffff;
-  
+
   /* Marcas de rumbo y orientación */
-  --color-marca-rumbo: #ff6b6b;
   --grosor-marca-rumbo: 1px;
-  
+
   /* Valores de reserva - garantizan contraste 3:1 frente a fondo y estela */
-  --color-tortuga-contorno-reserva: #000000;
-  --color-tortuga-relleno-reserva: #ffffff;
-  --color-kiro-contorno-reserva: #0a58ca;
-  --color-lapiz-contorno-reserva: #c53030;
+  --color-tortuga-contorno-reserva: #eafff6;
+  --color-tortuga-relleno-reserva: #5fdca6;
+  --color-kiro-contorno-reserva: #7c68c9;
+  --color-lapiz-contorno-reserva: #f08a9b;
   --grosor-tortuga-contorno-reserva: 2.5px;
   --grosor-kiro-contorno-reserva: 2px;
 
   /* ========== INTERFAZ Y CONTROLES ========== */
-  /* Botones y controles interactivos */
-  --color-boton-fondo: #0d6efd;
-  --color-boton-texto: #ffffff;
-  --color-boton-fondo-hover: #0b5ed7;
-  --color-boton-fondo-active: #0a58ca;
-  --color-boton-fondo-deshabilitado: #6c757d;
-  
-  /* Botones secundarios */
-  --color-boton-secundario-fondo: #6c757d;
-  --color-boton-secundario-texto: #ffffff;
-  --color-boton-secundario-fondo-hover: #5c636a;
-  
-  /* Botones de vista activa */
-  --color-boton-vista-activa-fondo: #198754;
-  --color-boton-vista-activa-texto: #ffffff;
-  
-  /* Indicador de foco (requerido: 2px o más, contraste ≥ 3:1) */
-  --color-indicador-foco: #0d6efd;
-  --grosor-indicador-foco: 2px;
+  --grosor-indicador-foco: 3px;
   --estilo-indicador-foco: solid;
-  
+
   /* Valores de reserva para controles */
-  --color-indicador-foco-reserva: #0a58ca;
+  --color-indicador-foco-reserva: #f0c36f;
   --grosor-indicador-foco-reserva: 3px;
 
-  /* ========== EDITOR ========== */
-  /* Borde y fondo del editor */
-  --color-borde-editor: #ced4da;
-  --color-borde-editor-focus: #86b7fe;
-  
-  /* Números de línea */
-  --color-numeros-linea: #6c757d;
-  --color-numeros-linea-activa: #0d6efd;
-  
-  /* Resaltado de línea activa (paso a paso) */
-  --color-linea-activa-fondo: rgba(13, 110, 253, 0.1);
-  --color-linea-activa-borde: #86b7fe;
-  
-  /* Marcas de error en la canaleta */
-  --color-marca-error: #dc3545;
-  --color-marca-error-fondo: rgba(220, 53, 69, 0.1);
+  /* ========== TIPOGRAFÍA ========== */
+  /* La primera familia de cada pila es la autoalojada (paquetes @fontsource-variable,
+     importados desde main.ts). Sus nombres reales llevan el sufijo «Variable», que es
+     como los declara el @font-face del paquete; si no cargan, el resto de la pila es la
+     reserva del sistema. */
+  --fuente-titulo: "Bricolage Grotesque Variable", "Trebuchet MS", "Segoe UI", system-ui, sans-serif;
+  --fuente-ui: "Bricolage Grotesque Variable", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --fuente-codigo: "JetBrains Mono Variable", "Cascadia Code", "SF Mono", Consolas, "Courier New", monospace;
 
-  /* ========== PANEL DE COMANDOS ========== */
-  --color-borde-panel: #dee2e6;
-  --color-item-comando-fondo-hover: #e9ecef;
-  --color-item-comando-fondo-active: #dee2e6;
-
-  /* ========== GLOBO DE KIRO ========== */
-  --color-globo-fondo: #f8f9fa;
-  --color-globo-borde: #dee2e6;
-  --color-globo-texto: #212529;
-  --color-globo-sombra: rgba(0, 0, 0, 0.1);
-
-  /* ========== ESTADOS DE INTERFAZ ========== */
-  /* Estados de las estrellas */
-  --color-estrella-otorgada: #ffc107;
-  --color-estrella-negada: #e9ecef;
-  
-  /* Contador de instrucciones */
-  --color-contador-normal: #212529;
-  --color-contador-excede: #dc3545;
-  --color-contador-provisional: #6c757d;
+  /* ========== FORMAS ========== */
+  --radio-tarjeta: 1.125rem;
+  --radio-control: 0.75rem;
+  --borde-grueso: 2px;
 
   /* ========== ACCESIBILIDAD ========== */
   /* Soporte para prefers-reduced-motion */
   --duracion-animacion-reducida: 0s;
   --duracion-animacion-normal: 0.3s;
-  
-  /* Soporte para prefers-color-scheme: dark */
-  /* (Implementado en futuras especificaciones) */
 }
 
-/* 
+/*
  * Función para obtener valores seguros del tema.
  * Estas funciones garantizan que siempre haya un valor usable,
  * incluso si alguna variable CSS no está definida.
@@ -243,10 +348,10 @@
 
 /* Indicador de foco accesible */
 :focus-visible {
-  outline: var(--grosor-indicador-foco, var(--grosor-indicador-foco-reserva)) 
-          var(--estilo-indicador-foco, solid) 
+  outline: var(--grosor-indicador-foco, var(--grosor-indicador-foco-reserva))
+          var(--estilo-indicador-foco, solid)
           var(--color-indicador-foco, var(--color-indicador-foco-reserva));
-  outline-offset: 2px;
+  outline-offset: 3px;
 }
 
 /* Soporte para prefers-reduced-motion */
@@ -254,7 +359,7 @@
   :root {
     --duracion-animacion-reducida: 0s;
   }
-  
+
   *,
   *::before,
   *::after {
@@ -264,27 +369,27 @@
   }
 }
 
-/* 
+/*
  * Verificación de contraste (para desarrollo)
  * Estas reglas ayudan a identificar problemas de contraste durante el desarrollo.
  */
 .verificar-contraste {
   /* Fondo lienzo vs cuadrícula 20: mínimo 3:1 */
-  background-color: var(--color-fondo-lienzo, #ffffff);
-  color: var(--color-cuadricula-20, #e9ecef);
-  
+  background-color: var(--color-fondo-lienzo, #14111d);
+  color: var(--color-cuadricula-20, #1f1b2d);
+
   /* Fondo lienzo vs cuadrícula 100: mínimo 3:1 */
-  background-color: var(--color-fondo-lienzo, #ffffff);
-  color: var(--color-cuadricula-100, #ced4da);
-  
+  background-color: var(--color-fondo-lienzo, #14111d);
+  color: var(--color-cuadricula-100, #3b3454);
+
   /* Fondo lienzo vs estela referencia: mínimo 3:1 */
-  background-color: var(--color-fondo-lienzo, #ffffff);
-  color: var(--color-estela-referencia, #6c757d);
-  
+  background-color: var(--color-fondo-lienzo, #14111d);
+  color: var(--color-estela-referencia, #e6e0f7);
+
   /* Fondo lienzo vs estela jugador: mínimo 3:1 */
-  background-color: var(--color-fondo-lienzo, #ffffff);
-  color: var(--color-estela-jugador, #0d6efd);
-  
+  background-color: var(--color-fondo-lienzo, #14111d);
+  color: var(--color-estela-jugador, #a78bfa);
+
   /* Estela referencia vs estela jugador: distinguibles por grosor y patrón */
   /* Esto se verifica visualmente durante el desarrollo */
 }

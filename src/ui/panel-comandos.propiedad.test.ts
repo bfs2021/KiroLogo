@@ -22,7 +22,7 @@ describe('Property 23 · filtro por mundo del panel y fidelidad de sus textos', 
         const panel = crearPanelComandos({
           contenedor: cont,
           mundo,
-          insertarEjemplo: () => 1,
+          insertarTexto: () => 1,
           anunciar: () => {},
         });
 
@@ -56,7 +56,7 @@ describe('Property 23 · filtro por mundo del panel y fidelidad de sus textos', 
         const panel = crearPanelComandos({
           contenedor: cont,
           mundo,
-          insertarEjemplo: () => 1,
+          insertarTexto: () => 1,
           anunciar: () => {},
         });
 

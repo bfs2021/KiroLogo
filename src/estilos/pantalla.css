@@ -2,10 +2,16 @@
  * pantalla.css — Disposición de la pantalla y estilo de la interfaz.
  *
  * La capa ui/ construye su DOM con clases kl-* (editor, panel de comandos,
- * controles, globo y comparación). Este archivo estiliza esas clases y el
- * layout de los lienzos que declara index.html. Los colores, grosores y trazos
- * del LIENZO viven en tema.css y los lee el motor por getComputedStyle sobre el
+ * controles, globo, comparación, selector de nivel, semilla y marcador) y main.ts
+ * las cuelga de las ranuras que declara index.html. Este archivo estiliza esas
+ * clases y la disposición de los lienzos. Los colores, grosores y trazos del
+ * LIENZO viven en tema.css y los lee el motor por getComputedStyle sobre el
  * :root; aquí solo se usan variables de tema para la interfaz, con reserva.
+ *
+ * Idea visual (ver tema.css): una mesa de trazado de noche. Tarjetas de bordes
+ * gruesos con sombra dura, botones que se hunden al pulsarlos, la estela del
+ * jugador en lima eléctrico y la de Kiro en lavanda. El estado nunca se dice solo
+ * con color: cada estado lleva además forma o texto.
  */
 
 /* ========== RESET Y BASE ========== */
@@ -15,96 +21,44 @@
   box-sizing: border-box;
 }
 
+[hidden] {
+  display: none !important;
+}
+
 html {
   font-size: 16px;
-  height: 100%;
+  min-height: 100%;
+  scrollbar-color: var(--tinta-600, #3b3454) transparent;
 }
 
 body {
-  font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-family: var(--fuente-ui, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif);
   line-height: 1.5;
-  color: var(--color-texto-primario, #212529);
-  background-color: var(--color-fondo-primario, #ffffff);
-  height: 100%;
+  color: var(--color-texto-primario, #ebe8f4);
   min-height: 100vh;
+  background-color: var(--color-fondo-primario, #0f0d16);
+}
+
+button,
+input,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+::selection {
+  background: var(--acento, #a78bfa);
+  color: var(--color-boton-texto, #150f26);
 }
 
 #aplicacion {
-  display: grid;
-  /*
-   * Tres columnas: lienzo de Kiro (izquierda), sección del programa (centro),
-   * lienzo del jugador (derecha). Los lienzos toman un ancho cómodo y el centro
-   * el espacio flexible restante.
-   */
-  grid-template-columns: minmax(280px, 1fr) minmax(360px, 1.2fr) minmax(280px, 1fr);
-  /* Fila 1: cabecera. Fila 2: comparación (barra). Fila 3: editor (flexible,
-     con un mínimo para que no colapse al 100% de zoom). Filas 4-5: panel y
-     controles del centro. */
-  grid-template-rows: auto auto minmax(220px, 1fr) auto auto;
-  column-gap: 1.5rem;
-  row-gap: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
   min-height: 100vh;
-  padding: 1.5rem;
-  overflow-x: hidden;
-  overflow-y: auto;
-}
-
-/*
- * Los módulos de ui/ se cuelgan como hijos directos de #aplicacion en orden
- * fijo (globo, editor, panel, comparación, controles). No dependemos del orden:
- * cada pieza se coloca por su clase.
- */
-.kl-cabecera {
-  grid-column: 1 / -1;
-  grid-row: 1;
-}
-
-/* Columna izquierda: lienzo de Kiro, ocupa desde la barra hasta abajo. */
-.kl-lienzo-referencia {
-  grid-column: 1;
-  grid-row: 2 / -1;
-  /* Se alinea arriba y no estira el grid: el cuadrado no debe dictar la altura
-     de las filas 2 a 5 (ver .kl-lienzo-cuadro). */
-  align-self: start;
-  min-height: 0;
-}
-
-/* Columna derecha: lienzo del jugador (y la superposición, que se muestra en su
-   lugar cuando la comparación la activa). */
-.kl-lienzo-jugador,
-.kl-lienzo-superposicion {
-  grid-column: 3;
-  grid-row: 2 / -1;
-  align-self: start;
-  min-height: 0;
-}
-
-/* Columna central: la sección del programa, apilada. */
-.kl-globo,
-.kl-editor,
-.kl-panel-comandos,
-.kl-controles {
-  grid-column: 2;
-}
-.kl-globo { grid-row: 2; align-self: start; }
-/*
- * El editor ocupa la fila flexible. Su altura mínima la garantiza la propia
- * fila (grid-template-rows: … minmax(220px, 1fr) …). No fijamos min-height: 0
- * ni overflow: hidden aquí: hacerlo permitía que la fila se comprimiera por
- * debajo de su contenido cuando los lienzos cuadrados de las columnas laterales
- * (que abarcan las filas 2 a 5) reclamaban altura, y el editor colapsaba a una
- * franja con solo la barra de desplazamiento visible a 100 % de zoom.
- */
-.kl-editor { grid-row: 3; }
-.kl-panel-comandos { grid-row: 4; }
-.kl-controles { grid-row: 5; }
-
-/* La comparación (barra de rótulos + conmutador) va arriba, sobre la columna
-   del jugador. */
-.kl-comparacion {
-  grid-column: 3;
-  grid-row: 2;
-  align-self: start;
+  padding: 1rem 1.5rem 2rem;
+  max-width: 120rem;
+  margin: 0 auto;
 }
 
 /* Región aria-live: presente pero invisible, sin foco. */
@@ -124,343 +78,433 @@ body {
 
 /* ========== CABECERA ========== */
 .kl-cabecera {
-  padding: 1rem 2rem;
-  background-color: var(--color-fondo-secundario, #f8f9fa);
-  border-bottom: 1px solid var(--color-borde-panel, #dee2e6);
-  flex-shrink: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem 2rem;
+}
+
+.kl-marca {
+  display: grid;
+  grid-template-columns: auto;
+  grid-template-rows: auto auto;
+  justify-items: start;
 }
 
 .kl-titulo {
-  font-size: 1.75rem;
-  font-weight: 600;
-  color: var(--color-texto-primario, #212529);
-  text-align: center;
+  line-height: 0;
 }
 
-/* ========== EDITOR (kl-editor) ========== */
-.kl-editor {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  min-height: 0;
-}
-
-/* La zona de texto ocupa el alto flexible de la celda; el contador va debajo. */
-.kl-editor-zona {
-  flex: 1;
-  min-height: 200px;
-  display: flex;
-  position: relative;
-  border: 1px solid var(--color-borde-editor, #ced4da);
-  border-radius: 0.375rem;
-  background-color: var(--color-fondo-editor, #ffffff);
-  overflow: hidden;
-}
-
-.kl-editor-canaleta {
-  flex: 0 0 auto;
-  width: 3rem;
-  padding: 0.75rem 0.5rem;
-  background-color: var(--color-fondo-secundario, #f8f9fa);
-  border-right: 1px solid var(--color-borde-editor, #ced4da);
-  font-family: "SF Mono", "Monaco", "Inconsolata", "Fira Mono", monospace;
-  font-size: 0.875rem;
-  color: var(--color-numeros-linea, #6c757d);
-  text-align: right;
-  line-height: 1.5;
-  overflow: hidden;
-  user-select: none;
-}
-
-.kl-canaleta-linea {
+/* El logo es una imagen de trazo fino y blanco: se agranda lo justo para que el trazo
+   se lea sobre el fondo oscuro. Boceto, ver index.html. */
+.kl-logo {
   display: block;
+  height: 3.9rem;
+  width: auto;
 }
 
-.kl-canaleta-error {
-  color: var(--color-texto-error, #dc3545);
-  font-weight: 700;
-}
-
-.kl-canaleta-actual {
-  background-color: var(--color-item-comando-fondo-hover, #e9ecef);
-  font-weight: 700;
-}
-
-.kl-editor-area {
-  flex: 1;
-  min-height: 0;
-  height: 100%;
-  padding: 0.75rem;
-  border: none;
-  outline: none;
-  resize: none;
-  font-family: "SF Mono", "Monaco", "Inconsolata", "Fira Mono", monospace;
-  font-size: 0.875rem;
-  line-height: 1.5;
-  color: var(--color-texto-primario, #212529);
-  background-color: transparent;
-  white-space: pre;
-  tab-size: 2;
-}
-
-.kl-editor-area:focus-visible {
-  outline: var(--grosor-indicador-foco, 2px) var(--estilo-indicador-foco, solid) var(--color-indicador-foco, #0d6efd);
-  outline-offset: -2px;
-}
-
-.kl-editor-contador {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1rem;
-  font-size: 0.875rem;
-  font-variant-numeric: tabular-nums;
-  color: var(--color-texto-secundario, #495057);
-}
-
-.kl-contador-instrucciones {
-  font-weight: 600;
-  color: var(--color-texto-primario, #212529);
-}
-
-.kl-contador-presupuesto {
-  color: var(--color-texto-secundario, #495057);
-}
-
-/* El exceso de presupuesto se marca por texto (kl-contador-aviso) además del color. */
-.kl-contador-exceso {
-  color: var(--color-texto-error, #dc3545);
-  font-weight: 700;
-}
-
-.kl-contador-aviso {
-  color: var(--color-texto-error, #dc3545);
-  font-weight: 700;
-}
-
-.kl-editor-marcas {
-  list-style: none;
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-}
-
-.kl-editor-marca {
-  font-size: 0.8125rem;
-  color: var(--color-texto-error, #dc3545);
-}
-
-/* ========== PANEL DE COMANDOS (kl-panel-comandos) ========== */
-.kl-panel-comandos {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  border: 1px solid var(--color-borde-panel, #dee2e6);
-  border-radius: 0.375rem;
-  padding: 1rem;
-  background-color: var(--color-fondo-panel, #f8f9fa);
-  max-height: 240px;
-  overflow-y: auto;
-}
-
-.kl-comando {
-  text-align: left;
-  padding: 0.5rem 0.75rem;
-  border: 1px solid var(--color-borde-editor, #ced4da);
-  border-radius: 0.375rem;
-  background-color: var(--color-fondo-editor, #ffffff);
-  color: var(--color-texto-primario, #212529);
-  font-size: 0.8125rem;
-  line-height: 1.4;
-  cursor: pointer;
-  transition: background-color 0.15s ease-in-out;
-}
-
-.kl-comando:hover {
-  background-color: var(--color-item-comando-fondo-hover, #e9ecef);
-}
-
-.kl-comando:focus-visible {
-  outline: var(--grosor-indicador-foco, 2px) var(--estilo-indicador-foco, solid) var(--color-indicador-foco, #0d6efd);
-  outline-offset: 2px;
-}
-
-/* ========== CONTROLES (kl-controles) ========== */
-.kl-controles {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  border: 1px solid var(--color-borde-panel, #dee2e6);
-  border-radius: 0.375rem;
-  padding: 1rem;
-  background-color: var(--color-fondo-panel, #f8f9fa);
-  align-items: center;
-}
-
-.kl-control {
-  padding: 0.5rem 1rem;
-  border: 1px solid transparent;
-  border-radius: 0.375rem;
-  background-color: var(--color-boton-fondo, #0d6efd);
-  color: var(--color-boton-texto, #ffffff);
-  font-size: 0.875rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background-color 0.15s ease-in-out;
-}
-
-.kl-control:hover {
-  background-color: var(--color-boton-fondo-hover, #0b5ed7);
-}
-
-.kl-control:active {
-  background-color: var(--color-boton-fondo-active, #0a58ca);
-}
-
-.kl-control:focus-visible {
-  outline: var(--grosor-indicador-foco, 2px) var(--estilo-indicador-foco, solid) var(--color-indicador-foco, #0d6efd);
-  outline-offset: 2px;
-}
-
-/* Estado deshabilitado: por atributo disabled y por clase, para el mismo aspecto. */
-.kl-control:disabled,
-.kl-control.kl-deshabilitada,
-.kl-velocidad:disabled,
-.kl-velocidad.kl-deshabilitada {
-  background-color: var(--color-boton-fondo-deshabilitado, #6c757d);
-  cursor: not-allowed;
-  opacity: 0.65;
-}
-
-.kl-control-velocidades {
-  display: flex;
-  gap: 0.25rem;
-  margin-left: auto;
-}
-
-.kl-velocidad {
-  padding: 0.375rem 0.625rem;
-  border: 1px solid var(--color-borde-editor, #ced4da);
-  border-radius: 0.375rem;
-  background-color: var(--color-fondo-editor, #ffffff);
-  color: var(--color-texto-primario, #212529);
-  font-size: 0.8125rem;
-  cursor: pointer;
-  transition: all 0.15s ease-in-out;
-}
-
-.kl-velocidad:hover {
-  background-color: var(--color-item-comando-fondo-hover, #e9ecef);
-}
-
-/* Velocidad seleccionada: color de fondo + peso, y aria-pressed en el DOM. */
-.kl-velocidad.kl-seleccionada,
-.kl-velocidad[aria-pressed="true"] {
-  background-color: var(--color-boton-vista-activa-fondo, #198754);
-  color: var(--color-boton-vista-activa-texto, #ffffff);
-  border-color: transparent;
-  font-weight: 600;
-}
-
-.kl-velocidad:focus-visible {
-  outline: var(--grosor-indicador-foco, 2px) var(--estilo-indicador-foco, solid) var(--color-indicador-foco, #0d6efd);
-  outline-offset: 2px;
-}
-
-/* ========== GLOBO DE KIRO (kl-globo) ========== */
-.kl-globo {
-  flex-shrink: 0;
-  position: relative;
-  padding: 1rem 1.5rem;
-  background-color: var(--color-globo-fondo, #f8f9fa);
-  border: 1px solid var(--color-globo-borde, #dee2e6);
-  border-radius: 0.75rem;
-  color: var(--color-globo-texto, #212529);
-  box-shadow: 0 2px 8px var(--color-globo-sombra, rgba(0, 0, 0, 0.1));
-}
-
-.kl-globo-emisor {
-  font-weight: 700;
-  font-size: 0.8125rem;
-  color: var(--color-texto-secundario, #495057);
-  margin-bottom: 0.25rem;
-}
-
-.kl-globo-cuerpo {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.kl-globo-mensaje {
-  font-size: 1rem;
-  line-height: 1.5;
-}
-
-.kl-globo-sin-mas {
-  font-size: 0.8125rem;
-  font-style: italic;
-  color: var(--color-texto-secundario, #495057);
-}
-
-.kl-globo-pista {
-  align-self: flex-start;
-  padding: 0.375rem 0.75rem;
-  border: 1px solid var(--color-borde-editor, #ced4da);
-  border-radius: 0.375rem;
-  background-color: var(--color-fondo-editor, #ffffff);
-  color: var(--color-texto-primario, #212529);
-  font-size: 0.8125rem;
-  cursor: pointer;
-}
-
-.kl-globo-pista:hover {
-  background-color: var(--color-item-comando-fondo-hover, #e9ecef);
-}
-
-.kl-globo-pista:focus-visible {
-  outline: var(--grosor-indicador-foco, 2px) var(--estilo-indicador-foco, solid) var(--color-indicador-foco, #0d6efd);
-  outline-offset: 2px;
-}
-
-/* ========== LIENZOS ========== */
+/* ========== MENÚ DE MUNDOS (el desplegable de la cabecera) ========== */
 /*
- * Cada lienzo es una columna: un título arriba y un cuadro cuadrado debajo.
- * El cuadro (.kl-lienzo-cuadro) es el contenedor de posicionamiento donde se
- * apilan las capas de <canvas> con posición absoluta. Se dimensiona por el
- * ancho de su columna y mantiene la relación 1:1.
+ * Un botón de cabecera resume el mundo y el nivel en curso; al pulsarlo abre un
+ * panel superpuesto con los seis mundos en acordeón, cada uno con sus niveles. El
+ * estado se dice siempre con forma (candado, círculo, punto, estrellas, borde
+ * discontinuo) y texto, además del color sólido de la paleta.
+ *
+ * Color plano por decisión de la spec 09: ninguna sombra con radio de desenfoque y
+ * ningún drop-shadow/text-shadow, tampoco en el nivel «en curso». Solo Sombra_Dura
+ * (desplazamiento con blur 0) para dar relieve.
  */
-.kl-lienzo {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  min-height: 0;
+.kl-ruta {
   min-width: 0;
 }
 
-.kl-lienzo-titulo {
-  font-size: 1rem;
-  font-weight: 600;
-  color: var(--color-texto-primario, #212529);
-  text-align: center;
+/* El contenedor ancla al panel: `position: relative` para que el panel absoluto se
+   cuelgue de la cabecera y no empuje la escena al abrirse. */
+.kl-menu-mundos {
+  position: relative;
+  display: flex;
+  justify-content: flex-end;
 }
 
+/* Botón de cabecera: una sola parada de Tab cuando el menú está cerrado. */
+.kl-menu-mundos-boton {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  max-width: 100%;
+  padding: 0.45rem 0.8rem;
+  border: var(--borde-grueso, 2px) solid var(--secundario, #7c68c9);
+  border-radius: 0.8rem;
+  background: var(--tinta-700, #2a253d);
+  color: var(--color-texto-primario, #ebe8f4);
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 4px 0 var(--tinta-950, #0f0d16);
+  transition: background-color 0.15s, border-color 0.15s;
+}
+
+.kl-menu-mundos-boton:hover {
+  border-color: var(--acento, #a78bfa);
+}
+
+/* Una flecha por texto (no solo por color) indica que el botón abre un desplegable. */
+.kl-menu-mundos-boton::after {
+  content: "▾";
+  font-size: 0.9em;
+  color: var(--acento, #a78bfa);
+}
+
+.kl-menu-mundos-boton[aria-expanded="true"]::after {
+  content: "▴";
+}
+
+.kl-menu-mundos-resumen {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/*
+ * El panel flota sobre la escena: `position: absolute` con `z-index` por encima, para
+ * que desplegar un mundo no agrande la cabecera ni desplace nada. `max-height` con
+ * scroll interno asegura que la escena siga cabiendo a 1440×900 sin scroll de página.
+ */
+.kl-menu-panel {
+  position: absolute;
+  top: calc(100% + 0.4rem);
+  right: 0;
+  z-index: 50;
+  width: min(22rem, 90vw);
+  max-height: min(85vh, 40rem);
+  overflow: auto;
+  padding: 0.5rem;
+  border: var(--borde-grueso, 2px) solid var(--secundario, #7c68c9);
+  border-radius: 0.9rem;
+  background: var(--tinta-800, #1f1b30);
+  box-shadow: 0 4px 0 var(--tinta-950, #0f0d16);
+}
+
+.kl-menu-panel[hidden] {
+  display: none;
+}
+
+.kl-menu-mundo {
+  border-top: 1px solid var(--color-borde-panel, #3b3454);
+}
+
+.kl-menu-mundo:first-child {
+  border-top: none;
+}
+
+/* Encabezado de mundo: abre/cierra su acordeón. Su estado se nombra por texto. */
+.kl-menu-mundo-encabezado {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.55rem 0.5rem;
+  border: none;
+  background: transparent;
+  color: var(--color-texto-primario, #ebe8f4);
+  text-align: left;
+  cursor: pointer;
+}
+
+.kl-menu-mundo-encabezado:disabled {
+  cursor: not-allowed;
+}
+
+/* Triángulo de acordeón por texto, además del estado aria-expanded. */
+.kl-menu-mundo-encabezado::before {
+  content: "▸";
+  color: var(--acento, #a78bfa);
+}
+
+.kl-menu-mundo-encabezado[aria-expanded="true"]::before {
+  content: "▾";
+}
+
+.kl-menu-mundo-encabezado:disabled::before {
+  content: "🔒";
+}
+
+.kl-menu-mundo-numero {
+  font-family: var(--fuente-codigo, monospace);
+  font-weight: 800;
+  color: var(--acento, #a78bfa);
+  white-space: nowrap;
+}
+
+.kl-menu-mundo-nombre {
+  font-weight: 700;
+}
+
+/* Rótulo de estado del mundo, por texto. */
+.kl-menu-mundo-estado {
+  margin-left: auto;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-texto-secundario, #aaa4c0);
+}
+
+/* Un mundo «próximamente» o «bloqueado» se atenúa, además de decirlo por texto. */
+.kl-menu-mundo-encabezado[data-estado-mundo="bloqueado"],
+.kl-menu-mundo-encabezado[data-estado-mundo="proximamente"] {
+  color: var(--color-texto-deshabilitado, #8b84a5);
+}
+
+/* Medalla del mundo ganado, en el encabezado. Reusa `.kl-insignia-medalla`, pero a
+   escala de encabezado. */
+.kl-menu-mundo-medalla {
+  width: 1.5rem;
+  height: 1.5rem;
+  font-size: 0.9rem;
+}
+
+.kl-menu-mundo-medalla[hidden] {
+  display: none;
+}
+
+/* Lista de niveles del mundo (acordeón). */
+.kl-menu-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 0 0.3rem 0.5rem;
+}
+
+.kl-menu-lista[hidden] {
+  display: none;
+}
+
+.kl-menu-proximamente {
+  margin: 0;
+  padding: 0.3rem 0.4rem;
+  font-size: 0.78rem;
+  color: var(--color-texto-secundario, #aaa4c0);
+}
+
+/* Botón de nivel: símbolo de estado, id y título en una fila. */
+.kl-menu-nivel {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.4rem 0.55rem;
+  border: var(--borde-grueso, 2px) solid var(--secundario, #7c68c9);
+  border-radius: 0.6rem;
+  background: var(--tinta-700, #2a253d);
+  color: var(--color-texto-primario, #ebe8f4);
+  text-align: left;
+  cursor: pointer;
+  box-shadow: 0 3px 0 var(--tinta-950, #0f0d16);
+  transition: background-color 0.15s, border-color 0.15s;
+}
+
+.kl-menu-nivel:hover:not(:disabled) {
+  border-color: var(--acento, #a78bfa);
+}
+
+.kl-menu-nivel-marca {
+  flex: none;
+  line-height: 1;
+  color: var(--suave, #e6e0f7);
+}
+
+.kl-menu-nivel-id {
+  flex: none;
+  font-family: var(--fuente-codigo, monospace);
+  font-weight: 800;
+}
+
+.kl-menu-nivel-titulo {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.8rem;
+  color: var(--color-texto-secundario, #aaa4c0);
+}
+
+/* Aprobado: tinte lavanda sólido y punto lleno. */
+.kl-menu-nivel[data-estado="aprobado"] {
+  border-color: var(--suave, #e6e0f7);
+  background: color-mix(in srgb, var(--secundario) 28%, transparent);
+}
+
+/* Tres estrellas: tinte y borde ámbar sólidos. */
+.kl-menu-nivel[data-estado="tresEstrellas"] {
+  border-color: var(--aviso, #f0c36f);
+  background: color-mix(in srgb, var(--aviso) 14%, transparent);
+}
+
+.kl-menu-nivel[data-estado="tresEstrellas"] .kl-menu-nivel-marca {
+  color: var(--aviso, #f0c36f);
+}
+
+/* Bloqueado: borde discontinuo (forma) y candado, atenuado y sin relieve. */
+.kl-menu-nivel[data-estado="bloqueado"],
+.kl-menu-nivel.kl-bloqueado {
+  border-style: dashed;
+  border-color: var(--color-borde-panel, #3b3454);
+  background: transparent;
+  box-shadow: none;
+  cursor: not-allowed;
+}
+
+.kl-menu-nivel[data-estado="bloqueado"] .kl-menu-nivel-id,
+.kl-menu-nivel[data-estado="bloqueado"] .kl-menu-nivel-titulo {
+  color: var(--color-texto-deshabilitado, #8b84a5);
+}
+
+/* El motivo del bloqueo, por texto, en su propia línea bajo el título. Da la
+   segunda señal (6.3): el jugador lee qué le falta, no sólo que está cerrado. El
+   botón bloqueado deja que su contenido salte de línea para que el motivo quepa. */
+.kl-menu-nivel[data-estado="bloqueado"] {
+  flex-wrap: wrap;
+}
+
+.kl-menu-nivel-motivo {
+  flex-basis: 100%;
+  font-size: 0.72rem;
+  font-style: italic;
+  color: var(--color-texto-deshabilitado, #8b84a5);
+}
+
+/*
+ * El nivel en curso: relleno lila sólido y tinta encima. Nace PLANO (spec 09): sin
+ * glow ni ninguna sombra con desenfoque. El relieve es Sombra_Dura (blur 0) y el borde
+ * discontinuo por la izquierda da una segunda señal de forma, no solo color.
+ */
+.kl-menu-nivel[aria-current="step"] {
+  background: var(--acento, #a78bfa);
+  border-color: var(--acento, #a78bfa);
+  border-left-width: 6px;
+  color: var(--color-boton-texto, #150f26);
+  box-shadow: 0 3px 0 var(--acento-sombra, #5c4c8a);
+}
+
+.kl-menu-nivel[aria-current="step"] .kl-menu-nivel-marca,
+.kl-menu-nivel[aria-current="step"] .kl-menu-nivel-titulo {
+  color: inherit;
+}
+
+.kl-insignia-medalla {
+  display: grid;
+  place-items: center;
+  width: 2.9rem;
+  height: 2.9rem;
+  border: 3px solid #fff3c4;
+  border-radius: 50%;
+  background: var(--aviso, #f0c36f);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--aviso) 28%, transparent), 0 4px 0 #8a5a12;
+  font-size: 1.5rem;
+  line-height: 1;
+  color: #5b3a00;
+  animation: kl-medalla 0.7s cubic-bezier(0.2, 1.4, 0.4, 1) both;
+}
+
+.kl-insignia-rotulo {
+  font-size: 0.66rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--aviso, #f0c36f);
+}
+
+/* «Insignia» y «conseguida» siguen en el texto para quien lo lee con un lector de
+   pantalla; a la vista basta la medalla y el nombre. */
+.kl-insignia-palabra {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+}
+
+@keyframes kl-medalla {
+  0% { transform: scale(0.3) rotate(-30deg); opacity: 0; }
+  60% { transform: scale(1.2) rotate(8deg); opacity: 1; }
+  100% { transform: none; opacity: 1; }
+}
+
+/* ========== ESCENA: TRES COLUMNAS ========== */
+.kl-escena {
+  display: grid;
+  /* Figura de Kiro, programa y figura del jugador. El centro nunca baja de un
+     ancho cómodo para el editor; los lienzos se reparten el resto. */
+  grid-template-columns: minmax(0, 1fr) minmax(26rem, 1.1fr) minmax(0, 1fr);
+  gap: 1.75rem;
+  align-items: start;
+}
+
+/* ========== LIENZOS ========== */
+.kl-lienzo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+/* La cabecera de cada figura: el título y, en la del jugador, el botón de comparar. Las dos
+   miden lo mismo, así los dos lienzos quedan a la misma altura. */
+.kl-lienzo-cabecera {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem 0.75rem;
+  min-height: 2.4rem;
+}
+
+.kl-lienzo-titulo {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-family: var(--fuente-titulo, system-ui, sans-serif);
+  font-size: 1.1rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--color-texto-primario, #ebe8f4);
+}
+
+/* La muestra de color del título es la leyenda de la estela de esa figura. */
+.kl-lienzo-titulo::before {
+  content: "";
+  width: 2rem;
+  height: 0.4rem;
+  border-radius: 99px;
+  background: var(--color-estela-referencia, #e6e0f7);
+}
+
+.kl-lienzo-jugador .kl-lienzo-titulo::before {
+  background: var(--color-estela-jugador, #a78bfa);
+}
+
+/*
+ * El cuadro es un cuadrado perfecto: su lado es el menor entre el ancho de la
+ * columna y la altura de pantalla que le queda. Así el cuadrado lógico del
+ * motor se ve sin deformar y nunca empuja el alto de la página.
+ */
 .kl-lienzo-cuadro {
   position: relative;
   aspect-ratio: 1 / 1;
-  width: 100%;
-  /*
-   * No supera la altura disponible; si la columna es muy alta, el ancho manda.
-   * El tope por viewport es clave: los lienzos abarcan las filas 2 a 5 y, por su
-   * relación 1:1, un cuadrado ancho reclamaría una altura enorme que comprimía
-   * la fila flexible del editor hasta colapsarla (se veía solo su barra de
-   * desplazamiento a 100 % de zoom). Acotar su alto rompe esa presión.
-   */
-  max-height: min(100%, calc(100vh - 8rem));
+  width: min(100%, calc(100vh - 14rem));
+  min-width: min(100%, 17rem);
   margin: 0 auto;
-  border: 1px solid var(--color-borde-editor, #ced4da);
-  border-radius: 0.375rem;
-  background-color: var(--color-fondo-lienzo, #ffffff);
+  border: var(--borde-grueso, 2px) solid var(--secundario, #7c68c9);
+  border-radius: var(--radio-tarjeta, 1.125rem);
+  background-color: var(--color-fondo-lienzo, #14111d);
+  box-shadow: 0.4rem 0.4rem 0 var(--secundario-intenso, #44396f);
   overflow: hidden;
+}
+
+.kl-lienzo-jugador .kl-lienzo-cuadro {
+  border-color: var(--acento, #a78bfa);
+  box-shadow: 0.4rem 0.4rem 0 var(--acento-sombra, #5c4c8a);
 }
 
 .kl-capa {
@@ -469,63 +513,755 @@ body {
   width: 100%;
   height: 100%;
   touch-action: none;
-  image-rendering: crisp-edges;
+  pointer-events: none;
 }
 
+/* Un resplandor tenue sobre la estela, solo en pantalla: no cambia lo que se valida. */
+.kl-capa-estela-referencia {
+  filter: drop-shadow(0 0 5px color-mix(in srgb, var(--suave) 45%, transparent));
+}
+
+.kl-capa-estela-jugador {
+  filter: drop-shadow(0 0 6px color-mix(in srgb, var(--acento) 55%, transparent));
+}
+
+.kl-lienzo-pie {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  width: min(100%, calc(100vh - 14rem));
+  min-width: min(100%, 17rem);
+  margin: 0 auto;
+}
+
+/* ========== COMPARAR CON KIRO ========== */
 /*
- * Superposición: comparte la columna del jugador (columna 3). Se controla con
- * el atributo [hidden] que la comparación alterna. Oculta por defecto.
+ * El botón pone tu figura y la de Kiro en un solo lienzo. La superposición tapa las tres
+ * capas de la figura (lleva su propio fondo y cuadrícula) y sobre ella el diff marca lo que
+ * coincide, lo que sobra y lo que falta. Se activa sola cuando fallas la precisión.
  */
-.kl-lienzo-superposicion[hidden] {
-  display: none;
-}
-
-/* ========== COMPARACIÓN (kl-comparacion) ========== */
-.kl-comparacion {
-  flex-shrink: 0;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.75rem;
-  padding-bottom: 0.5rem;
-  border-bottom: 1px solid var(--color-borde-panel, #dee2e6);
-}
-
-.kl-comparacion-rotulo {
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: var(--color-texto-primario, #212529);
-}
-
-.kl-comparacion-lado {
-  display: flex;
-  gap: 1rem;
-}
-
 .kl-comparacion-conmutador {
-  margin-left: auto;
-  padding: 0.375rem 0.75rem;
-  border: 1px solid var(--color-borde-editor, #ced4da);
-  border-radius: 0.375rem;
-  background-color: var(--color-fondo-editor, #ffffff);
-  color: var(--color-texto-primario, #212529);
-  font-size: 0.875rem;
+  padding: 0.42rem 0.95rem;
+  border: var(--borde-grueso, 2px) solid var(--secundario, #7c68c9);
+  border-radius: 99px;
+  background: var(--tinta-850, #181522);
+  color: var(--texto, #ebe8f4);
+  font-size: 0.78rem;
+  font-weight: 700;
+  line-height: 1;
   cursor: pointer;
+  transition: transform 0.12s ease, border-color 0.12s ease, background-color 0.12s ease;
 }
 
 .kl-comparacion-conmutador:hover {
-  background-color: var(--color-item-comando-fondo-hover, #e9ecef);
+  border-color: var(--acento, #a78bfa);
+  transform: translateY(-1px);
 }
 
 .kl-comparacion-conmutador[aria-pressed="true"] {
-  background-color: var(--color-boton-vista-activa-fondo, #198754);
-  color: var(--color-boton-vista-activa-texto, #ffffff);
-  border-color: transparent;
+  border-color: var(--acento, #a78bfa);
+  background: var(--acento, #a78bfa);
+  color: var(--sobre-acento, #150f26);
 }
 
-.kl-comparacion-conmutador:focus-visible {
-  outline: var(--grosor-indicador-foco, 2px) var(--estilo-indicador-foco, solid) var(--color-indicador-foco, #0d6efd);
-  outline-offset: 2px;
+.kl-capa-superposicion {
+  z-index: 1;
+}
+
+/* La leyenda va dentro del cuadro, abajo: no agrega altura a la página. */
+.kl-leyenda-ranura {
+  position: absolute;
+  left: 0.55rem;
+  right: 0.55rem;
+  bottom: 0.55rem;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.kl-leyenda {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.3rem 0.4rem;
+  list-style: none;
+}
+
+.kl-leyenda-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.22rem 0.6rem;
+  border: 1px solid var(--tinta-600, #3b3454);
+  border-radius: 99px;
+  background: color-mix(in srgb, var(--tinta-950, #0f0d16) 88%, transparent);
+  color: var(--color-texto-primario, #ebe8f4);
+  font-size: 0.72rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+/* La muestra repite el trazo del diff: mismo color, mismo patrón y la misma relación de
+   grosor (lo que sobra, el doble que lo que coincide). */
+.kl-leyenda-muestra {
+  flex: none;
+  width: 1.5rem;
+  height: 0;
+}
+
+.kl-leyenda-coincidencia .kl-leyenda-muestra {
+  border-top: 3px solid var(--color-diff-coincidencia, #6fd0b0);
+}
+
+.kl-leyenda-exceso .kl-leyenda-muestra {
+  border-top: 6px solid var(--color-diff-exceso, #f08a9b);
+}
+
+.kl-leyenda-falta .kl-leyenda-muestra {
+  border-top: 3px dashed var(--color-diff-falta, #aaa4c0);
+}
+
+/* ========== COLUMNA CENTRAL: EL PROGRAMA ========== */
+/* La sección del programa: Kiro arriba, el editor con su columna de atajos al lado, y
+   los controles debajo. Por debajo de 720 px todo se apila (ver más abajo). */
+.kl-programa {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 9rem;
+  gap: 0.85rem;
+  align-items: stretch;
+  min-width: 0;
+}
+
+.kl-globo,
+.kl-controles {
+  grid-column: 1 / -1;
+}
+
+/* El orden visual es el del DOM (Kiro habla, escribes, ejecutas y consultas los
+   comandos), así que el orden de Tab coincide con lo que se ve: no se reordena con CSS. */
+
+/* ========== GLOBO DE KIRO (kl-globo) ========== */
+.kl-globo {
+  position: relative;
+  min-height: 6.6rem;
+  padding: 0.85rem 1.15rem 0.95rem 7.1rem;
+  background-color: var(--color-globo-fondo, #1f1b2d);
+  border: var(--borde-grueso, 2px) solid var(--color-globo-borde, #7c68c9);
+  border-radius: 1.4rem 1.4rem 1.4rem 0.4rem;
+  color: var(--color-globo-texto, #ebe8f4);
+  box-shadow: 0.35rem 0.35rem 0 var(--color-globo-sombra, #44396f);
+}
+
+/* La mascota de Kiro (el fantasma sobre la tortuga). Es una imagen local
+   (public/marca/, fuera de git): boceto para que el líder decida si se queda. Sin la
+   imagen, el hueco queda vacío. El globo deja a su izquierda el ancho de la mascota. */
+.kl-globo::before {
+  content: "";
+  position: absolute;
+  left: 1.05rem;
+  top: 0.8rem;
+  width: 5rem;
+  height: 5rem;
+  background: url("/marca/mascota.png") center / contain no-repeat;
+  animation: kl-flotar 3.2s ease-in-out infinite;
+}
+
+@keyframes kl-flotar {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-0.3rem); }
+}
+
+.kl-globo-emisor {
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--suave, #e6e0f7);
+  margin-bottom: 0.2rem;
+}
+
+.kl-globo-cuerpo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  font-size: 1.02rem;
+  line-height: 1.45;
+}
+
+.kl-globo-mensaje {
+  font-size: 1rem;
+  line-height: 1.45;
+}
+
+.kl-globo-sin-mas {
+  font-size: 0.8125rem;
+  font-style: italic;
+  color: var(--color-texto-secundario, #aaa4c0);
+}
+
+.kl-globo-pista {
+  margin-top: 0.55rem;
+  padding: 0.3rem 0.85rem;
+  border: var(--borde-grueso, 2px) solid var(--suave, #e6e0f7);
+  border-radius: 99px;
+  background: transparent;
+  color: var(--suave, #e6e0f7);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color 0.15s, color 0.15s;
+}
+
+.kl-globo-pista:hover {
+  background: var(--suave, #e6e0f7);
+  color: var(--color-boton-texto, #150f26);
+}
+
+/* ========== EDITOR (kl-editor) ========== */
+.kl-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  min-height: 0;
+}
+
+.kl-editor-zona {
+  display: flex;
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 13rem;
+  border: var(--borde-grueso, 2px) solid var(--color-borde-editor, #3b3454);
+  border-radius: var(--radio-tarjeta, 1.125rem);
+  background-color: var(--color-fondo-editor, #0c0a12);
+  overflow: hidden;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.kl-editor-zona:focus-within {
+  border-color: var(--color-borde-editor-focus, #a78bfa);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--acento) 16%, transparent);
+}
+
+.kl-editor-canaleta {
+  flex: 0 0 auto;
+  width: 3.4rem;
+  padding: 0.85rem 0.55rem;
+  background-color: var(--tinta-canaleta, #100e18);
+  border-right: 1px solid var(--color-borde-editor, #3b3454);
+  font-family: var(--fuente-codigo, monospace);
+  font-size: 0.9rem;
+  line-height: 1.55;
+  color: var(--color-numeros-linea, #8b84a5);
+  text-align: right;
+  overflow: hidden;
+  user-select: none;
+}
+
+.kl-canaleta-linea {
+  display: block;
+  border-radius: 0.3rem;
+  padding-right: 0.15rem;
+}
+
+.kl-canaleta-error {
+  color: var(--color-texto-error, #f59aa9);
+  font-weight: 700;
+}
+
+/* La línea que se ejecuta: relleno lima y tinta, visible aunque no se distinga el color. */
+.kl-canaleta-actual {
+  background-color: var(--color-linea-activa-fondo, #a78bfa);
+  color: var(--color-numeros-linea-activa, #150f26);
+  font-weight: 800;
+}
+
+.kl-editor-area {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+  padding: 0.85rem 1rem;
+  border: none;
+  outline: none;
+  resize: none;
+  font-family: var(--fuente-codigo, monospace);
+  font-size: 0.9rem;
+  line-height: 1.55;
+  color: var(--color-texto-primario, #ebe8f4);
+  caret-color: var(--acento, #a78bfa);
+  background-color: transparent;
+  white-space: pre;
+  tab-size: 2;
+}
+
+/* El foco del editor lo marca el borde de la zona (:focus-within); el contorno
+   del navegador sobraría dentro de la zona recortada. */
+.kl-editor-area:focus-visible {
+  outline: none;
+}
+
+.kl-editor-contador {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8125rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.kl-contador-instrucciones,
+.kl-contador-presupuesto,
+.kl-contador-aviso {
+  padding: 0.2rem 0.75rem;
+  border: var(--borde-grueso, 2px) solid var(--color-borde-panel, #3b3454);
+  border-radius: 99px;
+  background: var(--color-fondo-secundario, #181522);
+  font-weight: 700;
+  color: var(--color-contador-normal, #ebe8f4);
+}
+
+.kl-contador-presupuesto {
+  font-weight: 600;
+  color: var(--color-texto-secundario, #aaa4c0);
+}
+
+/* El exceso de presupuesto se marca por texto (kl-contador-aviso) además del color. */
+.kl-contador-exceso {
+  border-color: var(--peligro, #f08a9b);
+  color: var(--color-contador-excede, #f59aa9);
+}
+
+.kl-contador-aviso {
+  border-color: var(--peligro, #f08a9b);
+  background: var(--peligro, #f08a9b);
+  color: var(--color-boton-peligro-texto, #150f26);
+}
+
+.kl-editor-marcas {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.kl-editor-marca {
+  padding: 0.3rem 0.7rem;
+  border-left: 4px solid var(--peligro, #f08a9b);
+  border-radius: 0.25rem 0.6rem 0.6rem 0.25rem;
+  background: var(--color-marca-error-fondo, rgba(240, 138, 155, 0.14));
+  font-size: 0.8125rem;
+  color: var(--color-marca-error, #f59aa9);
+}
+
+/* ========== CONTROLES (kl-controles) ========== */
+/* Seis columnas: «Ejecutar» manda (4), «Detener» a su lado (2), tres secundarios
+   de 2 y las velocidades en una fila propia. */
+.kl-controles {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 0.65rem;
+  align-items: stretch;
+}
+
+.kl-control {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 2.9rem;
+  padding: 0.55rem 0.6rem;
+  border: var(--borde-grueso, 2px) solid var(--tinta-950, #0f0d16);
+  border-radius: var(--radio-control, 0.75rem);
+  background-color: var(--color-boton-secundario-fondo, #2a253d);
+  color: var(--color-boton-secundario-texto, #ebe8f4);
+  font-family: var(--fuente-titulo, system-ui, sans-serif);
+  font-size: 0.9rem;
+  font-weight: 700;
+  line-height: 1.1;
+  text-align: center;
+  cursor: pointer;
+  box-shadow: 0 4px 0 var(--color-boton-secundario-sombra, #0f0d16);
+  transition: transform 0.08s ease-out, box-shadow 0.08s ease-out, background-color 0.15s;
+}
+
+.kl-control-icono {
+  font-size: 0.95em;
+  line-height: 1;
+}
+
+.kl-control:hover {
+  background-color: var(--color-boton-secundario-fondo-hover, #3b3454);
+  transform: translateY(-1px);
+  box-shadow: 0 5px 0 var(--color-boton-secundario-sombra, #0f0d16);
+}
+
+/* Al pulsar el botón se hunde: baja lo que subía su sombra. */
+.kl-control:active {
+  transform: translateY(3px);
+  box-shadow: 0 1px 0 var(--color-boton-secundario-sombra, #0f0d16);
+}
+
+.kl-control-ejecutar {
+  grid-column: span 4;
+  min-height: 3.4rem;
+  font-size: 1.15rem;
+  background-color: var(--color-boton-fondo, #a78bfa);
+  color: var(--color-boton-texto, #150f26);
+  box-shadow: 0 4px 0 var(--color-boton-sombra, #5c4c8a);
+}
+
+.kl-control-ejecutar:hover {
+  background-color: var(--color-boton-fondo-hover, #b9a2fb);
+  box-shadow: 0 5px 0 var(--color-boton-sombra, #5c4c8a);
+}
+
+.kl-control-ejecutar:active {
+  background-color: var(--color-boton-fondo-active, #8e76d4);
+  box-shadow: 0 1px 0 var(--color-boton-sombra, #5c4c8a);
+}
+
+.kl-control-detener {
+  grid-column: span 2;
+  min-height: 3.4rem;
+  background-color: var(--color-boton-peligro-fondo, #f08a9b);
+  color: var(--color-boton-peligro-texto, #150f26);
+  box-shadow: 0 4px 0 var(--color-boton-peligro-sombra, #844c55);
+}
+
+.kl-control-detener:hover {
+  background-color: color-mix(in srgb, var(--color-boton-peligro-fondo, #f08a9b) 82%, #fff);
+  box-shadow: 0 5px 0 var(--color-boton-peligro-sombra, #844c55);
+}
+
+.kl-control-detener:active {
+  box-shadow: 0 1px 0 var(--color-boton-peligro-sombra, #844c55);
+}
+
+.kl-control-paso,
+.kl-control-reiniciar,
+.kl-control-demostracion {
+  grid-column: span 2;
+}
+
+/* Estado deshabilitado: por atributo disabled y por clase, para el mismo aspecto.
+   Se ve «apagado» por forma (sin sombra alta, sin relieve) y no solo por color. */
+.kl-control:disabled,
+.kl-control.kl-deshabilitada,
+.kl-velocidad:disabled,
+.kl-velocidad.kl-deshabilitada {
+  background-color: var(--color-boton-fondo-deshabilitado, #3b3454);
+  border-color: transparent;
+  color: var(--color-texto-deshabilitado, #8b84a5);
+  box-shadow: none;
+  transform: none;
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.kl-control-velocidades {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: auto repeat(4, minmax(0, 1fr));
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.kl-control-velocidades-rotulo {
+  padding-right: 0.35rem;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-texto-secundario, #aaa4c0);
+}
+
+.kl-velocidad {
+  padding: 0.4rem 0.4rem;
+  border: var(--borde-grueso, 2px) solid var(--color-borde-panel, #3b3454);
+  border-radius: 99px;
+  background-color: transparent;
+  color: var(--color-texto-secundario, #aaa4c0);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.kl-velocidad:hover {
+  border-color: var(--secundario, #7c68c9);
+  color: var(--color-texto-primario, #ebe8f4);
+}
+
+/* Velocidad seleccionada: relleno lima, texto en negrita y aria-pressed en el DOM. */
+.kl-velocidad.kl-seleccionada,
+.kl-velocidad[aria-pressed="true"] {
+  background-color: var(--color-boton-vista-activa-fondo, #a78bfa);
+  color: var(--color-boton-vista-activa-texto, #150f26);
+  border-color: var(--color-boton-vista-activa-fondo, #a78bfa);
+  font-weight: 800;
+}
+
+/* ========== PANEL DE COMANDOS (kl-panel-comandos) ========== */
+/*
+ * Una cuadrícula de botones grandes, todos a la vista (sin desplazarse por dentro) y
+ * cómodos de pulsar: cada uno muestra lo que se va a escribir. El texto completo de
+ * cada comando (nombre, abreviatura, descripción y ejemplo) sigue en el botón como
+ * nombre accesible; a la vista, lo que hace el comando se lee en la línea de ayuda de
+ * abajo al pasar el cursor o enfocarlo con el teclado.
+ */
+.kl-panel-comandos {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  min-width: 0;
+}
+
+.kl-comando {
+  display: flex;
+  flex: 1 1 0;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.3rem;
+  padding: 0.35rem 0.3rem;
+  border: var(--borde-grueso, 2px) solid var(--color-borde-panel, #3b3454);
+  border-radius: var(--radio-control, 0.75rem);
+  background-color: var(--color-item-comando-fondo, #1f1b2d);
+  color: var(--color-texto-primario, #ebe8f4);
+  cursor: pointer;
+  transition: background-color 0.15s, border-color 0.15s, transform 0.1s;
+}
+
+.kl-comando:hover {
+  background-color: var(--color-item-comando-fondo-hover, #2a253d);
+  border-color: var(--acento, #a78bfa);
+  transform: translateY(-2px);
+}
+
+.kl-comando:active {
+  background-color: var(--color-item-comando-fondo-active, #3b3454);
+  transform: translateY(0);
+}
+
+/* Lo único visible del botón es lo que se escribe al pulsarlo: el texto de inserción,
+   que el pseudo-elemento pinta desde data-insercion. Así el nombre completo (nombre,
+   abreviatura, descripción y ejemplo) sigue en el texto para el lector de pantalla,
+   pero a la vista se lee solo lo que el atajo va a escribir. */
+.kl-comando::before {
+  content: attr(data-insercion);
+  font-family: var(--fuente-codigo, monospace);
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: var(--acento, #a78bfa);
+  white-space: nowrap;
+}
+
+/* El nombre, la abreviatura, la descripción, el ejemplo y los separadores de lectura
+   siguen en el botón para quien lo lee con un lector de pantalla; a la vista no se
+   muestran (lo visible lo pinta ::before desde data-insercion). */
+.kl-comando-titulo,
+.kl-comando-desc,
+.kl-comando-ejemplo,
+.kl-comando-sep {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+}
+
+/* Lo que hace el comando señalado: un globo a la izquierda de la columna, a la altura
+   del botón señalado (la alinea el script con `top`). Aparece con el cursor o el foco. */
+.kl-comandos-ayuda {
+  position: absolute;
+  right: calc(100% + 0.6rem);
+  top: 0;
+  z-index: 30;
+  width: 15.5rem;
+  padding: 0.55rem 0.75rem;
+  border: var(--borde-grueso, 2px) solid var(--acento, #a78bfa);
+  border-radius: var(--radio-control, 0.75rem);
+  background: var(--color-globo-fondo, #1f1b2d);
+  box-shadow: 0.25rem 0.25rem 0 var(--color-globo-sombra, #44396f);
+  font-size: 0.78rem;
+  line-height: 1.35;
+  color: var(--color-texto-primario, #ebe8f4);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.12s;
+}
+
+.kl-comandos-ayuda.kl-activa {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* ========== PANEL DE SEMILLA (kl-panel-semilla, bajo la figura de Kiro) ========== */
+.kl-panel-semilla {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+  padding: 0.8rem 0.95rem;
+  border: var(--borde-grueso, 2px) dashed var(--color-borde-panel, #3b3454);
+  border-radius: var(--radio-tarjeta, 1.125rem);
+  background: color-mix(in srgb, var(--tinta-850) 70%, transparent);
+}
+
+.kl-panel-semilla-codigo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.2rem 0.6rem;
+}
+
+.kl-panel-semilla-etiqueta {
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-texto-secundario, #aaa4c0);
+}
+
+.kl-panel-semilla-valor {
+  padding: 0.1rem 0.7rem;
+  border-radius: 0.5rem;
+  background: var(--tinta-950, #0f0d16);
+  font-family: var(--fuente-codigo, monospace);
+  font-size: 1.1rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: var(--suave, #e6e0f7);
+}
+
+.kl-panel-semilla-nota {
+  grid-column: 1 / -1;
+  grid-row: 2;
+  font-size: 0.8rem;
+  color: var(--color-texto-secundario, #aaa4c0);
+}
+
+.kl-panel-semilla-otro,
+.kl-panel-semilla-reproducir-boton {
+  padding: 0.4rem 0.9rem;
+  border: var(--borde-grueso, 2px) solid var(--secundario, #7c68c9);
+  border-radius: 99px;
+  background: transparent;
+  color: var(--suave, #e6e0f7);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color 0.15s, color 0.15s;
+}
+
+.kl-panel-semilla-otro:hover:not(:disabled),
+.kl-panel-semilla-reproducir-boton:hover:not(:disabled) {
+  background: var(--secundario, #7c68c9);
+  color: var(--color-boton-texto, #150f26);
+}
+
+.kl-panel-semilla-otro:disabled,
+.kl-panel-semilla-reproducir-boton:disabled,
+.kl-panel-semilla-campo:disabled {
+  border-color: var(--color-borde-panel, #3b3454);
+  color: var(--color-texto-deshabilitado, #8b84a5);
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.kl-panel-semilla-reproducir {
+  grid-column: 1 / -1;
+  display: flex;
+  gap: 0.5rem;
+}
+
+.kl-panel-semilla-campo {
+  flex: 1;
+  min-width: 0;
+  padding: 0.4rem 0.75rem;
+  border: var(--borde-grueso, 2px) solid var(--color-borde-panel, #3b3454);
+  border-radius: 0.6rem;
+  background: var(--tinta-950, #0f0d16);
+  font-family: var(--fuente-codigo, monospace);
+  font-size: 0.875rem;
+  letter-spacing: 0.1em;
+  color: var(--color-texto-primario, #ebe8f4);
+}
+
+.kl-panel-semilla-campo:focus {
+  border-color: var(--acento, #a78bfa);
+  outline: none;
+}
+
+/* ========== MARCADOR DE ESTRELLAS (kl-marcador) ========== */
+.kl-marcador {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.6rem;
+  list-style: none;
+}
+
+.kl-estrella {
+  display: grid;
+  justify-items: center;
+  gap: 0.05rem;
+  padding: 0.55rem 0.3rem 0.6rem;
+  border: var(--borde-grueso, 2px) solid var(--color-borde-panel, #3b3454);
+  border-radius: var(--radio-control, 0.75rem);
+  background-color: var(--color-fondo-secundario, #181522);
+  transition: border-color 0.2s, background-color 0.2s;
+}
+
+.kl-estrella-icono {
+  font-size: 1.9rem;
+  line-height: 1.1;
+  color: var(--color-texto-deshabilitado, #8b84a5);
+}
+
+.kl-estrella-nombre {
+  font-size: 0.8rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  color: var(--color-texto-primario, #ebe8f4);
+}
+
+.kl-estrella-estado {
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-texto-secundario, #aaa4c0);
+}
+
+/* Otorgada: estrella llena y ámbar, borde ámbar, y un pequeño salto al aparecer. */
+.kl-estrella[data-estado="otorgada"] {
+  border-color: var(--color-estrella-otorgada, #f0c36f);
+  background-color: color-mix(in srgb, var(--aviso) 10%, transparent);
+}
+
+.kl-estrella[data-estado="otorgada"] .kl-estrella-icono {
+  color: var(--color-estrella-otorgada, #f0c36f);
+  text-shadow: 0 0 14px color-mix(in srgb, var(--aviso) 70%, transparent);
+  animation: kl-aparecer 0.55s cubic-bezier(0.2, 1.4, 0.4, 1) both;
+}
+
+.kl-estrella[data-estado="otorgada"]:nth-child(2) .kl-estrella-icono { animation-delay: 0.15s; }
+.kl-estrella[data-estado="otorgada"]:nth-child(3) .kl-estrella-icono { animation-delay: 0.3s; }
+
+/* Negada: estrella vacía y borde discontinuo coral, además del texto «negada». */
+.kl-estrella[data-estado="negada"] {
+  border-style: dashed;
+  border-color: var(--peligro, #f08a9b);
+}
+
+.kl-estrella[data-estado="negada"] .kl-estrella-icono {
+  color: var(--color-texto-error, #f59aa9);
+}
+
+@keyframes kl-aparecer {
+  0% { transform: scale(0.3) rotate(-25deg); opacity: 0; }
+  60% { transform: scale(1.3) rotate(8deg); opacity: 1; }
+  100% { transform: none; opacity: 1; }
 }
 
 /* ========== UTILIDAD ========== */
@@ -539,39 +1275,115 @@ body {
     transition-duration: 0.001ms !important;
     animation-duration: 0.001ms !important;
     animation-iteration-count: 1 !important;
+    animation-delay: 0s !important;
   }
 }
 
-/* ========== RESPONSIVE ========== */
-@media (max-width: 1200px) {
-  /* Una sola columna: todo se apila en el orden de fuente. */
-  #aplicacion {
-    grid-template-columns: 1fr;
-    grid-template-rows: none;
-    grid-auto-rows: auto;
-    overflow-y: auto;
+/* ========== ADAPTABLE ========== */
+/* Tableta: las dos figuras arriba, lado a lado, y el programa debajo, a todo el ancho. */
+@media (max-width: 1180px) {
+  .kl-escena {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.5rem;
   }
 
-  .kl-cabecera,
-  .kl-globo,
-  .kl-editor,
-  .kl-panel-comandos,
-  .kl-controles,
-  .kl-comparacion,
-  .kl-lienzo-referencia,
-  .kl-lienzo-jugador,
-  .kl-lienzo-superposicion {
-    grid-column: 1;
-    grid-row: auto;
+  .kl-programa {
+    grid-column: 1 / -1;
+    grid-row: 2;
   }
-}
 
-@media (max-width: 768px) {
+  .kl-lienzo-cuadro,
+  .kl-lienzo-pie {
+    width: min(100%, 34rem);
+  }
+
   .kl-cabecera {
-    padding: 0.75rem 1rem;
+    justify-content: center;
   }
 
-  .kl-titulo {
-    font-size: 1.5rem;
+  .kl-menu-mundos {
+    justify-content: center;
+  }
+}
+
+/* Móvil: una columna; primero la figura de Kiro, luego el programa y al final tu figura. */
+@media (max-width: 720px) {
+  #aplicacion {
+    padding: 0.75rem 0.9rem 1.5rem;
+  }
+
+  .kl-escena {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .kl-lienzo-referencia { order: 1; }
+  .kl-programa { order: 2; grid-column: auto; grid-row: auto; grid-template-columns: minmax(0, 1fr); }
+  .kl-lienzo-jugador { order: 3; }
+
+  /* Apilado: los atajos pasan a una cuadrícula bajo el editor y la ayuda, a una línea fija. */
+  .kl-panel-comandos {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(8.6rem, 1fr));
+    gap: 0.5rem;
+  }
+
+  .kl-comando {
+    min-height: 2.9rem;
+  }
+
+  .kl-comandos-ayuda {
+    position: static;
+    grid-column: 1 / -1;
+    width: auto;
+    min-height: 2.6rem;
+    padding: 0.15rem 0.2rem 0;
+    border: 0;
+    background: none;
+    box-shadow: none;
+    font-size: 0.8rem;
+    color: var(--color-texto-secundario, #aaa4c0);
+    opacity: 1;
+    visibility: visible;
+  }
+
+  .kl-lienzo-cuadro,
+  .kl-lienzo-pie {
+    width: 100%;
+  }
+
+  .kl-logo {
+    height: 3rem;
+  }
+
+  .kl-globo {
+    padding-left: 5.7rem;
+  }
+
+  .kl-globo::before {
+    left: 0.8rem;
+    width: 4rem;
+    height: 4rem;
+  }
+
+  .kl-control-ejecutar,
+  .kl-control-detener {
+    grid-column: span 3;
+  }
+
+  .kl-control-paso,
+  .kl-control-reiniciar {
+    grid-column: span 3;
+  }
+
+  .kl-control-demostracion {
+    grid-column: 1 / -1;
+  }
+
+  .kl-control-velocidades {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .kl-control-velocidades-rotulo {
+    grid-column: 1 / -1;
   }
 }

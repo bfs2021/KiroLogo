@@ -343,3 +343,537 @@ el HTML. El juego queda jugable de punta a punta —la referencia, la estela del
 diff y la comparación se dibujan y todas las pruebas pasan, incluida la de contraste—, pero la cuadrícula
 por lado no se pinta en un canvas propio. Es el punto más flojo del cierre y el primer candidato a limpiar
 cuando una spec de interfaz retome la pantalla.
+
+---
+
+## Verificación manual del encuadre (spec 08 · diseño visual · tarea 9.2)
+
+Esta nota queda **pendiente de confirmación en un navegador real**. No es un resultado aprobado: es el
+registro honesto de qué comprueba la máquina y qué tiene que mirar una persona, con el procedimiento para
+hacerlo.
+
+**Por qué es manual y no una prueba automática.** El entorno de pruebas corre sobre jsdom, que modela el
+DOM pero **no hace layout**: no calcula alturas reales, no reparte las columnas de la cuadrícula en píxeles
+ni dispara desplazamiento. Por eso la forma de las reglas de `src/estilos/pantalla.css` —las tres columnas
+de la escena, la `@media` de apilado y el orden de las piezas— sí se puede verificar leyendo el CSS como
+texto, y eso es lo que hace `src/main.test.ts`. Pero el **encuadre pintado** —que no aparezca una barra de
+desplazamiento, que el corrimiento vertical quede dentro de un límite de píxeles, que nada se recorte— solo
+se observa cuando el documento se dibuja de verdad en una ventana con un tamaño concreto. Eso exige un
+navegador y un par de ojos.
+
+**Qué confirman ya las pruebas automáticas** (grupo «1.1–1.4 · pantalla.css define las tres columnas y el
+apilado responsivo» en `src/main.test.ts`, que lee el CSS real):
+
+- Que `.kl-escena` es una cuadrícula de **exactamente tres columnas** en la presentación ancha.
+- Que existe la `@media (max-width: 720px)` y que dentro de ella la escena pasa a **una sola columna**.
+- Que en ese apilado el **orden** es el exigido por el requisito 1.7: figura de Kiro (`order: 1`), programa
+  (`order: 2`) y figura del jugador (`order: 3`).
+
+Es decir: la **existencia y la forma** de las reglas, y el **orden del apilado**, quedan cubiertos por la
+máquina. Lo que la máquina **no** puede afirmar es el comportamiento visual resultante: la presencia o
+ausencia de scroll y los límites reales en píxeles.
+
+**Qué falta confirmar a mano, por requisito:**
+
+- **1.5 · a 1440 × 900:** la escena entra completa, **sin desplazamiento vertical ni horizontal**.
+- **1.6 · a 1366 × 768:** se admite un **desplazamiento vertical de hasta 8 px**, y **ningún** desplazamiento
+  horizontal.
+- **1.7 · a menos de 720 px de ancho:** todo queda **apilado en una sola columna**, en orden —cabecera,
+  figura de Kiro, programa, figura del jugador—, **sin recortes y sin desplazamiento horizontal**.
+
+**Procedimiento para quien lo verifique** (reproducible, sin medir «a ojo»):
+
+1. Compilar y servir la versión real: `npm run build` y luego `npx vite preview` (o servir el `dist`
+   resultante). Conviene usar el `build`, no el servidor de desarrollo, para medir sobre los mismos activos
+   que se despliegan.
+2. Abrir las herramientas de desarrollo del navegador y fijar el viewport **exacto** a cada tamaño
+   (1440 × 900, 1366 × 768 y un ancho menor de 720, por ejemplo 390 × 844). El modo de dispositivo con tamaño
+   personalizado da el viewport exacto; conviene confirmarlo leyendo `window.innerWidth`/`innerHeight` en la
+   consola, porque la barra de herramientas del propio navegador descuenta píxeles.
+3. En cada tamaño, comprobar la ausencia o el límite de desplazamiento comparando `documentElement`:
+   horizontal con `scrollWidth <= clientWidth`; vertical con `scrollHeight - clientHeight`, que a 1440 × 900
+   debe ser 0 y a 1366 × 768 no debe pasar de 8.
+4. A menos de 720 px, confirmar visualmente el orden del apilado (cabecera, figura de Kiro, programa, figura
+   del jugador) y que ninguna pieza se recorta por los bordes.
+
+Mientras esta verificación no se ejecute en un navegador y se anote su resultado aquí, **la tarea 9.2 queda
+pendiente**: las reglas están y las prueba la máquina, pero el encuadre pintado todavía no se ha confirmado
+a mano.
+
+---
+
+## Enmiendas, excepción y decisión al cerrar la spec 08 (diseño visual · tarea 11.1)
+
+La spec 08 no inventó un diseño: formalizó como requisitos verificables el diseño visual que ya vivía en
+el repositorio y que el líder había aprobado. Al hacerlo salieron a la luz diez desvíos respecto de la
+spec 00 (Cimientos). La regla del proyecto es que ninguna contradicción quede callada: cada desvío se
+cierra de forma explícita como **enmienda** (se cita el criterio de la spec 00 y la spec 08 pasa a
+prevalecer), **corrección** (se cambia el diseño para cumplir el criterio) o **excepción** (se admite el
+desvío con su justificación). Esta nota registra, con su porqué, las ocho enmiendas que tocan conducta
+visible, la excepción temporal al steering y la decisión de producto D11.
+
+### Las enmiendas a la spec 00, con su porqué
+
+**00·13.3 — no se dibuja la marca de rumbo.** El Tema fija `--marca-rumbo-mostrar: no` y los Personajes
+no dibujan ninguna flecha de rumbo. El porqué es que la cabeza de la tortuga ya apunta hacia el rumbo
+actual: una marca extra sería redundante y recargaría el personaje sin agregar información. La spec 00
+pedía la marca; la 08 la retira y pasa a prevalecer.
+
+**00·13.5 — el lápiz solo se dibuja cuando está levantado.** Los Personajes dibujan el lápiz únicamente
+en su posición levantada cuando `--lapiz-mostrar: arriba`; con cualquier otro valor, o sin valor, lo
+dibujan en sus dos posiciones. El porqué es que con el lápiz abajo la estela que va quedando ya comunica
+que la tortuga escribe; lo que necesita hacerse visible es el **acto de levantarlo** (`SUBELAPIZ`), el
+cambio de estado que de otro modo sería invisible. Dibujar el lápiz abajo de forma permanente no aporta
+y estorba a la lectura del trazo.
+
+**00·13.6 — escala 2,4 del conjunto de personajes.** El conjunto tortuga + Kiro + lápiz se dibuja a
+escala 2,4 respecto del círculo de 40 unidades que declaraba 00·13.6. El porqué es puramente de lectura:
+a tamaño natural la tortuga quedaría de unos 13 px en el Lienzo y no se leería como personaje, que es su
+función —comunicar el estado de la ejecución, no decorar. Fijar la escala también resolvió el riesgo de
+solapamiento del que hablan las dos enmiendas siguientes.
+
+**00·14.8 y 00·24.7 — al terminar o detener, vuelta al Estado inicial.** Cuando una ejecución termina, o
+si el jugador la detiene, el Juego devuelve la tortuga al Estado inicial del Nivel conservando intacta la
+estela ya dibujada. La spec 00 dejaba la tortuga donde cayera el último trazo. El porqué de la enmienda
+es que el Estado inicial es el punto de referencia estable para volver a intentar, y dejar el personaje
+sobre la punta del último trazo lo taparía. En el Nivel 0.1, cuya figura es un tramo abierto que termina
+lejos del inicio, la silueta en reposo no se solapa con el extremo final del trazo: el solapamiento se
+evitó precisamente al fijar la escala del conjunto (la enmienda 00·13.6). En las figuras cerradas, como
+el cuadrado del Nivel 0.4, el trazo termina en el punto de partida y la tortuga descansa ahí mismo, de
+modo que la garantía de no solapamiento se limita, con honestidad, al Nivel 0.1.
+
+**00·23.5 — la superposición dibuja en Posiciones reales.** La vista de superposición dibuja las dos
+estelas en sus Posiciones reales del Lienzo, y el Diff colorea las tres regiones aplicando el veredicto
+de presentación (`veredictoParaMostrar`), que elige entre las Posiciones reales y la Alineación del
+Validador el que tenga **mayor coincidencia**. El porqué es que mostrar la figura del jugador en el lugar
+exacto donde la dibujó es más honesto y más útil para depurar que mostrarla ya recolocada sobre la de
+referencia. La garantía que sostiene la enmienda es que las **Estrellas salen siempre del veredicto
+oficial** del Validador: el veredicto de presentación solo afecta cómo se pinta, nunca cómo se califica.
+
+**00·26.2 — solo el ejemplo como texto visible permanente.** El Panel_Comandos muestra como texto visible
+permanente únicamente el ejemplo de uso de cada comando; el nombre largo, la abreviatura y la descripción
+se revelan al pasar el cursor o al enfocar el botón, y van completos, carácter por carácter, en el nombre
+accesible. La spec 00 pedía mostrar también los tres como texto permanente. El porqué de la enmienda es
+que la columna de comandos se recargaba con texto y el ejemplo es lo que más enseña de un vistazo; lo
+demás sigue disponible al enfocar o al pasar el cursor, y nunca se pierde para un lector de pantalla
+porque está íntegro en el nombre accesible.
+
+**00·28.3 — contraste de controles acotado a lo que se identifica como control.** El contraste WCAG 3:1
+se exige solo a los elementos interactivos que lo necesitan para identificarse como control, no a todo
+borde y fondo de control. El porqué es que el diseño aprobado por el líder conserva el aspecto actual de
+los controles —medido entre 1,07:1 y 2,07:1 frente a su fondo— y la enmienda ajusta la exigencia de la
+spec 00 a los elementos donde el contraste cumple la función real de distinguir un control de su entorno.
+El texto visible sigue en 4.5:1 y el foco en 3:1, sin tocar.
+
+**00·28.6 — foco con `:focus-visible`.** El indicador de foco se muestra según `:focus-visible`, el
+comportamiento estándar del navegador, que ya venía en el Tema desde la spec 00. La spec 00 exigía
+mostrarlo con independencia de si el foco llegó por teclado o por puntero. El porqué de la enmienda es
+que `:focus-visible` es justamente el mecanismo pensado para esto: muestra el anillo cuando ayuda —al
+navegar con teclado— y lo omite cuando el usuario hizo clic y no lo necesita, evitando el anillo
+«pegajoso» que molesta con el ratón. No es una conducta nueva: es reconocer como correcta la que la base
+ya traía.
+
+### La excepción temporal al steering `tecnologia`
+
+El steering `tecnologia` es tajante: el proyecto **no tiene carpeta de activos gráficos**; la tortuga y
+Kiro se dibujan por código con Canvas 2D, sin imágenes, sprites ni SVG externos. Hoy hay dos excepciones
+a esa regla: el **logo** de KiroLogo y la **mascota** del Globo_Kiro son imágenes de boceto en
+`public/marca/` (`kirologo.png` y `mascota.png`). El logo entra como `<img ... alt="KiroLogo">` en
+`index.html`; la mascota entra como imagen de **fondo CSS** en `.kl-globo::before` de `pantalla.css`.
+
+Esto es una **excepción temporal**, no un cambio del steering. Son bocetos que están fuera del control de
+versiones a la espera de que el líder decida el arte definitivo; la regla de «personajes por código»
+sigue vigente para todo lo demás. Se deja dicho su carácter temporal precisamente para que no se
+normalice: en cuanto el líder resuelva, o bien la marca pasa a dibujarse por código como el resto, o bien
+se abre una spec que modifique el steering de forma explícita. Mientras tanto, el requisito exige que el
+nombre accesible del logo («KiroLogo», en el `alt`) quede disponible aunque la imagen no cargue, para que
+la excepción no degrade la accesibilidad.
+
+### Decisión D11 · una sola paleta Kiro
+
+Se adopta una **única paleta**, la paleta Kiro. Se descartó la segunda paleta (Océano) y, con ella, el
+Selector_Paleta y la segunda clave de `localStorage`; desaparece además la enmienda de 00·27.8 que esa
+segunda clave había motivado. El porqué es de alcance y de producto: una sola paleta, pensada para jugar
+muchas horas sin cansar la vista, es suficiente, y mantener dos multiplicaba el trabajo de contraste y de
+pruebas sin un beneficio claro para el jugador.
+
+Hay que ser claro con un límite: **el retiro del código es trabajo aparte y las tareas de la spec 08 no
+lo tocan.** Siguen en el repositorio, por ahora, `src/ui/selector-paleta.ts`, `src/estilos/paletas.css`
+y la clave de `localStorage` `kirologo.paleta`. Esta nota registra la **decisión**; la limpieza del
+código se hará en su propio cambio, con su propio diff, para no mezclar el retiro de una función con la
+formalización del diseño.
+
+### La regla de no debilitamiento (requisito 9.5)
+
+Todo lo anterior existe por una sola regla, que conviene dejar escrita aquí como cierre: **ninguna prueba
+heredada de las specs 00 o 01 se debilita sin una enmienda registrada tanto en la spec como en esta
+Bitácora.** Cada una de las ocho enmiendas de arriba deja su rastro en este documento y cita el criterio
+de la spec 00 que modifica. Si mañana alguien afloja una prueba heredada sin ese doble registro —en la
+spec y en la Bitácora, identificando la prueba afectada—, la Suite_Pruebas debe tratar ese cambio como no
+válido. La Bitácora no es un adorno: es la mitad del contrato que permite que una prueba heredada cambie
+sin que el cambio sea un olvido silencioso.
+
+---
+
+## Las pruebas del diseño visual y por qué (spec 08 · diseño visual · tarea 12.1)
+
+La spec 08 no construyó funcionalidad: formalizó como requisitos verificables el diseño visual que ya
+vivía en el repositorio. Por eso su trabajo de pruebas es de **verificación** y **conciliación**, no de
+cobertura nueva. Esta nota reúne, en un solo lugar, las pruebas que la spec reescribió o añadió, con el
+motivo de cada una, y deja escrito el límite honesto de todo este aparato: **que las pruebas pasen no es,
+por sí solo, prueba de cumplimiento.**
+
+### La lista de pruebas, con su motivo
+
+**Prueba del Tema — dentro de `src/main.test.ts`, no en un archivo propio.** Las adiciones del Tema viven
+en `src/main.test.ts` y no en un `src/estilos/tema.test.ts`, porque la regla «21.3 · estructura de
+archivos» de ese mismo archivo exige que cada `.test.ts` tenga un módulo `.ts` homónimo, y no existe
+`src/estilos/tema.ts`. Crear `tema.test.ts` habría roto esa regla heredada, así que las pruebas nuevas se
+suman al grupo transversal del tema que ya estaba ahí. Lo añadido:
+
+- **Las 19 fichas y «ninguna derivada con color literal».** La prueba lee `src/estilos/tema.css` como
+  texto, confirma que el primer bloque declara exactamente las 19 fichas de la paleta Kiro y verifica que
+  ninguna variable derivada lleva un color literal (hex, `rgb`/`rgba`, `hsl`/`hsla` o nombre CSS): solo
+  `var()` a una ficha o una mezcla `color-mix` de fichas. Conoce y respeta dos conjuntos de excepciones
+  deliberadas: las variables de sufijo `-reserva` y las ocho de la mascota y el lápiz, que son literales a
+  propósito porque la tortuga y el lápiz conservan su color en toda paleta. *Motivo:* el Tema es la única
+  fuente de verdad del color (requisito 2.1); la prueba lee el CSS real para que una derivada no pueda
+  colar un color a mano.
+- **Los huecos de contraste WCAG de 8.3/8.4.** Reutilizando el cálculo WCAG 2.1 que `src/main.test.ts` ya
+  tenía (luminancia relativa y razón `(L1 + 0.05) / (L2 + 0.05)`), se confirmó el contraste de las tres
+  regiones del Diff y del conjunto tortuga + Kiro frente al fondo del Lienzo ≥ 3:1, sin duplicar los pares
+  que el grupo «21.4 · accesibilidad WCAG del tema» ya verificaba (texto principal y secundario ≥ 4.5:1,
+  las dos estelas ≥ 3:1, el contorno de la tortuga ≥ 3:1 y el indicador de foco ≥ 3:1). *Motivo:*
+  requisitos 2.3, 8.1, 8.3 y 8.4; el contraste se calcula sobre los colores reales del tema, no sobre una
+  copia.
+- **Las variables `*-reserva` coinciden con la paleta.** La prueba descubre por sí sola las reservas de
+  color recorriendo las declaraciones del tema y comprueba que cada `*-reserva` resuelve al mismo color que
+  su ficha equivalente de la paleta Kiro. *Motivo:* requisito 2.1; si la reserva y la paleta se
+  desincronizan en silencio, el día que falte la variable principal el jugador vería un color distinto al
+  diseñado.
+
+**Prueba de literales de color — artefacto nuevo (`src/sin-colores-literales.ts` y su prueba).** Recorre
+todos los módulos `.ts` de `src/motor/` y `src/ui/` (excluyendo los `.test.ts`) y falla si alguno escribe
+un color como literal: hex de 3/4/6/8 dígitos, `rgb`/`rgba`, `hsl`/`hsla` o un nombre CSS en posición de
+color. Al fallar identifica archivo, línea, columna y literal, y no toca el módulo. Excluye a propósito
+`src/main.ts`, que mantiene los valores de reserva del lector de tema y las constantes de presentación. El
+detector distingue un color dentro de una cadena de la misma palabra en un comentario o embebida en una
+frase (no confunde «la red» con `red`). *Motivo:* requisitos 9.1 y 9.2; generaliza a los dos directorios
+la comprobación que `personajes.test.ts` ya hacía solo para `personajes.ts`, garantizando que todo color
+salga del Tema.
+
+**Verificación del documento servido — `src/main.test.ts`, grupo «6.4».** Lee el `index.html` real y falla
+si declara enlaces o preconexiones a un origen de fuentes distinto del propio (`fonts.googleapis.com`,
+`fonts.gstatic.com` u otro host externo). *Motivo:* requisito 6.4 (cero solicitudes a otro origen de
+fuentes), que cierra el desvío 00·27.8. Se escribió primero para **fallar** con el estado de entonces —dos
+`preconnect` y un `stylesheet` a Google Fonts— y confirmar que la verificación detecta el incumplimiento;
+tras el autoalojado de fuentes de la tarea 8.3 (paquetes Fontsource con licencia OFL, empaquetados por
+Vite desde el propio origen), la misma prueba **pasa**.
+
+**Pruebas de estructura — `src/main.test.ts`, grupo «1.1–1.4 · tres columnas y apilado».** Leen
+`pantalla.css` como texto y confirman que `.kl-escena` es una cuadrícula de exactamente tres columnas, que
+existe la `@media (max-width: 720px)` que apila a una sola columna, y que el apilado respeta el orden
+exigido (figura de Kiro, programa, figura del jugador). Se apoyan en las pruebas de estructura de archivos
+que ya comprobaban la región `aria-live` única, las ranuras y los `id` de los lienzos, y añaden la caída a
+`#aplicacion` cuando una pieza no encuentra su ranura: no se omite ni interrumpe el montaje de las demás.
+*Motivo:* requisitos 1.1–1.4 y 1.8; la forma y el orden de las reglas sí se pueden verificar leyendo el CSS.
+
+**Propiedades 1 y 2 — opcionales, aún sin implementar.** Las tareas 4.2 y 4.3 están marcadas como
+opcionales (`[ ]*`) en `tasks.md` y, con honestidad, **todavía no se han escrito**. Quedan descritas para
+quien las retome:
+
+- **Property 1 · el veredicto de presentación nunca empeora la coincidencia** (validaría los requisitos 4.3
+  y 4.5). El invariante: para toda figura del jugador y de referencia, la coincidencia (IoU) de
+  `veredictoParaMostrar` es mayor o igual que la del veredicto oficial, y las Estrellas no cambian, porque
+  la calificación sale siempre del veredicto oficial. Es la garantía formal de la enmienda 00·23.5: la
+  superposición puede dibujar en la alineación más favorable, pero nunca califica con ella.
+- **Property 2 · idempotencia del repintado ante el mismo tema** (validaría el requisito 2.2). El
+  invariante: repintar dos veces con los mismos valores del Tema produce el mismo dibujo, porque color y
+  grosor son función de las fichas leídas por `getComputedStyle`, no de estado acumulado.
+
+Ambas se pensaron con fast-check 4.9.0, mínimo 100 iteraciones, etiquetadas `Feature: 08-diseno-visual,
+Property N`. Mientras no existan, el invariante que cubrirían queda sostenido solo por las pruebas de
+ejemplo y por esta nota, no por una comprobación sobre muchas entradas.
+
+**No debilitamiento e integración de mundos — documentales, sin prueba automática.** Las tareas 10.1 y 10.2
+son opcionales y documentales: registran reglas en esta Bitácora en lugar de crear pruebas. La regla de no
+debilitamiento (ninguna prueba heredada de las specs 00 o 01 se afloja sin una enmienda registrada tanto en
+la spec como en la Bitácora) ya quedó escrita en la nota de la tarea 11.1. La regla de integración de un
+mundo nuevo —conservar identificador, orden y anidamiento de las ranuras existentes, y no agregar, eliminar
+ni modificar declaraciones de `tema.css` ni reglas de `pantalla.css` ajenas a sus propias clases— se
+registra aquí con el mismo carácter. *Motivo de que sean documentales y no automáticas:* una prueba que
+intentara detectar «debilitamiento de pruebas heredadas» o «un mundo nuevo que toca el tema» bloquearía las
+specs de los mundos 02–07, que legítimamente añaden vocabulario, niveles y sus propias clases. La regla es
+un contrato de revisión, no un cerrojo de la Suite_Pruebas.
+
+### «Que las pruebas pasen» no basta como prueba de cumplimiento
+
+Conviene dejarlo escrito sin rodeos. Todo lo anterior corre sobre jsdom, que modela el DOM pero **no hace
+layout**, no pinta, no calcula píxeles y no tiene ojos. Las pruebas confirman la **existencia y la forma**
+de las reglas —que el tema declara las fichas, que ninguna derivada lleva un literal, que el CSS tiene tres
+columnas y una `@media`, que `index.html` no pide fuentes a otro origen—, pero no confirman el **resultado
+visual**. Una suite verde es condición necesaria, no suficiente. Queda a verificación manual, en un
+navegador real y con una persona mirando:
+
+- **El encuadre** (tarea 9.2). Que la escena entre completa a 1440 × 900 sin desplazamiento, con un margen
+  de hasta 8 px en vertical a 1366 × 768 y sin desplazamiento horizontal, y que apile en orden a menos de
+  720 px sin recortes. jsdom no lo puede afirmar; el procedimiento está en la nota de la tarea 9.2.
+- **La lectura visual de los personajes.** Que la tortuga y Kiro se lean de un vistazo: hacia dónde mira la
+  tortuga (el rumbo), si el lápiz está arriba o abajo, cuál tortuga lleva jinete en la reproducción en
+  paralelo. La prueba confirma que los trazos se dibujan y que el tema puede quitarlos; que **se entiendan**
+  es un juicio humano.
+- **La calidad del foco pintado.** La prueba confirma que la regla de foco existe y que su color contrasta
+  ≥ 3:1. Que el anillo de `:focus-visible` se **vea bien** —grosor, separación, que no quede cortado por un
+  borde— solo se comprueba navegando con el teclado y mirando.
+
+Esta separación no es una debilidad del diseño de pruebas: es su honestidad. La máquina verifica lo que se
+puede leer en el texto del CSS y del HTML; la persona verifica lo que solo existe cuando el documento se
+dibuja. Dar por cumplido un requisito visual porque «las pruebas pasan» sería confundir las dos cosas.
+
+---
+
+## La regla de no debilitamiento de pruebas heredadas (spec 08 · diseño visual · tarea 10.1)
+
+Las notas de las tareas 11.1 y 12.1 ya mencionan esta regla de pasada, al cerrar las enmiendas y al listar
+las pruebas. Esta nota la aísla y la deja escrita como regla permanente del proyecto, con el detalle que
+las otras dos no alcanzaban a fijar: **cómo se identifica la prueba afectada en cada enmienda** y **por qué
+es una regla documental y no una prueba automática.** Es el lugar al que remitir cuando una spec futura
+—mundos 02 a 07— necesite aflojar algo que las specs 00 (Cimientos) o 01 (Mundo 0) dejaron fijado.
+
+### La regla
+
+Ninguna prueba heredada de las specs 00 o 01 se **debilita** sin una enmienda registrada **tanto en la spec
+que la debilita como en esta Bitácora**. «Debilitar» cubre toda forma de bajar la exigencia de una prueba
+existente, no solo borrarla:
+
+- **eliminar** la prueba por completo;
+- **relajar un umbral** (bajar un contraste exigido, ampliar una tolerancia geométrica, subir un
+  presupuesto de instrucciones);
+- **reducir iteraciones** de una prueba de propiedad (por ejemplo, pasar de 200 semillas a menos, o de las
+  100 iteraciones mínimas de fast-check a menos);
+- **quitar una aserción** de un caso que antes la tenía;
+- **convertir en `skip`** (o en `todo`, o comentar) una prueba que antes corría.
+
+Cualquiera de estas acciones sobre una prueba heredada de 00 o 01 exige el **doble registro**. Sin él, el
+cambio debe tratarse como no válido en la revisión: una prueba heredada no se afloja por descuido ni en
+silencio.
+
+### Cómo se identifica la prueba afectada en cada enmienda
+
+Para que el rastro sea rastreable y no una mención vaga, cada enmienda —en la spec y en la Bitácora— tiene
+que señalar la prueba afectada por:
+
+- **su archivo**, con la ruta exacta (por ejemplo `src/main.test.ts` o `src/motor/validador.test.ts`);
+- **el nombre exacto del `describe`/`it`**, copiado carácter por carácter como aparece en el código, no
+  parafraseado; y, **si aplica, el grupo numerado** al que pertenece (por ejemplo «21.4 · accesibilidad
+  WCAG del tema» o «1.1–1.4 · tres columnas y apilado»), porque varias pruebas de este proyecto viven
+  agrupadas bajo un mismo encabezado numerado dentro de un archivo grande;
+- **qué criterio heredado cubría**, citando el requisito o el punto de la spec 00/01 que la prueba hacía
+  cumplir (por ejemplo «00·13.3 · marca de rumbo»), de modo que se vea de un vistazo qué garantía se está
+  modificando y contra qué se originó.
+
+Con esos tres datos —archivo, nombre exacto del bloque y grupo, y criterio heredado— cualquiera que lea el
+diff puede ir de la enmienda a la prueba concreta y de vuelta al requisito original. Ese ida y vuelta es lo
+que convierte el cambio en revisable. Las ocho enmiendas registradas en la nota de la tarea 11.1 son el
+modelo a seguir: cada una cita el criterio de la spec 00 que modifica y el porqué del cambio.
+
+### Por qué es documental y no una prueba automática
+
+La tentación es escribir una prueba que detecte el «debilitamiento» por su cuenta y lo bloquee. No se hace,
+y la razón es de fondo: **una prueba automática no puede distinguir un debilitamiento legítimo y enmendado
+de uno accidental.** Las dos cosas se ven igual desde el código —un umbral que baja, una aserción que
+desaparece, una prueba que pasa a `skip`—; lo único que las separa es la **intención**, registrada en la
+enmienda de la spec y en esta Bitácora. Eso es exactamente lo que un verificador automático no lee.
+
+Una prueba así, además, haría daño activo: bloquearía de forma indebida las specs de los mundos 02 a 07,
+que **legítimamente evolucionan** el catálogo y la interfaz —añaden vocabulario, niveles, generadores y sus
+propias clases de CSS—, y que en el camino van a ajustar de forma válida pruebas heredadas con su enmienda
+correspondiente. Un cerrojo automático no sabría que esos cambios vienen con su doble registro y los
+frenaría a todos por igual.
+
+Por eso la regla es un **contrato de revisión**, no un candado de la Suite_Pruebas: vive en la mirada de
+quien revisa el diff, apoyada en la enmienda escrita, no en una aserción que no puede leer la intención.
+Esta es, de paso, la misma lógica por la que la regla de integración de mundos nuevos (tarea 10.2) tampoco
+se automatiza.
+
+---
+
+## La regla de integración de un mundo nuevo (spec 08 · diseño visual · tarea 10.2)
+
+La nota de la tarea 12.1 enunció esta regla al pasar, en la lista de pruebas, y la nota de la tarea 10.1 la
+nombró como su gemela documental. Esta nota la aísla y la deja escrita como regla permanente del proyecto,
+porque es la que van a leer las specs de los mundos 02 a 07 y el mundo bonus cada vez que necesiten sumar
+una pieza de interfaz o un color. El requisito 9 de la spec 08 —«Integración de los mundos futuros sin
+tocar el tema»— la fija en dos criterios, 9.3 y 9.4; aquí quedan con su porqué.
+
+### La regla
+
+Cuando se integra un mundo nuevo, se hace **conservando la base intacta**. En concreto, dos compromisos:
+
+- **(9.3) Las Ranuras de `index.html` no se tocan.** Una pieza de interfaz de un mundo nuevo se cuelga de
+  su Ranura **por identificador**, conservando sin cambios el **identificador**, el **orden** y el
+  **anidamiento** de las Ranuras que ya existen: `programa`, `ranura-comparacion`, `ranura-leyenda`,
+  `ranura-reto`, `ranura-marcador`, `ranura-ruta` y `ranura-paleta`. Agregar un mundo es enganchar su DOM
+  en la Ranura que le corresponde, nunca renombrar una Ranura, reordenarlas ni cambiar cómo anidan unas
+  dentro de otras. Si una pieza no encuentra su Ranura, cae en el contenedor raíz `#aplicacion` sin omitirse
+  ni interrumpir el montaje de las demás; esa caída es la red de seguridad, no una licencia para mover las
+  Ranuras de sitio.
+- **(9.4) El Tema y la Pantalla no se reescriben.** Integrar un mundo nuevo no agrega, elimina ni modifica
+  ninguna declaración de `tema.css`, ni ninguna regla de `pantalla.css` **ajena a las clases propias de ese
+  mundo**. Un mundo nuevo solo **añade sus propias clases**; el color de esas clases sale siempre del Tema
+  —las 19 fichas de la paleta Kiro— **por variable**, nunca con un literal. Lo que un mundo puede hacer es
+  crecer hacia afuera: sumar sus reglas y sus clases. Lo que no puede es entrar a editar las fichas del Tema
+  ni las reglas de layout que comparten todos los mundos.
+
+### El porqué
+
+El Tema es la **única fuente de verdad del color** y la Pantalla es un **contrato estable** de layout. Esa
+es toda la razón. Si cada mundo se permitiera reescribir una ficha del Tema «solo para su caso», o mover una
+Ranura para que su pieza encajara mejor, dos cosas se romperían a la vez: la **coherencia visual** —seis
+mundos tirando del mismo color en direcciones distintas dejan de verse como un solo juego— y la
+**revisabilidad** —una enmienda al Tema hecha desde el mundo 4 afecta en silencio a los mundos 0 a 3, y
+nadie que revise el diff del mundo 4 lo esperaría. Acotar cada mundo a sus propias clases y a colgar de las
+Ranuras existentes es lo que permite que el catálogo y la interfaz **evolucionen sin desestabilizar la
+base**: un mundo nuevo es siempre una suma, nunca una reescritura de lo compartido.
+
+Es, además, lo que vuelve barata la integración. Añadir un mundo se parece a añadir un nivel, que el
+steering ya define como «agregar un objeto a un arreglo»: datos y clases nuevas, no cirugía sobre lo que ya
+funciona. Si integrar un mundo obligara a tocar el Tema o a reacomodar las Ranuras, sería la señal de que
+falta una capacidad en la base, no de que el mundo tenga derecho a reescribirla.
+
+### Por qué es documental y no una prueba automática
+
+Por la misma lógica que la regla de no debilitamiento de la tarea 10.1, y conviene dejarlo escrito. Una
+prueba que afirmara «un mundo nuevo no toca el tema ni la pantalla» tendría que ejecutarse contra código que
+**todavía no existe**: las specs de los mundos 02 a 07 aún están por escribirse. Un cerrojo así bloquearía
+de antemano a esos mundos, que **legítimamente** van a añadir sus propias clases a `pantalla.css` y a leer
+las fichas del Tema por variable. La prueba no sabría distinguir una clase nueva y bien acotada —permitida—
+de una modificación de una declaración compartida —prohibida—, porque ambas tocan los mismos archivos; lo
+único que las separa es **a qué clases pertenece el cambio**, y eso es un juicio de revisión sobre el diff,
+no una condición que una aserción pueda leer sin ambigüedad.
+
+Por eso la regla es un **contrato de revisión del diff**, no un cerrojo de la Suite_Pruebas: se hace cumplir
+leyendo qué toca cada mundo cuando llega, apoyándose en este registro, no con una prueba que frenaría por
+igual a los mundos que respetan la regla y a los que no.
+
+---
+
+## Enmiendas y decisiones al cerrar la spec 09 (ajustes de interfaz · tarea 7.2)
+
+La spec 09 no reabrió el diseño visual: hizo **tres ajustes acotados** sobre la pantalla que la spec 08
+ya había formalizado como estado aprobado del repositorio. Pero cada uno de los tres toca una conducta
+que una spec anterior había fijado, así que, por la misma regla de siempre —ninguna contradicción queda
+callada—, cada desvío se cierra aquí de forma explícita: se cita el criterio anterior, se dice si queda
+**enmendado** (el criterio anterior deja de ser cierto y la spec 09 prevalece sobre él) o **reemplazado**
+(el estado que la spec 08 describía como «actual» queda sustituido por el comportamiento de esta spec), y
+se explica el porqué. Las enmiendas de la spec 08 son el modelo: cada una con su criterio y su razón.
+
+### Enmienda 00·26.2 y 00·26.4 — el atajo de movimiento ya no anticipa la cantidad
+
+**Qué cambia.** El texto visible permanente del botón de un `Atajo_Movimiento` —`AVANZA`, `RETROCEDE`,
+`GIRADERECHA`, `GIRAIZQUIERDA`— deja de ser el ejemplo con cantidad (`AVANZA 100`, `GIRADERECHA 90`…) y
+pasa a ser **solo el nombre del comando**. Y al activar el botón, el `Panel_Comandos` deja de insertar el
+`ejemplo` con su número: ahora inserta el nombre del comando seguido de un solo espacio, y deja el cursor
+justo detrás de ese espacio para que el jugador escriba la cantidad. El ejemplo con cantidad no se pierde:
+sigue en la descripción del comando y en el nombre accesible del botón.
+
+**Cómo se hizo sin duplicar la fuente de verdad.** El cambio podría haberse resuelto con una lista aparte
+de «qué inserta cada botón», pero eso habría creado una segunda fuente de verdad enfrentada al
+Vocabulario. En vez de eso se añadió un campo nuevo, `insercion`, a cada entrada del Vocabulario, con una
+regla derivada de los campos que ya existían: aridad 1 con argumento numérico → nombre más un espacio;
+aridad 0 (`CENTRO`, `BORRAPANTALLA`) → nombre a secas, sin espacio final; cualquier otra entrada conserva
+su `ejemplo` como inserción por ahora, a revisar en la spec de su propio mundo. El `Panel_Comandos`
+inserta `insercion` y expone `data-insercion` en el botón; el CSS lo pinta con un `::before` que lee
+`attr(data-insercion)`. Así el Vocabulario sigue siendo la única fuente de verdad de lo que un botón
+escribe, igual que lo es de su nombre, su aridad y su error.
+
+**El porqué, que es pedagógico.** Un botón que escribe `AVANZA 100` le está diciendo al jugador que la
+cantidad es cosa del juego. La lección del mundo 0 es justo la contraria: la cantidad es una decisión del
+jugador, y la tortuga avanza lo que uno le diga. Que el botón escriba `AVANZA ` y espere el número hace
+visible esa decisión desde el primer nivel. Por eso la enmienda pide explícitamente que **ningún** botón
+del mundo 0 muestre un dígito, y una prueba lo verifica sobre los seis.
+
+La spec 00 pedía el ejemplo con cantidad como texto visible (00·26.2) y como lo que el botón inserta
+(00·26.4). La spec 09 enmienda ambos criterios y pasa a prevalecer sobre ellos. El significado, la aridad
+y los mensajes de error del comando no cambian: pulsar `AVANZA`, escribir `100` y ejecutar en el Nivel 0.1
+otorga las tres estrellas igual que antes, y `AVANZA` sin número sigue dando el mismo error del catálogo
+(`AVANZA necesita un número. Por ejemplo: AVANZA 100`).
+
+### Enmienda 01·12 — de la fila de un solo mundo a un menú de los seis mundos
+
+**Qué cambia.** La navegación de niveles de la cabecera dejaba ver solo los niveles del **mundo en curso**,
+en una fila, sin forma de pasar a otro mundo: al completar el mundo 0, el jugador se quedaba sin salida.
+Esa fila (el `Selector_Nivel`) se sustituye por un `Menu_Mundos`: los seis mundos de concepto (0 a 5), cada
+uno como un desplegable en acordeón —a lo sumo uno abierto a la vez— que muestra sus niveles. Desde él se
+puede abrir cualquier mundo desbloqueado y cargar cualquiera de sus niveles.
+
+**Lo que se conserva y lo que no.** No cambia la regla de desbloqueo de la spec 01: el mundo *n* se abre al
+aprobar con estrella de precisión todos los niveles del mundo *n-1*, y el menú lee esa disponibilidad del
+`Desbloqueo`, no la reinventa. Tampoco cambia el cometido de cargar un nivel elegido, que era lo que hacía
+el `Selector_Nivel` (01·12.2); solo se extiende a niveles de cualquier mundo. Lo que cambia es la
+**presentación**: de una fila de un mundo a un menú de seis. Por eso 01·12 queda **enmendado**, no
+reemplazado: el acto de elegir y cargar un nivel sigue, su alcance se amplía.
+
+**Los cuidados que trajo el menú.** Para no gastar paradas de Tab contra el límite de 20 de 00·28.1, el
+menú entero es **una sola parada de Tab** recorrida con las flechas (el mismo «roving tabindex» que ya usa
+el `Panel_Comandos`): con el menú cerrado, una parada; abierto, dos. Se abre como **capa superpuesta** sobre
+el contenido, de modo que abrir un mundo no agranda la cabecera ni empuja la escena, que sigue cabiendo a
+1440 × 900 sin desplazamiento. Al entrar, queda abierto por defecto el mundo del nivel en curso. Un mundo
+sin niveles en el catálogo se muestra como bloqueado con el texto «próximamente», sin niveles que elegir, de
+modo que cuando el catálogo incorpore ese mundo el menú lo muestre sin tocar el código del menú. Y la
+medalla de la insignia de concepto de un mundo ganado aparece en el encabezado de su desplegable, que es
+donde recaló al desaparecer la fila de niveles.
+
+### Reemplazo de elementos de la spec 08
+
+La spec 08 ya anticipaba que estas cosas iban a cambiar: las había dejado descritas como «estado actual que
+la spec 09 sustituye». Aquí queda escrito qué sustituye cada una.
+
+- **08·1 — la ruta de niveles como estado actual.** La spec 08 describía la cabecera con una ruta de niveles
+  de un solo mundo y la etiqueta «Mundo N · Nombre» con la medalla al final. Queda **reemplazada** por el
+  `Menu_Mundos` de seis mundos desplegables descrito arriba. El mundo y el nivel en curso ya no se leen en
+  una fila fija, sino en el botón de cabecera que abre el menú.
+- **08·5.3 — el panel mostraba el ejemplo como texto visible permanente.** Queda **reemplazado**: el texto
+  visible permanente del botón pasa a ser el campo `insercion` (para un atajo, el nombre del comando), no el
+  ejemplo con cantidad. Es la cara de presentación de la misma enmienda 00·26.2/00·26.4.
+- **08·5.5 y 08·5.7 — la presentación del `Panel_Comandos` que apoyaba mostrar el ejemplo.** Quedan
+  **sustituidos** en lo que describían de ese estado anterior: el reparto del texto del botón donde el
+  ejemplo era el trozo visible y lo demás se revelaba al enfocar deja de pintar el ejemplo como único trozo
+  a la vista. El ejemplo sigue íntegro en el `textContent` y en el nombre accesible del botón —no se pierde
+  para un lector de pantalla—, pero el trozo que se **ve** pasa a ser la `insercion`, mostrada por el
+  `::before` del botón. La barra de herramientas conserva su única parada de Tab y el recorrido con las
+  flechas, sin que la retirada de la cantidad cambie el foco ni el orden de tabulación.
+
+### Decisión de color plano
+
+**Qué se retira.** Se adopta color sólido en la presentación y se retiran los degradados y los resplandores
+difuminados enumerados, uno por uno:
+
+- el **halo del logo**, el `filter: drop-shadow` de `.kl-logo`;
+- los **fondos del `body`**, los `radial-gradient` de color y la cuadrícula de puntos hecha con gradiente,
+  que pasan a un color sólido;
+- el **glow del botón del nivel en curso**, la parte con desenfoque del `box-shadow` del elemento «en
+  curso» (que desaparece junto con las reglas `.kl-selector-*` al nacer el menú plano `.kl-menu-*`);
+- el **degradado y el glow de la medalla** de la insignia: el `radial-gradient` dorado y la sombra
+  difuminada de `.kl-insignia-medalla`, que pasa a dorado sólido;
+- el **`linear-gradient` de la pluma** (`.kl-pluma`), que además era CSS sin uso en el HTML y se retira por
+  completo con su animación.
+
+En todos los casos se conserva el relieve de **Sombra_Dura** —el `box-shadow` con radio de desenfoque
+cero—, la paleta Kiro sin tocar un solo valor de color, y el contraste.
+
+**Las dos excepciones, documentadas a propósito.** No todo resplandor es decoración. Se **conservan**, y la
+prueba estructural de color plano los admite nombrando selector y propiedad exactos:
+
+- el `drop-shadow` de las **dos estelas del lienzo**, `.kl-capa-estela-referencia` y
+  `.kl-capa-estela-jugador`;
+- el `text-shadow` del icono de una **estrella otorgada**,
+  `.kl-estrella[data-estado="otorgada"] .kl-estrella-icono`.
+
+**El porqué.** Una pantalla sin halos ni degradados es una imagen limpia que no compite con la figura que
+el jugador está dibujando, que es lo único que debería brillar. Por eso las dos excepciones son
+precisamente las que comunican el resultado del juego: el trazo que quedó en el lienzo y la estrella que se
+acaba de ganar. El resplandor ahí no decora, señala un logro; en el logo o en el fondo solo distraía. Y
+para que la decisión no se erosione con el tiempo, una prueba estructural (`Prueba_Color_Plano`) lee el
+texto real de `pantalla.css` y `tema.css` y falla si reaparece cualquiera de los efectos retirados,
+admitiendo solo esas dos excepciones por su selector y propiedad exactos y la Sombra_Dura sin desenfoque.
