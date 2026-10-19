@@ -181,6 +181,11 @@ export interface Editor {
   lineaDelCursor(): number;
   /** Presenta un reto: vacía el área, pone el presupuesto y limpia marcas. */
   presentarReto(presupuestoEstrella: number): void;
+  /**
+   * Fija el mundo del análisis al del nivel en curso y reanaliza el texto, para
+   * que marcas y contador reflejen el mundo nuevo sin esperar al próximo tecleo.
+   */
+  fijarMundo(mundo: Mundo): void;
   /** Resalta exactamente la línea dada en el paso a paso; 0 o menos retira el resalte. */
   resaltarLinea(linea: number): void;
   /** Fuerza el reanálisis y actualización del contador y las marcas ahora. */
@@ -202,6 +207,9 @@ export function crearEditor(deps: DependenciasEditor): Editor {
   const doc = deps.contenedor.ownerDocument;
   const reloj = deps.reloj ?? RELOJ_REBOTE_INMEDIATO;
   let presupuesto = deps.presupuestoEstrella;
+  // Mutable para que al cambiar de nivel el análisis use el mundo del nivel en
+  // curso sin recrear el editor (ver fijarMundo).
+  let mundoActual = deps.mundo;
 
   // --- Estructura del DOM ---
   const raiz = doc.createElement('div');
@@ -331,7 +339,7 @@ export function crearEditor(deps: DependenciasEditor): Editor {
 
     let conteoActual: number | null = null;
     if (lexico.errores.length === 0) {
-      const sintactico = analizar(lexico.tokens, { mundo: deps.mundo });
+      const sintactico = analizar(lexico.tokens, { mundo: mundoActual });
       for (const e of sintactico.errores) errores.push(e);
       if (sintactico.programa !== null && sintactico.errores.length === 0) {
         const c = contarInstrucciones(sintactico.programa);
@@ -478,6 +486,11 @@ export function crearEditor(deps: DependenciasEditor): Editor {
       actualizarContador();
       actualizarCanaleta();
       actualizarMarcas();
+    },
+
+    fijarMundo(mundo: Mundo): void {
+      mundoActual = mundo;
+      analizarTexto();
     },
 
     resaltarLinea(linea: number): void {

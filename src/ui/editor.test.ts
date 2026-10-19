@@ -252,3 +252,238 @@ describe('editor · insertar en cursor', () => {
     expect(editor.texto()).toBe('CENTRO');
   });
 });
+
+// ============================================================================
+// Tarea 2 (spec repite-desbloqueo-mundo-1) · Property 2: Preservación
+//
+// Observación primero: se fija el comportamiento BASE que el arreglo debe
+// preservar, sobre el código SIN arreglar. La condición del bug es
+// `mundoDelEditor <> mundoDelNivelEnCurso`; aquí se cubre su negación (¬C):
+// el editor se crea DIRECTAMENTE en el mundo del nivel (como las pruebas con
+// `mundo` forzado), de modo que `mundoDelEditor = mundoDelNivelEnCurso`. Para
+// toda entrada así, F' (arreglado) debe comportarse igual que F (actual), por
+// lo que estas pruebas PASAN hoy y deben seguir pasando tras el arreglo.
+//
+// El dominio es pequeño y cerrado (mundos 0..5, vocabulario fijo). El azar que
+// hace falta pasa por `azar/prng.ts`, nunca `Math.random`: la semilla fija deja
+// el recorrido de los mundos reproducible.
+// ============================================================================
+
+import { crearPrng } from '../azar/prng.js';
+import { comandosDelMundo, type Mundo } from '../lenguaje/vocabulario.js';
+
+// Un programa válido por mundo que usa solo comandos con `mundo <= m`, con su
+// conteo esperado (la línea base del contador que se preserva). Los mundos sin
+// comandos nuevos propios (3) reutilizan el vocabulario ya desbloqueado; todos
+// parten del vocabulario del mundo 0, que nunca está vacío.
+const PROGRAMA_VALIDO_POR_MUNDO: Record<Mundo, { readonly texto: string; readonly conteo: number }> = {
+  // El conteo incluye el nodo REPITE más los comandos de su cuerpo (la base del
+  // contador que `conteo.ts` calcula y que el arreglo debe preservar).
+  0: { texto: 'AVANZA 100\nGIRADERECHA 90', conteo: 2 },
+  1: { texto: 'REPITE 4 [AVANZA 100 GIRADERECHA 90]', conteo: 3 },
+  2: { texto: 'SUBELAPIZ\nAVANZA 100\nBAJALAPIZ', conteo: 3 },
+  3: { texto: 'REPITE 3 [AVANZA 60 GIRADERECHA 120]', conteo: 3 },
+  4: { texto: 'AVANZA 100\nGIRAIZQUIERDA 45', conteo: 2 },
+  5: { texto: 'REPITE 4 [AVANZA 50 GIRADERECHA 90]', conteo: 3 },
+};
+
+const TODOS_LOS_MUNDOS: readonly Mundo[] = [0, 1, 2, 3, 4, 5];
+
+describe('editor · preservación (mundo del editor = mundo del nivel, ¬C)', () => {
+  it('para todo mundo m, un programa válido de m se analiza sin errores y con el mismo conteo', () => {
+    // Recorre los seis mundos en un orden barajado por el PRNG (semilla fija):
+    // el resultado no depende del orden, pero deja el recorrido reproducible y
+    // sin recurrir a Math.random.
+    const prng = crearPrng(20240531);
+    const orden = [...TODOS_LOS_MUNDOS];
+    for (let i = orden.length - 1; i > 0; i--) {
+      const j = prng.entero(0, i);
+      [orden[i], orden[j]] = [orden[j]!, orden[i]!];
+    }
+
+    for (const mundo of orden) {
+      const { editor } = montar(mundo);
+      const caso = PROGRAMA_VALIDO_POR_MUNDO[mundo]!;
+      escribir(editor, caso.texto);
+      const estado = editor.estadoContador();
+      // Sin errores: ningún comando con mundo <= m queda bloqueado.
+      expect(estado.errores, `mundo ${mundo}: sin errores`).toEqual([]);
+      expect(estado.provisional, `mundo ${mundo}: conteo firme`).toBe(false);
+      // El conteo es el de siempre (la base que se preserva).
+      expect(estado.conteo, `mundo ${mundo}: conteo`).toBe(caso.conteo);
+    }
+  });
+
+  it('en el mundo 1, SUBELAPIZ (mundo 2) sigue reportando comandoBloqueado nombrando el mundo 2', () => {
+    const { editor } = montar(1);
+    escribir(editor, 'SUBELAPIZ');
+    const errores = editor.estadoContador().errores;
+    const bloqueo = errores.find((e) => e.id === 'comandoBloqueado');
+    expect(bloqueo, 'hay un comandoBloqueado para SUBELAPIZ').toBeDefined();
+    // El mensaje del catálogo nombra el mundo en que se desbloquea (el 2).
+    expect(bloqueo!.mensaje).toContain('mundo 2');
+    expect(bloqueo!.mensaje).toContain('SUBELAPIZ');
+  });
+
+  it('presentarReto sigue vaciando texto, fijando presupuesto, reiniciando conteo y limpiando marcas', () => {
+    // Parte de un programa válido del mundo con un error añadido, para que haya
+    // texto, conteo y marcas que limpiar.
+    const { editor } = montar(1, 1);
+    escribir(editor, 'REPITE 4 [AVANZA 100 GIRADERECHA 90]\n&&&');
+    expect(editor.texto().length).toBeGreaterThan(0);
+    expect(editor.raiz.querySelectorAll('.kl-editor-marca').length).toBeGreaterThan(0);
+
+    editor.presentarReto(7);
+    // Texto vacío, conteo en 0 sin provisional, sin marcas.
+    expect(editor.texto()).toBe('');
+    const estado = editor.estadoContador();
+    expect(estado.conteo).toBe(0);
+    expect(estado.provisional).toBe(false);
+    expect(estado.errores).toEqual([]);
+    expect(editor.raiz.querySelectorAll('.kl-editor-marca').length).toBe(0);
+    // El presupuesto nuevo quedó fijado (lo refleja el nombre accesible del contador).
+    const contador = editor.raiz.querySelector('.kl-editor-contador')!;
+    expect(contador.getAttribute('aria-label')).toContain('presupuesto de estrella 7');
+  });
+});
+
+// ============================================================================
+// Tarea 3.4 (spec repite-desbloqueo-mundo-1) · Property 1: comportamiento esperado
+//
+// El arreglo: `fijarMundo` cambia el mundo del análisis sin recrear el editor y
+// reanaliza el texto en curso, de modo que marcas y contador reflejen el mundo
+// nuevo sin esperar al próximo tecleo. Deja presupuesto y texto intactos.
+//
+// isBugCondition(X) = mundoDelEditor <> mundoDelNivelEnCurso. Aquí se cubre C:
+// el editor nace en un mundo y se le fija otro, igual que hace montarReto al
+// navegar. El dominio es cerrado (mundos 0..5, vocabulario fijo); el PBT recorre
+// todos los pares (inicial, destino) con el PRNG decidiendo solo el orden.
+// ============================================================================
+
+describe('editor · fijarMundo cambia el mundo del análisis (Property 1)', () => {
+  it('fijarMundo(1) deja REPITE disponible y fijarMundo(0) lo vuelve a bloquear', () => {
+    // Nace en el mundo 0: REPITE (mundo 1) está bloqueado.
+    const { editor } = montar(0);
+    escribir(editor, 'REPITE 4 [AVANZA 100 GIRADERECHA 90]');
+    const bloqueoInicial = editor
+      .estadoContador()
+      .errores.find((e) => e.id === 'comandoBloqueado' && e.mensaje.includes('REPITE'));
+    expect(bloqueoInicial, 'en el mundo 0 REPITE está bloqueado').toBeDefined();
+
+    // Fijar el mundo 1 lo desbloquea sin recrear el editor ni volver a teclear.
+    editor.fijarMundo(1);
+    const estadoUno = editor.estadoContador();
+    expect(
+      estadoUno.errores.some((e) => e.id === 'comandoBloqueado' && e.mensaje.includes('REPITE')),
+      'tras fijarMundo(1) REPITE ya no está bloqueado',
+    ).toBe(false);
+    expect(estadoUno.errores, 'el programa válido del mundo 1 no deja ningún error').toEqual([]);
+
+    // Volver al mundo 0 lo bloquea de nuevo, nombrando el mundo 1.
+    editor.fijarMundo(0);
+    const bloqueoVuelta = editor
+      .estadoContador()
+      .errores.find((e) => e.id === 'comandoBloqueado' && e.mensaje.includes('REPITE'));
+    expect(bloqueoVuelta, 'tras fijarMundo(0) REPITE vuelve a bloquearse').toBeDefined();
+    expect(bloqueoVuelta!.mensaje).toContain('mundo 1');
+  });
+
+  it('reanaliza el texto en curso de inmediato, sin esperar al próximo tecleo', () => {
+    const { editor } = montar(0);
+    escribir(editor, 'REPITE 4 [AVANZA 100 GIRADERECHA 90]');
+    // Antes de fijar el mundo, hay una marca de error de REPITE bloqueado en la canaleta.
+    expect(editor.raiz.querySelectorAll('.kl-editor-marca').length).toBeGreaterThan(0);
+
+    // fijarMundo(1) reanaliza ya: la marca desaparece sin que el jugador vuelva a teclear.
+    editor.fijarMundo(1);
+    expect(editor.raiz.querySelectorAll('.kl-editor-marca').length).toBe(0);
+    expect(editor.estadoContador().conteo).toBe(3);
+    expect(editor.estadoContador().provisional).toBe(false);
+  });
+
+  it('no altera el texto en curso ni el presupuesto mostrado', () => {
+    const { editor } = montar(0, 5);
+    escribir(editor, 'REPITE 4 [AVANZA 100 GIRADERECHA 90]');
+    const textoAntes = editor.texto();
+
+    editor.fijarMundo(1);
+    // El texto del jugador queda tal cual: fijarMundo configura el análisis, no el intento.
+    expect(editor.texto()).toBe(textoAntes);
+    // El presupuesto que presentarReto fijó sigue siendo el mismo (no lo toca fijarMundo).
+    const contador = editor.raiz.querySelector('.kl-editor-contador')!;
+    expect(contador.getAttribute('aria-label')).toContain('presupuesto de estrella 5');
+  });
+
+  it('fijarMundo con el mundo ya vigente es idempotente: no cambia conteo ni errores', () => {
+    // ¬C: el editor ya está en el mundo del nivel en curso. Volver a fijar el mismo
+    // mundo deja el análisis exactamente igual (conteo, provisional y errores).
+    const { editor } = montar(1);
+    escribir(editor, 'REPITE 4 [AVANZA 100 GIRADERECHA 90]');
+    const antes = editor.estadoContador();
+
+    editor.fijarMundo(1); // mismo mundo
+
+    const despues = editor.estadoContador();
+    expect(despues.conteo).toBe(antes.conteo);
+    expect(despues.provisional).toBe(antes.provisional);
+    expect(despues.errores).toEqual(antes.errores);
+    // Y con un comando de un mundo posterior, el bloqueo tampoco cambia al reafirmar el mundo.
+    escribir(editor, 'SUBELAPIZ');
+    const conBloqueo = editor.estadoContador();
+    editor.fijarMundo(1); // reafirma el mismo mundo
+    expect(editor.estadoContador().errores).toEqual(conBloqueo.errores);
+  });
+
+  it('PBT: para todo par (inicial, destino) en 0..5, tras fijarMundo(destino) no hay comandoBloqueado para comandos con mundo <= destino', () => {
+    // Todos los pares (inicial, destino) con inicial != destino. El PRNG decide
+    // solo el ORDEN del recorrido (semilla fija, reproducible, sin Math.random):
+    // el veredicto es determinista y no depende del orden.
+    const pares: Array<{ inicial: Mundo; destino: Mundo }> = [];
+    for (const inicial of TODOS_LOS_MUNDOS) {
+      for (const destino of TODOS_LOS_MUNDOS) {
+        if (inicial !== destino) pares.push({ inicial, destino });
+      }
+    }
+    const prng = crearPrng(20240712);
+    for (let i = pares.length - 1; i > 0; i--) {
+      const j = prng.entero(0, i);
+      [pares[i], pares[j]] = [pares[j]!, pares[i]!];
+    }
+
+    for (const { inicial, destino } of pares) {
+      const { editor } = montar(inicial);
+      // Un programa con un comando representativo de cada mundo <= destino, para
+      // provocar un bloqueo si el editor se quedara en el mundo inicial.
+      escribir(editor, programaRepresentativo(destino));
+      editor.fijarMundo(destino);
+
+      const errores = editor.estadoContador().errores;
+      for (const entrada of comandosDelMundo(destino)) {
+        const bloqueado = errores.some(
+          (e) => e.id === 'comandoBloqueado' && e.mensaje.includes(entrada.nombre),
+        );
+        expect(
+          bloqueado,
+          `(${inicial} → ${destino}) el editor bloqueó ${entrada.nombre} (mundo ${entrada.mundo} <= ${destino})`,
+        ).toBe(false);
+      }
+    }
+  });
+});
+
+// Programa que usa UN comando real de cada mundo desbloqueado en `destino`, para
+// ejercitar que ninguno queda bloqueado tras fijarMundo. Se construye a partir
+// del vocabulario real (vocabulario.ts es la única fuente de verdad), tomando el
+// ejemplo declarado de un comando por mundo; así no se inventan literales ni se
+// asume qué comandos existen por mundo.
+function programaRepresentativo(destino: Mundo): string {
+  const lineas: string[] = [];
+  const vistos = new Set<Mundo>();
+  for (const entrada of comandosDelMundo(destino)) {
+    if (vistos.has(entrada.mundo)) continue;
+    vistos.add(entrada.mundo);
+    // El ejemplo del vocabulario es un uso sintácticamente válido del comando.
+    lineas.push(entrada.ejemplo);
+  }
+  return lineas.join('\n');
+}

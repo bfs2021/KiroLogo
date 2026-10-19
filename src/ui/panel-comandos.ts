@@ -91,6 +91,11 @@ export interface PanelComandos {
   readonly entradas: readonly EntradaVocabulario[];
   /** Activa el comando de un índice como si el jugador lo hubiese pulsado. */
   activar(indice: number): void;
+  /**
+   * Fija el mundo del nivel en curso y, si cambió, reconstruye los botones con
+   * `comandosDelMundo` del nuevo mundo. No-op si el mundo ya era el vigente.
+   */
+  fijarMundo(mundo: Mundo): void;
 }
 
 // ============================================================================
@@ -106,7 +111,6 @@ export interface PanelComandos {
  */
 export function crearPanelComandos(deps: DependenciasPanel): PanelComandos {
   const doc = deps.contenedor.ownerDocument;
-  const entradas = comandosDelMundo(deps.mundo);
 
   const raiz = doc.createElement('div');
   raiz.className = 'kl-panel-comandos';
@@ -116,8 +120,6 @@ export function crearPanelComandos(deps: DependenciasPanel): PanelComandos {
   // un Tab nunca queda atrapado: sale del panel.
   raiz.setAttribute('role', 'toolbar');
   raiz.setAttribute('aria-label', 'Comandos disponibles');
-
-  const botones: HTMLButtonElement[] = [];
 
   // Ayuda: lo que hace el comando sobre el que está el cursor o el foco, para que cada
   // botón pueda ser solo lo que se va a escribir y todos quepan a la vez. Junto al
@@ -130,6 +132,13 @@ export function crearPanelComandos(deps: DependenciasPanel): PanelComandos {
   ayuda.setAttribute('aria-hidden', 'true');
   ayuda.textContent = TEXTO_AYUDA_INICIAL;
 
+  // Mutables para que al cambiar de nivel el panel refleje el vocabulario del mundo
+  // en curso sin recrear el panel (ver fijarMundo). `botones` y `entradas` se
+  // respaldan aquí y se exponen como lectura readonly por getters.
+  let mundoActual = deps.mundo;
+  let entradas: readonly EntradaVocabulario[] = [];
+  let botones: HTMLButtonElement[] = [];
+
   function activarEntrada(entrada: EntradaVocabulario): void {
     // Inserta el texto de inserción de la entrada (el nombre más un espacio para
     // los comandos con argumento, el nombre solo para los de aridad cero); el
@@ -138,42 +147,9 @@ export function crearPanelComandos(deps: DependenciasPanel): PanelComandos {
     deps.anunciar(`Inserté ${entrada.nombre} en la línea ${linea}.`);
   }
 
-  for (const entrada of entradas) {
-    const boton = doc.createElement('button');
-    boton.type = 'button';
-    boton.className = 'kl-comando';
-    boton.setAttribute('data-comando', entrada.nombre);
-    // Lo que el botón escribe en el editor, expuesto para que el CSS lo muestre
-    // como texto visible del atajo (`::before` con `attr(data-insercion)`).
-    boton.setAttribute('data-insercion', entrada.insercion);
-    // Texto visible: nombre, abreviatura, descripción y ejemplo.
-    rellenarBoton(doc, boton, entrada);
-    // Nombre accesible en español con el mismo contenido.
-    boton.setAttribute('aria-label', textoDeEntrada(entrada));
-    // Un botón nativo se activa con ratón, Enter y barra espaciadora, y conserva
-    // el foco al activarse; no captura el foco (Tab lo mueve al siguiente).
-    boton.addEventListener('click', () => activarEntrada(entrada));
-    // La ayuda sigue al cursor y al teclado por igual.
-    for (const evento of ['mouseenter', 'focus']) {
-      boton.addEventListener(evento, () => {
-        ayuda.textContent = textoDeEntrada(entrada);
-        ayuda.style.top = `${boton.offsetTop}px`;
-        ayuda.classList.add('kl-activa');
-      });
-    }
-    for (const evento of ['mouseleave', 'blur']) {
-      boton.addEventListener(evento, () => {
-        ayuda.textContent = TEXTO_AYUDA_INICIAL;
-        ayuda.classList.remove('kl-activa');
-      });
-    }
-    raiz.appendChild(boton);
-    botones.push(boton);
-  }
-  raiz.appendChild(ayuda);
-
   // Una sola parada de Tab: solo el último botón con el foco (al inicio, el primero) es
-  // alcanzable con Tab; los demás, con las flechas.
+  // alcanzable con Tab; los demás, con las flechas. Lee `botones` por la clausura, así
+  // que sigue válido tras cada reconstrucción.
   function marcarActivo(i: number): void {
     botones.forEach((b, k) => {
       b.tabIndex = k === i ? 0 : -1;
@@ -184,7 +160,9 @@ export function crearPanelComandos(deps: DependenciasPanel): PanelComandos {
     if (n === 0) return;
     botones[((i % n) + n) % n]!.focus();
   }
-  botones.forEach((b, i) => b.addEventListener('focus', () => marcarActivo(i)));
+
+  // El keydown del roving tabindex vive en la raíz y no se recrea al reconstruir:
+  // lee `botones` por la clausura, que la reconstrucción reemplaza.
   raiz.addEventListener('keydown', (e: KeyboardEvent) => {
     const i = botones.indexOf(doc.activeElement as HTMLButtonElement);
     if (i < 0) return;
@@ -208,19 +186,81 @@ export function crearPanelComandos(deps: DependenciasPanel): PanelComandos {
     }
     e.preventDefault();
   });
-  marcarActivo(0);
 
+  // Reconstruye por completo los botones del mundo vigente: borra el contenido de la
+  // raíz, crea un botón por entrada con sus escuchas (click, mouseenter/focus,
+  // mouseleave/blur) y el foco del roving tabindex, vuelve a colgar la ayuda y deja
+  // una sola parada de Tab en el primer botón. `entradas` y `botones` pasan a reflejar
+  // el nuevo vocabulario.
+  function reconstruir(): void {
+    entradas = comandosDelMundo(mundoActual);
+    botones = [];
+    raiz.textContent = '';
+
+    for (const entrada of entradas) {
+      const boton = doc.createElement('button');
+      boton.type = 'button';
+      boton.className = 'kl-comando';
+      boton.setAttribute('data-comando', entrada.nombre);
+      // Lo que el botón escribe en el editor, expuesto para que el CSS lo muestre
+      // como texto visible del atajo (`::before` con `attr(data-insercion)`).
+      boton.setAttribute('data-insercion', entrada.insercion);
+      // Texto visible: nombre, abreviatura, descripción y ejemplo.
+      rellenarBoton(doc, boton, entrada);
+      // Nombre accesible en español con el mismo contenido.
+      boton.setAttribute('aria-label', textoDeEntrada(entrada));
+      // Un botón nativo se activa con ratón, Enter y barra espaciadora, y conserva
+      // el foco al activarse; no captura el foco (Tab lo mueve al siguiente).
+      boton.addEventListener('click', () => activarEntrada(entrada));
+      // La ayuda sigue al cursor y al teclado por igual.
+      for (const evento of ['mouseenter', 'focus']) {
+        boton.addEventListener(evento, () => {
+          ayuda.textContent = textoDeEntrada(entrada);
+          ayuda.style.top = `${boton.offsetTop}px`;
+          ayuda.classList.add('kl-activa');
+        });
+      }
+      for (const evento of ['mouseleave', 'blur']) {
+        boton.addEventListener(evento, () => {
+          ayuda.textContent = TEXTO_AYUDA_INICIAL;
+          ayuda.classList.remove('kl-activa');
+        });
+      }
+      const indice = botones.length;
+      boton.addEventListener('focus', () => marcarActivo(indice));
+      raiz.appendChild(boton);
+      botones.push(boton);
+    }
+    raiz.appendChild(ayuda);
+
+    // La reconstrucción reinicia la ayuda al texto inicial: ningún botón está señalado.
+    ayuda.textContent = TEXTO_AYUDA_INICIAL;
+    ayuda.classList.remove('kl-activa');
+
+    marcarActivo(0);
+  }
+
+  reconstruir();
   deps.contenedor.appendChild(raiz);
 
   return {
     raiz,
-    botones,
+    get botones(): readonly HTMLButtonElement[] {
+      return botones;
+    },
     ayuda,
-    entradas,
+    get entradas(): readonly EntradaVocabulario[] {
+      return entradas;
+    },
     activar(indice: number): void {
       const entrada = entradas[indice];
       if (entrada === undefined) return;
       activarEntrada(entrada);
+    },
+    fijarMundo(mundo: Mundo): void {
+      if (mundo === mundoActual) return; // no-op: el vocabulario vigente no cambia
+      mundoActual = mundo;
+      reconstruir();
     },
   };
 }

@@ -781,7 +781,6 @@ export function crearAplicacion(deps: DependenciasAplicacion): Aplicacion {
     insertarTexto: (t: string) => editor.insertarEnCursor(t),
     anunciar,
   });
-  void panel;
 
   // El panel de comandos se crea ANTES que los controles: va junto al editor (a su
   // derecha) y los controles debajo, y el orden del DOM es el orden de Tab. El panel es
@@ -1062,6 +1061,11 @@ export function crearAplicacion(deps: DependenciasAplicacion): Aplicacion {
       pistas,
     });
     editor.presentarReto(reto.presupuestoEstrella);
+    // Sincroniza el mundo del análisis y del vocabulario con el nivel en curso.
+    // montarReto corre en el arranque y en cada cambiarANivel, así que el mundo
+    // queda siempre al día; en el primer montaje es un no-op porque ya coincide.
+    editor.fijarMundo(reto.nivel.mundo);
+    panel.fijarMundo(reto.nivel.mundo);
 
     // Panel de semilla: el código y si el nivel admite otro reto.
     panelSemilla.presentarReto({

@@ -1,0 +1,159 @@
+{
+  "pbtResults": {
+    "1. Escribir la prueba de exploración de la condición del bug (antes del arreglo)": {
+      "status": "passed",
+      "failingExample": "La prueba de exploración FALLA sobre el código sin arreglar, como se esperaba: el fallo confirma el bug (isBugCondition: mundoDelEditor <> mundoDelNivelEnCurso). Contraejemplos observados (ejecutados con describe.only sobre src/main.test.ts, jsdom):\n\n1) contraejemplo 0 → 1 (editor): tras irANivel('1.1') escribiendo \"REPITE 6 [ AVANZA 120 GIRADERECHA 15 ]\" →\n   \"el editor reportó comandoBloqueado para REPITE tras navegar al mundo 1: expected true to be false\".\n   El error del catálogo es: \"REPITE todavía no está disponible. Se desbloquea en el mundo 1.\" (id=comandoBloqueado, linea 1), porque el editor sigue analizando con { mundo: 0 } del arranque.\n\n2) contraejemplo 0 → 1 (panel): tras irANivel('1.1') →\n   \"el panel no incluye REPITE en sus entradas tras navegar al mundo 1: expected [ 'AVANZA', 'RETROCEDE', …(4) ] to include 'REPITE'\". El panel conserva el vocabulario del mundo 0.\n\n3) caso límite 1 → 0: arrancando en '1.1' y navegando a '0.1', escribir REPITE →\n   \"el editor no reportó comandoBloqueado para REPITE en el mundo 0: expected undefined to be defined\". El editor sigue en el mundo 1 del arranque, así que NO bloquea REPITE como debería.\n\n4) PBT pares (inicial, destino) en mundos reachables {0,1}, inicial != destino (orden barajado con azar/prng.ts, semilla 20240607) →\n   \"(1 → 0) el panel no refleja el vocabulario del mundo 0: expected [ 'AVANZA', 'RETROCEDE', …(5) ] to deeply equal [ 'AVANZA', 'RETROCEDE', …(4) ]\".\n\nResultado: 4 de 4 tests del grupo FALLAN sobre el código sin arreglar (Tests: 4 failed). Es el resultado correcto en esta fase; estas pruebas codifican el comportamiento esperado y validarán el arreglo en la tarea 3.4.",
+      "lastRunTimestamp": 1792435695942
+    },
+    "3.4 Verificar que la prueba de exploración ahora pasa": {
+      "status": "passed",
+      "failingExample": "Ejemplo representativo (par inicial→destino = 0→1): tras crearAppEn('0.1'); app.irANivel('1.1'); escribir('REPITE 6 [ AVANZA 120 GIRADERECHA 15 ]') ya NO se reporta comandoBloqueado para REPITE y el panel lista exactamente comandosDelMundo(1) = [AVANZA, RETROCEDE, GIRADERECHA, GIRAIZQUIERDA, CENTRO, BORRAPANTALLA, REPITE]. El caso límite 1→0 vuelve a bloquear REPITE nombrando el mundo 1. La prueba de exploración de la tarea 1 pasa en su totalidad (4 tests).",
+      "lastRunTimestamp": 1792436471831
+    }
+  },
+  "executionHistory": {
+    "1. Escribir la prueba de exploración de la condición del bug (antes del arreglo)": [
+      {
+        "executionId": "8d73a47b-2f69-494e-8598-7e829e4d8602",
+        "chatSessionId": "sess_f23f54d8-1b9f-4e8d-829e-92a641144613",
+        "timestamp": 1792435216556
+      },
+      {
+        "executionId": "8d73a47b-2f69-494e-8598-7e829e4d8602",
+        "chatSessionId": "sess_f23f54d8-1b9f-4e8d-829e-92a641144613",
+        "timestamp": 1792435220792
+      },
+      {
+        "executionId": "8d73a47b-2f69-494e-8598-7e829e4d8602",
+        "chatSessionId": "sess_f23f54d8-1b9f-4e8d-829e-92a641144613",
+        "timestamp": 1792435727542
+      }
+    ],
+    "2. Escribir las pruebas de preservación (antes de implementar el arreglo)": [
+      {
+        "executionId": "8d73a47b-2f69-494e-8598-7e829e4d8602",
+        "chatSessionId": "sess_f23f54d8-1b9f-4e8d-829e-92a641144613",
+        "timestamp": 1792435216666
+      },
+      {
+        "executionId": "8d73a47b-2f69-494e-8598-7e829e4d8602",
+        "chatSessionId": "sess_f23f54d8-1b9f-4e8d-829e-92a641144613",
+        "timestamp": 1792435731719
+      },
+      {
+        "executionId": "8d73a47b-2f69-494e-8598-7e829e4d8602",
+        "chatSessionId": "sess_f23f54d8-1b9f-4e8d-829e-92a641144613",
+        "timestamp": 1792436141059
+      }
+    ],
+    "3.1 Hacer mutable el mundo del editor y añadir `fijarMundo`": [
+      {
+        "executionId": "8d73a47b-2f69-494e-8598-7e829e4d8602",
+        "chatSessionId": "sess_f23f54d8-1b9f-4e8d-829e-92a641144613",
+        "timestamp": 1792435216737
+      },
+      {
+        "executionId": "8d73a47b-2f69-494e-8598-7e829e4d8602",
+        "chatSessionId": "sess_f23f54d8-1b9f-4e8d-829e-92a641144613",
+        "timestamp": 1792436146303
+      },
+      {
+        "executionId": "8d73a47b-2f69-494e-8598-7e829e4d8602",
+        "chatSessionId": "sess_f23f54d8-1b9f-4e8d-829e-92a641144613",
+        "timestamp": 1792436211654
+      }
+    ],
+    "3.2 Hacer mutable el vocabulario del panel y añadir `fijarMundo`": [
+      {
+        "executionId": "8d73a47b-2f69-494e-8598-7e829e4d8602",
+        "chatSessionId": "sess_f23f54d8-1b9f-4e8d-829e-92a641144613",
+        "timestamp": 1792435216827
+      },
+      {
+        "executionId": "8d73a47b-2f69-494e-8598-7e829e4d8602",
+        "chatSessionId": "sess_f23f54d8-1b9f-4e8d-829e-92a641144613",
+        "timestamp": 1792436214700
+      },
+      {
+        "executionId": "8d73a47b-2f69-494e-8598-7e829e4d8602",
+        "chatSessionId": "sess_f23f54d8-1b9f-4e8d-829e-92a641144613",
+        "timestamp": 1792436326209
+      }
+    ],
+    "3.3 Sincronizar el mundo en `montarReto` y usar la referencia `panel`": [
+      {
+        "executionId": "8d73a47b-2f69-494e-8598-7e829e4d8602",
+        "chatSessionId": "sess_f23f54d8-1b9f-4e8d-829e-92a641144613",
+        "timestamp": 1792435216895
+      },
+      {
+        "executionId": "8d73a47b-2f69-494e-8598-7e829e4d8602",
+        "chatSessionId": "sess_f23f54d8-1b9f-4e8d-829e-92a641144613",
+        "timestamp": 1792436329442
+      },
+      {
+        "executionId": "8d73a47b-2f69-494e-8598-7e829e4d8602",
+        "chatSessionId": "sess_f23f54d8-1b9f-4e8d-829e-92a641144613",
+        "timestamp": 1792436392344
+      }
+    ],
+    "3.4 Verificar que la prueba de exploración ahora pasa": [
+      {
+        "executionId": "8d73a47b-2f69-494e-8598-7e829e4d8602",
+        "chatSessionId": "sess_f23f54d8-1b9f-4e8d-829e-92a641144613",
+        "timestamp": 1792435216957
+      },
+      {
+        "executionId": "8d73a47b-2f69-494e-8598-7e829e4d8602",
+        "chatSessionId": "sess_f23f54d8-1b9f-4e8d-829e-92a641144613",
+        "timestamp": 1792436395484
+      },
+      {
+        "executionId": "8d73a47b-2f69-494e-8598-7e829e4d8602",
+        "chatSessionId": "sess_f23f54d8-1b9f-4e8d-829e-92a641144613",
+        "timestamp": 1792436581050
+      }
+    ],
+    "3.5 Verificar que las pruebas de preservación siguen pasando": [
+      {
+        "executionId": "8d73a47b-2f69-494e-8598-7e829e4d8602",
+        "chatSessionId": "sess_f23f54d8-1b9f-4e8d-829e-92a641144613",
+        "timestamp": 1792435217022
+      },
+      {
+        "executionId": "8d73a47b-2f69-494e-8598-7e829e4d8602",
+        "chatSessionId": "sess_f23f54d8-1b9f-4e8d-829e-92a641144613",
+        "timestamp": 1792436584246
+      },
+      {
+        "executionId": "8d73a47b-2f69-494e-8598-7e829e4d8602",
+        "chatSessionId": "sess_f23f54d8-1b9f-4e8d-829e-92a641144613",
+        "timestamp": 1792436694134
+      }
+    ],
+    "4. Punto de control - Asegurar que todo está en verde": [
+      {
+        "executionId": "8d73a47b-2f69-494e-8598-7e829e4d8602",
+        "chatSessionId": "sess_f23f54d8-1b9f-4e8d-829e-92a641144613",
+        "timestamp": 1792435217097
+      },
+      {
+        "executionId": "8d73a47b-2f69-494e-8598-7e829e4d8602",
+        "chatSessionId": "sess_f23f54d8-1b9f-4e8d-829e-92a641144613",
+        "timestamp": 1792436697671
+      },
+      {
+        "executionId": "8d73a47b-2f69-494e-8598-7e829e4d8602",
+        "chatSessionId": "sess_f23f54d8-1b9f-4e8d-829e-92a641144613",
+        "timestamp": 1792436982873
+      }
+    ],
+    "3. Arreglo para el desbloqueo de `REPITE` en el mundo 1 (sincronizar el mundo del editor y del panel al cambiar de nivel)": [
+      {
+        "executionId": "8d73a47b-2f69-494e-8598-7e829e4d8602",
+        "chatSessionId": "sess_f23f54d8-1b9f-4e8d-829e-92a641144613",
+        "timestamp": 1792436694199
+      }
+    ]
+  }
+}
