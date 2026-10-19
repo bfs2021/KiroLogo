@@ -717,3 +717,149 @@ describe('panel-comandos · P2 ningún botón del mundo 0 muestra un dígito', (
     }
   });
 });
+
+// ============================================================================
+// Tarea 2 (spec repite-desbloqueo-mundo-1) · Property 2: Preservación
+//
+// Observación primero (¬C): el panel se crea DIRECTAMENTE en el mundo del nivel,
+// de modo que `mundoDelPanel = mundoDelNivelEnCurso`. Para toda entrada así, el
+// panel debe seguir listando exactamente `comandosDelMundo(m)` en orden, tal como
+// la Property 23 ya fija para el mundo 0. Aquí se extiende a los seis mundos. El
+// azar que ordena el recorrido pasa por `azar/prng.ts`, nunca `Math.random`: el
+// resultado no depende del orden, pero la semilla fija lo deja reproducible.
+// ============================================================================
+
+import { crearPrng } from '../azar/prng.js';
+
+describe('panel-comandos · preservación (mundo del panel = mundo del nivel, ¬C)', () => {
+  const TODOS_LOS_MUNDOS: readonly Mundo[] = [0, 1, 2, 3, 4, 5];
+
+  it('para todo mundo m, el panel creado en m lista exactamente comandosDelMundo(m) en orden', () => {
+    const prng = crearPrng(19700101);
+    const orden = [...TODOS_LOS_MUNDOS];
+    for (let i = orden.length - 1; i > 0; i--) {
+      const j = prng.entero(0, i);
+      [orden[i], orden[j]] = [orden[j]!, orden[i]!];
+    }
+
+    for (const mundo of orden) {
+      const { panel } = montar(mundo);
+      const esperadas = comandosDelMundo(mundo);
+      // Mismas entradas, en el mismo orden.
+      expect(panel.entradas, `mundo ${mundo}: entradas`).toEqual(esperadas);
+      // Un botón por entrada, con el nombre del comando en su mismo orden.
+      expect(panel.botones.length, `mundo ${mundo}: número de botones`).toBe(esperadas.length);
+      const nombresBotones = panel.botones.map((b) => b.getAttribute('data-comando'));
+      expect(nombresBotones, `mundo ${mundo}: orden de botones`).toEqual(esperadas.map((e) => e.nombre));
+    }
+  });
+});
+
+// ============================================================================
+// Tarea 3.4 (spec repite-desbloqueo-mundo-1) · Property 1: comportamiento esperado
+//
+// El arreglo: `fijarMundo` reconstruye los botones con `comandosDelMundo` del
+// mundo nuevo sin recrear el panel, y es no-op si el mundo no cambió. Tras la
+// reconstrucción, el roving tabindex y las escuchas (flechas para mover el foco,
+// activar para insertar el texto) siguen funcionando.
+//
+// isBugCondition(X) = mundoDelPanel <> mundoDelNivelEnCurso. Aquí se cubre C: el
+// panel nace en un mundo y se le fija otro, como hace montarReto al navegar.
+// ============================================================================
+
+describe('panel-comandos · fijarMundo reconstruye el vocabulario vigente (Property 1)', () => {
+  const tecla = (key: string): KeyboardEvent =>
+    new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true });
+
+  it('fijarMundo(destino) reconstruye los botones con comandosDelMundo(destino)', () => {
+    // Nace en el mundo 0 (seis comandos, sin REPITE).
+    const { panel } = montar(0);
+    expect(panel.entradas).toEqual(comandosDelMundo(0));
+    expect(panel.botones.map((b) => b.getAttribute('data-comando'))).not.toContain('REPITE');
+
+    // Fijar el mundo 1: aparece REPITE y la lista es exactamente comandosDelMundo(1).
+    panel.fijarMundo(1);
+    expect(panel.entradas).toEqual(comandosDelMundo(1));
+    const nombres = panel.botones.map((b) => b.getAttribute('data-comando'));
+    expect(nombres).toEqual(comandosDelMundo(1).map((e) => e.nombre));
+    expect(nombres).toContain('REPITE');
+
+    // Volver al mundo 0: REPITE desaparece de nuevo.
+    panel.fijarMundo(0);
+    expect(panel.entradas).toEqual(comandosDelMundo(0));
+    expect(panel.botones.map((b) => b.getAttribute('data-comando'))).not.toContain('REPITE');
+  });
+
+  it('fijarMundo con el mismo mundo es no-op: no rompe el DOM ni los botones', () => {
+    const { panel } = montar(1);
+    const botonesAntes = panel.botones;
+    const entradasAntes = panel.entradas;
+    const hijosAntes = panel.raiz.childElementCount;
+
+    panel.fijarMundo(1); // mismo mundo
+
+    // No reconstruye: conserva las mismas referencias de botones y entradas.
+    expect(panel.botones).toBe(botonesAntes);
+    expect(panel.entradas).toBe(entradasAntes);
+    expect(panel.raiz.childElementCount).toBe(hijosAntes);
+    // La ayuda sigue siendo el último hijo y el panel sigue montado.
+    expect(panel.raiz.lastElementChild).toBe(panel.ayuda);
+  });
+
+  it('tras reconstruir, el roving tabindex sigue vivo: las flechas mueven el foco', () => {
+    const { panel } = montar(0);
+    panel.fijarMundo(1); // reconstruye con el vocabulario del mundo 1
+
+    // Una sola parada de Tab, en el primer botón del nuevo vocabulario.
+    const conTab = panel.botones.map((b, i) => (b.tabIndex === 0 ? i : -1)).filter((i) => i >= 0);
+    expect(conTab).toEqual([0]);
+
+    // Las flechas recorren los botones recién creados.
+    panel.botones[0]!.focus();
+    document.activeElement!.dispatchEvent(tecla('ArrowDown'));
+    expect(panel.botones.indexOf(document.activeElement as HTMLButtonElement)).toBe(1);
+    document.activeElement!.dispatchEvent(tecla('End'));
+    expect(panel.botones.indexOf(document.activeElement as HTMLButtonElement)).toBe(
+      panel.botones.length - 1,
+    );
+  });
+
+  it('tras reconstruir, activar un botón nuevo inserta su texto en el editor', () => {
+    const { panel, editor } = montar(0);
+    panel.fijarMundo(1);
+
+    // El botón de REPITE, que solo existe tras reconstruir con el mundo 1, inserta su texto.
+    const indiceRepite = panel.entradas.findIndex((e) => e.nombre === 'REPITE');
+    expect(indiceRepite).toBeGreaterThanOrEqual(0);
+    editor.area.setSelectionRange(0, 0);
+    panel.botones[indiceRepite]!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    expect(editor.texto()).toBe(panel.entradas[indiceRepite]!.insercion);
+  });
+
+  it('PBT: para todo par (inicial, destino) en 0..5, tras fijarMundo(destino) el panel lista comandosDelMundo(destino)', () => {
+    const pares: Array<{ inicial: Mundo; destino: Mundo }> = [];
+    const mundos: readonly Mundo[] = [0, 1, 2, 3, 4, 5];
+    for (const inicial of mundos) {
+      for (const destino of mundos) {
+        if (inicial !== destino) pares.push({ inicial, destino });
+      }
+    }
+    // El PRNG decide solo el orden del recorrido; el veredicto es determinista.
+    const prng = crearPrng(20240908);
+    for (let i = pares.length - 1; i > 0; i--) {
+      const j = prng.entero(0, i);
+      [pares[i], pares[j]] = [pares[j]!, pares[i]!];
+    }
+
+    for (const { inicial, destino } of pares) {
+      const { panel } = montar(inicial);
+      panel.fijarMundo(destino);
+      const esperadas = comandosDelMundo(destino);
+      expect(panel.entradas, `(${inicial} → ${destino}) entradas`).toEqual(esperadas);
+      expect(
+        panel.botones.map((b) => b.getAttribute('data-comando')),
+        `(${inicial} → ${destino}) orden de botones`,
+      ).toEqual(esperadas.map((e) => e.nombre));
+    }
+  });
+});

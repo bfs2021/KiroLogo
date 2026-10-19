@@ -12,6 +12,8 @@ import type { Reloj } from './motor/animador.js';
 import { DobleDibujo } from './motor/doble-dibujo.test.js';
 import type { RelojEspera } from './ui/demostracion.js';
 import type { RelojRebote } from './ui/editor.js';
+import { comandosDelMundo, type Mundo } from './lenguaje/vocabulario.js';
+import { crearPrng } from './azar/prng.js';
 
 // Con `guarda` encendido, `ejecutar` corre el programa de verdad pero informa que una
 // guarda lo cortó, como haría un `REPITE` sin fin: en el mundo 0 no hay forma de
@@ -3289,5 +3291,263 @@ describe('21.5 · Prueba_Color_Plano (requisitos 3.1–3.8, 4.1–4.4)', () => {
 
   it('ningún degradado prohibido en tema.css (ni linear/radial/conic)', () => {
     expect(GRADIENTES.test(TEMA), 'tema.css reintrodujo un gradient()').toBe(false);
+  });
+});
+
+// ============================================================================
+// repite-desbloqueo-mundo-1 · Prueba de exploración de la condición del bug
+//
+// Property 1 (Bug Condition): el editor y el panel reflejan el mundo del nivel
+// en curso. Tras navegar de un nivel de un mundo a otro, el editor debe analizar
+// con el mundo del nivel en curso y el panel debe listar el vocabulario de ese
+// mundo. isBugCondition(X) = mundoDelEditor <> mundoDelNivelEnCurso.
+//
+// ESTA PRUEBA DEBE FALLAR sobre el código SIN arreglar: su fallo confirma el bug.
+// Codifica el comportamiento esperado del diseño, así que validará el arreglo
+// cuando pase tras implementarlo (tarea 3.4). El azar de ordenar los pares de
+// mundos pasa por azar/prng.ts, nunca Math.random.
+// ============================================================================
+
+describe('repite-desbloqueo-mundo-1 · condición del bug (exploración, Property 1)', () => {
+  beforeEach(() => {
+    montarDom();
+  });
+
+  /** Niveles `.1` que existen hoy en el catálogo, uno por mundo disponible. */
+  const NIVEL_INICIAL_DE_MUNDO: Readonly<Record<number, string>> = { 0: '0.1', 1: '1.1' };
+
+  /**
+   * Fabrica un almacén en memoria con todos los mundos disponibles APROBADOS
+   * (estrella de precisión en cada nivel de 0 y 1), de modo que `irANivel` deje
+   * navegar entre cualquier par de mundos reachables sin tener que resolver cada
+   * reto a mano. Escribe directamente el JSON v2 que `cargarProgreso` interpreta.
+   */
+  function sembrarTodoAprobado(): Storage {
+    const almacen = crearAlmacenMemoria();
+    const estrellas = { precision: true, economia: true, abstraccion: true };
+    const niveles: Record<string, unknown> = {};
+    // Los cinco niveles del mundo 0 y los cinco del mundo 1 (ids x.1..x.5).
+    for (const mundo of [0, 1]) {
+      for (let n = 1; n <= 5; n++) {
+        niveles[`${mundo}.${n}`] = { estrellas, mejorConteo: 1, ultimaSemilla: 0 };
+      }
+    }
+    almacen.setItem('kirologo.progreso.v2', JSON.stringify({ version: 2, niveles, guiaVista: true }));
+    return almacen;
+  }
+
+  /** Crea la app arrancando en `idNivel`, con el progreso que abre todos los mundos. */
+  function crearAppEn(idNivel: string): Aplicacion {
+    return crearAplicacion({
+      documento: document,
+      almacen: sembrarTodoAprobado(),
+      reloj: relojInmediato(),
+      relojEspera: relojEsperaInerte(),
+      relojRebote: relojReboteInmediato,
+      movimiento: movimientoReducido,
+      idNivel,
+    });
+  }
+
+  /** Nombres de comando que el panel presenta ahora en el DOM (atributo data-comando). */
+  function comandosDelPanel(): string[] {
+    return [...document.querySelectorAll<HTMLElement>('.kl-comando')].map(
+      (b) => b.getAttribute('data-comando') ?? '',
+    );
+  }
+
+  /** ¿`estadoContador().errores` contiene un `comandoBloqueado` para `nombre`? */
+  function hayComandoBloqueado(app: Aplicacion, nombre: string): boolean {
+    return app.editor.estadoContador().errores.some(
+      (e) => e.id === 'comandoBloqueado' && e.mensaje.includes(nombre),
+    );
+  }
+
+  // --- Caso concreto del contraejemplo observado: 0 → 1 con REPITE ---
+  it('contraejemplo 0 → 1: tras irANivel(1.1), REPITE no debe reportar comandoBloqueado', () => {
+    const app = crearAppEn('0.1');
+    app.irANivel('1.1');
+    expect(app.nivelEnCurso()).toBe('1.1');
+
+    escribir(app, 'REPITE 6 [ AVANZA 120 GIRADERECHA 15 ]');
+
+    // Comportamiento esperado del diseño: en un nivel del mundo 1, REPITE (mundo 1)
+    // está disponible y NO se reporta comandoBloqueado para él. Sobre el código sin
+    // arreglar el editor sigue analizando con el mundo 0 y esta aserción FALLA.
+    expect(
+      hayComandoBloqueado(app, 'REPITE'),
+      'el editor reportó comandoBloqueado para REPITE tras navegar al mundo 1',
+    ).toBe(false);
+  });
+
+  it('contraejemplo 0 → 1: tras irANivel(1.1), el panel debe listar REPITE', () => {
+    const app = crearAppEn('0.1');
+    app.irANivel('1.1');
+    expect(app.nivelEnCurso()).toBe('1.1');
+
+    // Comportamiento esperado: el panel presenta el vocabulario del mundo 1, que
+    // incluye REPITE. Sobre el código sin arreglar el panel conserva el vocabulario
+    // del mundo 0 y esta aserción FALLA.
+    expect(
+      comandosDelPanel(),
+      'el panel no incluye REPITE en sus entradas tras navegar al mundo 1',
+    ).toContain('REPITE');
+  });
+
+  // --- Caso límite 1 → 0: REPITE debe volver a bloquearse nombrando el mundo 1 ---
+  it('caso límite 1 → 0: tras irANivel(0.1) desde el mundo 1, REPITE SÍ debe reportar comandoBloqueado nombrando el mundo 1', () => {
+    const app = crearAppEn('1.1');
+    app.irANivel('0.1');
+    expect(app.nivelEnCurso()).toBe('0.1');
+
+    escribir(app, 'REPITE 6 [ AVANZA 120 GIRADERECHA 15 ]');
+
+    const errorRepite = app.editor
+      .estadoContador()
+      .errores.find((e) => e.id === 'comandoBloqueado' && e.mensaje.includes('REPITE'));
+    // En el mundo 0 REPITE está bloqueado y el mensaje nombra el mundo 1 donde se
+    // desbloquea. Sobre el código sin arreglar el editor sigue analizando con el
+    // mundo 1 (el del arranque), así que no bloquea REPITE y esta aserción FALLA.
+    expect(
+      errorRepite,
+      'el editor no reportó comandoBloqueado para REPITE en el mundo 0',
+    ).toBeDefined();
+    expect(errorRepite!.mensaje).toContain('mundo 1');
+  });
+
+  // --- PBT acotado a pares (inicial, destino) reachables, con inicial != destino ---
+  //
+  // El dominio práctico de mundos reachables hoy es {0, 1} (el catálogo solo
+  // declara esos mundos). Para todo par (inicial, destino) con inicial != destino,
+  // tras navegar a `destino` el editor no debe reportar comandoBloqueado para
+  // ningún comando con mundo <= destino, y el panel debe listar exactamente
+  // comandosDelMundo(destino). El PRNG solo decide el ORDEN en que se recorren los
+  // pares: el bug es determinista, así que el recorrido no cambia el veredicto.
+  //
+  // **Validates: Requirements 2.1, 2.2, 2.3**
+  it('PBT: para todo par (inicial, destino) de mundos, tras navegar el editor y el panel reflejan el mundo destino', () => {
+    const mundosDisponibles: Mundo[] = [0, 1];
+    const pares: Array<{ inicial: Mundo; destino: Mundo }> = [];
+    for (const inicial of mundosDisponibles) {
+      for (const destino of mundosDisponibles) {
+        if (inicial !== destino) pares.push({ inicial, destino });
+      }
+    }
+
+    // Baraja el orden de los pares con el PRNG determinista (semilla fija): mismo
+    // orden en cada corrida, reproducible y sin Math.random.
+    const prng = crearPrng(20240607);
+    for (let i = pares.length - 1; i > 0; i--) {
+      const j = prng.entero(0, i);
+      [pares[i], pares[j]] = [pares[j]!, pares[i]!];
+    }
+
+    for (const { inicial, destino } of pares) {
+      montarDom();
+      const app = crearAppEn(NIVEL_INICIAL_DE_MUNDO[inicial]!);
+      app.irANivel(NIVEL_INICIAL_DE_MUNDO[destino]!);
+      expect(app.nivelEnCurso()).toBe(NIVEL_INICIAL_DE_MUNDO[destino]);
+
+      // Un programa con un comando representativo de cada mundo <= destino, para
+      // provocar el bloqueo si el editor quedó en el mundo de arranque. REPITE es
+      // el comando del mundo 1; AVANZA, del mundo 0.
+      const programa = destino >= 1 ? 'REPITE 6 [ AVANZA 120 GIRADERECHA 15 ]' : 'AVANZA 120';
+      escribir(app, programa);
+
+      // Ningún comando con mundo <= destino debe quedar bloqueado.
+      for (const entrada of comandosDelMundo(destino)) {
+        expect(
+          hayComandoBloqueado(app, entrada.nombre),
+          `(${inicial} → ${destino}) el editor bloqueó ${entrada.nombre} (mundo ${entrada.mundo} <= ${destino})`,
+        ).toBe(false);
+      }
+
+      // El panel debe presentar exactamente el vocabulario del mundo destino.
+      const esperados = comandosDelMundo(destino).map((e) => e.nombre);
+      expect(
+        comandosDelPanel(),
+        `(${inicial} → ${destino}) el panel no refleja el vocabulario del mundo ${destino}`,
+      ).toEqual(esperados);
+    }
+  });
+});
+
+// ============================================================================
+// Tarea 2 (spec repite-desbloqueo-mundo-1) · Property 2: Preservación
+//
+// Observación primero (¬C): se arranca DIRECTAMENTE en un nivel, sin navegar
+// entre mundos, de modo que `mundoDelEditor = mundoDelNivelEnCurso`. En ese caso
+// la ejecución del programa de referencia sigue usando `comandosDelMundo(
+// nivel.mundo)` y el reto aprueba con las tres estrellas; y el editor analiza el
+// texto del jugador con el mundo del nivel. Estas pruebas PASAN sobre el código
+// sin arreglar y fijan la base que el arreglo debe preservar (la regresión del
+// catálogo con tres estrellas ya vive en reto.test.ts, Property 25; aquí se
+// observa el mismo invariante de punta a punta a través de la app).
+// ============================================================================
+
+describe('main · preservación: arrancar directo en un nivel (mundo del editor = mundo del nivel, ¬C)', () => {
+  beforeEach(() => {
+    montarDom();
+  });
+
+  /** Crea la app arrancando directamente en `idNivel`, con animación de golpe. */
+  function crearAppEnNivel(idNivel: string): Aplicacion {
+    return crearAplicacion({
+      documento: document,
+      almacen: null,
+      reloj: relojInmediato(),
+      relojEspera: relojEsperaInerte(),
+      relojRebote: relojReboteInmediato,
+      movimiento: movimientoReducido,
+      idNivel,
+    });
+  }
+
+  it('la referencia del 1.1 se ejecutó con los comandos del mundo 1 (REPITE) y dejó segmentos no vacíos', () => {
+    const app = crearAppEnNivel('1.1');
+    const reto = app.estado().reto;
+    // El nivel 1.1 es del mundo 1 y su referencia usa REPITE (comando del mundo 1):
+    // si la ejecución NO hubiera usado comandosDelMundo(1), REPITE no se ejecutaría
+    // y no quedarían ni operaciones ni segmentos que dibujar. Que los haya confirma
+    // que la ejecución de la referencia sigue usando comandosDelMundo(nivel.mundo).
+    expect(reto.nivel.mundo).toBe(1);
+    expect(reto.operaciones.length).toBeGreaterThan(0);
+    expect(reto.segmentos.length).toBeGreaterThan(0);
+    // El presupuesto de estrella deriva del conteo de la referencia, que incluye el
+    // nodo REPITE: para el 1.1 autorado es 3 (REPITE + AVANZA + GIRADERECHA).
+    expect(reto.presupuestoEstrella).toBe(3);
+  });
+
+  it('al arrancar directo en el 1.1, el editor analiza con el mundo 1 y no bloquea REPITE', () => {
+    const app = crearAppEnNivel('1.1');
+    expect(app.estado().reto.nivel.mundo).toBe(1);
+    // El jugador escribe un programa con REPITE (comando del mundo 1).
+    escribir(app, 'REPITE 4 [AVANZA 100 GIRADERECHA 90]');
+    // El editor analiza con el mundo del nivel (1): REPITE no se reporta bloqueado.
+    const bloqueoRepite = app.editor
+      .estadoContador()
+      .errores.find((e) => e.id === 'comandoBloqueado' && e.mensaje.includes('REPITE'));
+    expect(bloqueoRepite, 'no debe bloquear REPITE en un nivel del mundo 1').toBeUndefined();
+    // En cambio, un comando de un mundo posterior (SUBELAPIZ, mundo 2) sí se bloquea.
+    escribir(app, 'SUBELAPIZ');
+    const bloqueoSubelapiz = app.editor
+      .estadoContador()
+      .errores.find((e) => e.id === 'comandoBloqueado' && e.mensaje.includes('SUBELAPIZ'));
+    expect(bloqueoSubelapiz, 'SUBELAPIZ (mundo 2) sigue bloqueado en el mundo 1').toBeDefined();
+    expect(bloqueoSubelapiz!.mensaje).toContain('mundo 2');
+  });
+
+  it('arrancar directo en el 0.1 (mundo 0) sigue concediendo las tres estrellas a AVANZA 100', () => {
+    // El caso ¬C del mundo 0: la referencia y el análisis usan el mundo 0, igual
+    // que antes. Es la base que el arreglo no debe tocar.
+    const app = crearAppEnNivel('0.1');
+    expect(app.estado().reto.nivel.mundo).toBe(0);
+    escribir(app, 'AVANZA 100');
+    app.ejecutar();
+    const cal = app.estado().calificacion;
+    expect(cal).not.toBeNull();
+    expect(cal!.precision.otorgada).toBe(true);
+    expect(cal!.economia.otorgada).toBe(true);
+    expect(cal!.abstraccion.otorgada).toBe(true);
   });
 });
