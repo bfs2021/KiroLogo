@@ -54,7 +54,7 @@
     - `resolverColorRGB(255, 0, 0)` resuelve; `[256 0 0]` y `[−1 0 0]` fallan.
     - Un nombre fuera del catálogo (`turquesa`) falla.
 
-- [ ] 3. Errores del mundo 2 — `src/lenguaje/errores.ts` (AMPLIAR el catálogo)
+- [x] 3. Errores del mundo 2 — `src/lenguaje/errores.ts` (AMPLIAR el catálogo)
 
   Agregar los `IdError` nuevos con sus parámetros y los textos exactos de la tabla de Error
   Handling, y permitir que la sugerencia de palabra desconocida considere procedimientos.
@@ -67,14 +67,14 @@
     - `colorInvalido(palabra)` → `No conozco el color X. Puedes usar: rojo, azul, verde, amarillo, naranja, morado, rosa, café, negro, blanco o gris.` (R4.3, R6.7).
     - `grosorInvalido()` → `El grosor debe ser un número entero entre 1 y 50.` (R4.5).
 
-  - [-] 3.2 Sugerencia hacia procedimientos en `resolverPalabraNoEjecutable`
+  - [x] 3.2 Sugerencia hacia procedimientos en `resolverPalabraNoEjecutable`
     - Extender la firma para recibir también los nombres de procedimiento definidos como candidatos
       de sugerencia, junto a los comandos desbloqueados.
     - Aplicar el mismo umbral de distancia de edición ya existente (≤1 para ≤3 caracteres, ≤2 para
       ≥4) sobre el conjunto combinado (R6.3).
     - No cambiar el comportamiento cuando no hay candidato: mensaje sin sugerencia (R6.4).
 
-  - [ ]* 3.3 Tests de los mensajes en `src/lenguaje/errores.test.ts`
+  - [x]* 3.3 Tests de los mensajes en `src/lenguaje/errores.test.ts`
     - Cada nuevo mensaje con el número de línea correcto (desde 1) donde aplica.
     - `colorInvalido` lista los once nombres en el orden canónico.
     - Una palabra desconocida cercana a un procedimiento definido produce `¿Querías decir …?` con
@@ -98,7 +98,7 @@
   El trabajo real del parser: una primera pasada que recoge los nombres de `PARA` y una segunda que
   reconoce invocaciones y definiciones, con los cuatro errores nuevos.
 
-  - [~] 5.1 Primera pasada `recolectarProcedimientos`
+  - [-] 5.1 Primera pasada `recolectarProcedimientos`
     - Implementar `recolectarProcedimientos(tokens): ReadonlySet<string>` que recorre los tokens
       buscando `PARA NOMBRE … FIN` bien formados y devuelve el conjunto de nombres válidos.
     - Descartar los rechazados: nombre que pisa el lenguaje, redefinición (conserva el primero), y
@@ -106,14 +106,14 @@
     - Añadir el campo `readonly procedimientos: ReadonlySet<string>` a `Estado` y guardarlo en
       `analizar` antes del bucle de `analizarInstruccion`.
 
-  - [~] 5.2 Reconocer la invocación de procedimiento
+  - [-] 5.2 Reconocer la invocación de procedimiento
     - En `analizarInstruccion`, rama `'identificador'`: si el nombre normalizado está en
       `estado.procedimientos`, producir `InvocacionProcedimiento` con `argumentos: []` y avanzar
       (R1.2 reconocimiento; R1.5 referencia adelantada).
     - Si no está, conservar la caída a `resolverPalabraNoEjecutable` con los procedimientos como
       candidatos de sugerencia (R6.3, R6.4).
 
-  - [~] 5.3 Analizar la definición `PARA NOMBRE … FIN`
+  - [-] 5.3 Analizar la definición `PARA NOMBRE … FIN`
     - Implementar `analizarDefinicion(estado, tokenPara)` que consume `PARA`, el `identificador`
       del nombre, las instrucciones del cuerpo y `FIN`, y produce `DefinicionProcedimiento` con
       `parametros: []` e ignorando cualquier `:param` (R1.2).
@@ -124,7 +124,7 @@
     - Reportar `paraSinFin` (nombra el procedimiento y la línea del `PARA`) si se agotan los tokens
       sin `FIN` (R6.2).
 
-  - [~] 5.4 `FIN` suelto y recuperación
+  - [-] 5.4 `FIN` suelto y recuperación
     - En `analizarComando`, al ver `FIN` donde se espera una instrucción (sin `PARA` abierto),
       reportar `finSinPara` con la línea del `FIN`, descartarlo y continuar con `sincronizar`
       (R6.1).
