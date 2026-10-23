@@ -1,0 +1,276 @@
+{
+  "pbtResults": {},
+  "executionHistory": {
+    "2.1 Definir el catálogo y los resolutores": [
+      {
+        "executionId": "bd803e91-c866-40a5-92e7-1a88716ad95d",
+        "chatSessionId": "sess_c70d222e-8771-4a50-8a15-514de6b72b57",
+        "timestamp": 1792767733981
+      },
+      {
+        "executionId": "bd803e91-c866-40a5-92e7-1a88716ad95d",
+        "chatSessionId": "sess_c70d222e-8771-4a50-8a15-514de6b72b57",
+        "timestamp": 1792778977454
+      },
+      {
+        "executionId": "bd803e91-c866-40a5-92e7-1a88716ad95d",
+        "chatSessionId": "sess_c70d222e-8771-4a50-8a15-514de6b72b57",
+        "timestamp": 1792779210249
+      }
+    ],
+    "3.1 Nuevos `IdError` con mensajes exactos": [
+      {
+        "executionId": "bd803e91-c866-40a5-92e7-1a88716ad95d",
+        "chatSessionId": "sess_c70d222e-8771-4a50-8a15-514de6b72b57",
+        "timestamp": 1792767734116
+      },
+      {
+        "executionId": "2c24cf7f-2e0c-4882-af0d-2f80bf5981d7",
+        "chatSessionId": "sess_c70d222e-8771-4a50-8a15-514de6b72b57",
+        "timestamp": 1792788856622
+      }
+    ],
+    "3.2 Sugerencia hacia procedimientos en `resolverPalabraNoEjecutable`": [
+      {
+        "executionId": "bd803e91-c866-40a5-92e7-1a88716ad95d",
+        "chatSessionId": "sess_c70d222e-8771-4a50-8a15-514de6b72b57",
+        "timestamp": 1792767734233
+      }
+    ],
+    "4.1 Ajustar el ejemplo de `PARA`": [
+      {
+        "executionId": "bd803e91-c866-40a5-92e7-1a88716ad95d",
+        "chatSessionId": "sess_c70d222e-8771-4a50-8a15-514de6b72b57",
+        "timestamp": 1792767734447
+      },
+      {
+        "executionId": "bd803e91-c866-40a5-92e7-1a88716ad95d",
+        "chatSessionId": "sess_c70d222e-8771-4a50-8a15-514de6b72b57",
+        "timestamp": 1792767751212
+      },
+      {
+        "executionId": "bd803e91-c866-40a5-92e7-1a88716ad95d",
+        "chatSessionId": "sess_c70d222e-8771-4a50-8a15-514de6b72b57",
+        "timestamp": 1792778912085
+      }
+    ],
+    "5.1 Primera pasada `recolectarProcedimientos`": [
+      {
+        "executionId": "bd803e91-c866-40a5-92e7-1a88716ad95d",
+        "chatSessionId": "sess_c70d222e-8771-4a50-8a15-514de6b72b57",
+        "timestamp": 1792767734595
+      }
+    ],
+    "5.2 Reconocer la invocación de procedimiento": [
+      {
+        "executionId": "bd803e91-c866-40a5-92e7-1a88716ad95d",
+        "chatSessionId": "sess_c70d222e-8771-4a50-8a15-514de6b72b57",
+        "timestamp": 1792767734745
+      }
+    ],
+    "5.3 Analizar la definición `PARA NOMBRE … FIN`": [
+      {
+        "executionId": "bd803e91-c866-40a5-92e7-1a88716ad95d",
+        "chatSessionId": "sess_c70d222e-8771-4a50-8a15-514de6b72b57",
+        "timestamp": 1792767734874
+      }
+    ],
+    "5.4 `FIN` suelto y recuperación": [
+      {
+        "executionId": "bd803e91-c866-40a5-92e7-1a88716ad95d",
+        "chatSessionId": "sess_c70d222e-8771-4a50-8a15-514de6b72b57",
+        "timestamp": 1792767735022
+      }
+    ],
+    "6.1 Parsear el argumento de `PONCOLOR` y `PONGROSOR`": [
+      {
+        "executionId": "bd803e91-c866-40a5-92e7-1a88716ad95d",
+        "chatSessionId": "sess_c70d222e-8771-4a50-8a15-514de6b72b57",
+        "timestamp": 1792767735163
+      }
+    ],
+    "7.1 Operaciones decorativas en la unión `Operacion`": [
+      {
+        "executionId": "bd803e91-c866-40a5-92e7-1a88716ad95d",
+        "chatSessionId": "sess_c70d222e-8771-4a50-8a15-514de6b72b57",
+        "timestamp": 1792767735292
+      }
+    ],
+    "7.2 Lápiz y visibilidad": [
+      {
+        "executionId": "bd803e91-c866-40a5-92e7-1a88716ad95d",
+        "chatSessionId": "sess_c70d222e-8771-4a50-8a15-514de6b72b57",
+        "timestamp": 1792767735416
+      }
+    ],
+    "7.3 Color, grosor y relleno": [
+      {
+        "executionId": "bd803e91-c866-40a5-92e7-1a88716ad95d",
+        "chatSessionId": "sess_c70d222e-8771-4a50-8a15-514de6b72b57",
+        "timestamp": 1792767735642
+      }
+    ],
+    "9.1 Niveles autorados 2.1 y 2.4": [
+      {
+        "executionId": "bd803e91-c866-40a5-92e7-1a88716ad95d",
+        "chatSessionId": "sess_c70d222e-8771-4a50-8a15-514de6b72b57",
+        "timestamp": 1792767735784
+      }
+    ],
+    "9.2 Declaración de los niveles generados 2.2, 2.3, 2.5, 2.6": [
+      {
+        "executionId": "bd803e91-c866-40a5-92e7-1a88716ad95d",
+        "chatSessionId": "sess_c70d222e-8771-4a50-8a15-514de6b72b57",
+        "timestamp": 1792767735899
+      }
+    ],
+    "10.1 Generador `estrella-m2` (nivel 2.2)": [
+      {
+        "executionId": "bd803e91-c866-40a5-92e7-1a88716ad95d",
+        "chatSessionId": "sess_c70d222e-8771-4a50-8a15-514de6b72b57",
+        "timestamp": 1792767736021
+      }
+    ],
+    "10.2 Generador `escalera-m2` (nivel 2.3)": [
+      {
+        "executionId": "bd803e91-c866-40a5-92e7-1a88716ad95d",
+        "chatSessionId": "sess_c70d222e-8771-4a50-8a15-514de6b72b57",
+        "timestamp": 1792767736163
+      }
+    ],
+    "10.3 Generador `dos-poligonos-m2` (nivel 2.5)": [
+      {
+        "executionId": "bd803e91-c866-40a5-92e7-1a88716ad95d",
+        "chatSessionId": "sess_c70d222e-8771-4a50-8a15-514de6b72b57",
+        "timestamp": 1792767736295
+      }
+    ],
+    "10.4 Generador `cuadricula-m2` (nivel 2.6)": [
+      {
+        "executionId": "bd803e91-c866-40a5-92e7-1a88716ad95d",
+        "chatSessionId": "sess_c70d222e-8771-4a50-8a15-514de6b72b57",
+        "timestamp": 1792767736426
+      }
+    ],
+    "10.5 Registro, encuadre y presupuesto": [
+      {
+        "executionId": "bd803e91-c866-40a5-92e7-1a88716ad95d",
+        "chatSessionId": "sess_c70d222e-8771-4a50-8a15-514de6b72b57",
+        "timestamp": 1792767736566
+      }
+    ],
+    "11.1 Correr `npm test` y confirmar que pasan sin regresiones; ante dudas, preguntar al usuario.": [
+      {
+        "executionId": "bd803e91-c866-40a5-92e7-1a88716ad95d",
+        "chatSessionId": "sess_c70d222e-8771-4a50-8a15-514de6b72b57",
+        "timestamp": 1792767736702
+      }
+    ],
+    "12.1 Añadir `MUNDO_2` y los generadores": [
+      {
+        "executionId": "bd803e91-c866-40a5-92e7-1a88716ad95d",
+        "chatSessionId": "sess_c70d222e-8771-4a50-8a15-514de6b72b57",
+        "timestamp": 1792767736824
+      }
+    ],
+    "13.1 `fijarProcedimientos`": [
+      {
+        "executionId": "bd803e91-c866-40a5-92e7-1a88716ad95d",
+        "chatSessionId": "sess_c70d222e-8771-4a50-8a15-514de6b72b57",
+        "timestamp": 1792767736949
+      }
+    ],
+    "13.2 Conectar el editor al panel": [
+      {
+        "executionId": "bd803e91-c866-40a5-92e7-1a88716ad95d",
+        "chatSessionId": "sess_c70d222e-8771-4a50-8a15-514de6b72b57",
+        "timestamp": 1792767737068
+      }
+    ],
+    "14.1 Registrar la insignia": [
+      {
+        "executionId": "bd803e91-c866-40a5-92e7-1a88716ad95d",
+        "chatSessionId": "sess_c70d222e-8771-4a50-8a15-514de6b72b57",
+        "timestamp": 1792767737183
+      }
+    ],
+    "15.1 Ejecutar `npm test` y confirmar que todos los tests pasan sin regresiones en mundos 0 y 1.": [
+      {
+        "executionId": "bd803e91-c866-40a5-92e7-1a88716ad95d",
+        "chatSessionId": "sess_c70d222e-8771-4a50-8a15-514de6b72b57",
+        "timestamp": 1792767737318
+      }
+    ],
+    "15.2 Correr los tests de propiedad de los cuatro generadores sobre 200 semillas cada uno.": [
+      {
+        "executionId": "bd803e91-c866-40a5-92e7-1a88716ad95d",
+        "chatSessionId": "sess_c70d222e-8771-4a50-8a15-514de6b72b57",
+        "timestamp": 1792767737442
+      }
+    ],
+    "15.3 Repaso manual en el navegador:": [
+      {
+        "executionId": "bd803e91-c866-40a5-92e7-1a88716ad95d",
+        "chatSessionId": "sess_c70d222e-8771-4a50-8a15-514de6b72b57",
+        "timestamp": 1792767737680
+      }
+    ],
+    "4. Reconciliar la entrada `PARA` del vocabulario — `src/lenguaje/vocabulario.ts`": [
+      {
+        "executionId": "bd803e91-c866-40a5-92e7-1a88716ad95d",
+        "chatSessionId": "sess_c70d222e-8771-4a50-8a15-514de6b72b57",
+        "timestamp": 1792778912171
+      }
+    ],
+    "2. Catálogo de colores — `src/lenguaje/colores.ts` (NUEVO)": [
+      {
+        "executionId": "bd803e91-c866-40a5-92e7-1a88716ad95d",
+        "chatSessionId": "sess_c70d222e-8771-4a50-8a15-514de6b72b57",
+        "timestamp": 1792779210366
+      }
+    ],
+    "1.1 Tests del AST de procedimientos en `src/lenguaje/ast.test.ts`": [
+      {
+        "executionId": "5cb46270-1ef9-42c1-bf34-465fa595857f",
+        "chatSessionId": "sess_c70d222e-8771-4a50-8a15-514de6b72b57",
+        "timestamp": 1792779485764
+      },
+      {
+        "executionId": "5cb46270-1ef9-42c1-bf34-465fa595857f",
+        "chatSessionId": "sess_c70d222e-8771-4a50-8a15-514de6b72b57",
+        "timestamp": 1792780302676
+      }
+    ],
+    "1.2 Tests de conteo de procedimientos en `src/lenguaje/conteo.test.ts`": [
+      {
+        "executionId": "5cb46270-1ef9-42c1-bf34-465fa595857f",
+        "chatSessionId": "sess_c70d222e-8771-4a50-8a15-514de6b72b57",
+        "timestamp": 1792779487090
+      },
+      {
+        "executionId": "6b20980f-e7a2-4302-aeee-4f630476dbc4",
+        "chatSessionId": "sess_c70d222e-8771-4a50-8a15-514de6b72b57",
+        "timestamp": 1792788662422
+      }
+    ],
+    "1.3 Tests de abstracción `defineProcedimiento` en `src/juego/abstraccion.test.ts`": [
+      {
+        "executionId": "5cb46270-1ef9-42c1-bf34-465fa595857f",
+        "chatSessionId": "sess_c70d222e-8771-4a50-8a15-514de6b72b57",
+        "timestamp": 1792779488081
+      },
+      {
+        "executionId": "5cb46270-1ef9-42c1-bf34-465fa595857f",
+        "chatSessionId": "sess_c70d222e-8771-4a50-8a15-514de6b72b57",
+        "timestamp": 1792780303907
+      }
+    ],
+    "1. Afianzar la capa de lenguaje que ya ejecuta procedimientos": [
+      {
+        "executionId": "5cb46270-1ef9-42c1-bf34-465fa595857f",
+        "chatSessionId": "sess_c70d222e-8771-4a50-8a15-514de6b72b57",
+        "timestamp": 1792780302845
+      }
+    ]
+  }
+}
