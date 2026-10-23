@@ -159,19 +159,19 @@
     - `PONGROSOR 5` produce el literal numérico.
     - `RL` y las abreviaturas `PC`, `PG` se reconocen como sus comandos (R4.9).
 
-- [ ] 7. Intérprete — comandos del mundo 2 en `src/lenguaje/interprete.ts` (AMPLIAR)
+- [x] 7. Intérprete — comandos del mundo 2 en `src/lenguaje/interprete.ts` (AMPLIAR)
 
   El flujo de `pila`/`Marco`, `buscarDefinicion` y las guardas no cambian. Se amplían la unión
   `Operacion` con el canal decorativo y `ejecutarComando` con los nueve comandos del mundo 2.
 
-  - [-] 7.1 Operaciones decorativas en la unión `Operacion`
+  - [x] 7.1 Operaciones decorativas en la unión `Operacion`
     - Añadir `OperacionColor` (`tipo: 'color'`, `color: Color`), `OperacionGrosor`
       (`tipo: 'grosor'`, `grosor: number`) y `OperacionRelleno` (`tipo: 'relleno'`, `color: Color`)
       a la unión `Operacion`.
     - Introducir `EstadoDecorativo { color: Color; grosor: number }` que el intérprete arrastra
       entre operaciones, con valores por omisión `negro` y `1`.
 
-  - [-] 7.2 Lápiz y visibilidad
+  - [x] 7.2 Lápiz y visibilidad
     - `SUBELAPIZ`/`SL`: emitir `OperacionLapiz` con `lapizAbajo: false` vía `conLapiz(estado, false)`
       (R3.1, R3.2). `BAJALAPIZ`/`BL`: `conLapiz(estado, true)` (R3.3, R3.4).
     - `OCULTATORTUGA`/`OT` y `MUESTRATORTUGA`/`MT`: emitir `OperacionVisibilidad` vía
@@ -180,7 +180,7 @@
       `SUBELAPIZ`/`OCULTATORTUGA`/`MUESTRATORTUGA` sobre el mismo estado es idempotente y sin error
       (R3.7, R5.4, R5.5).
 
-  - [-] 7.3 Color, grosor y relleno
+  - [x] 7.3 Color, grosor y relleno
     - `PONCOLOR`/`PC`: resolver el argumento con `colores.ts`; si es válido, actualizar
       `EstadoDecorativo.color` y emitir `OperacionColor`; si no, conservar el color vigente y
       reportar `colorInvalido` (R4.1, R4.3).
@@ -190,7 +190,7 @@
       cambia el lienzo (R4.7).
     - Ninguno de estos comandos mueve la tortuga: `estadoDespues` conserva posición y rumbo.
 
-  - [ ]* 7.4 Tests del intérprete en `src/lenguaje/interprete.test.ts`
+  - [x]* 7.4 Tests del intérprete en `src/lenguaje/interprete.test.ts`
     - `PARA CUADRADO REPITE 4 [AV 100 GD 90] FIN CUADRADO` emite exactamente las mismas operaciones,
       en el mismo orden, que `REPITE 4 [AV 100 GD 90]` (R1.1).
     - Procedimiento con cuerpo vacío → cero operaciones, sin error (R1.8).
@@ -203,12 +203,12 @@
       1..50 conserva el grosor y reporta `grosorInvalido` (R4.5).
     - `OCULTATORTUGA`/`MUESTRATORTUGA` emiten `OperacionVisibilidad` y son idempotentes (R5.4, R5.5).
 
-- [ ] 8. Confirmar que el canal decorativo no llega al validador
+- [x] 8. Confirmar que el canal decorativo no llega al validador
 
   Ni `src/motor/segmentos.ts` ni `src/motor/validador.ts` cambian. Se añade un test que lo deja por
   escrito: las decoraciones son invisibles para la precisión.
 
-  - [ ]* 8.1 Test de frontera decorativa en `src/motor/validador.test.ts`
+  - [x]* 8.1 Test de frontera decorativa en `src/motor/validador.test.ts`
     - Un programa con `SUBELAPIZ`/`BAJALAPIZ`, `PONCOLOR`, `PONGROSOR` y `RELLENA` intercalados que
       deja los mismos trazos que su versión sin decoraciones obtiene el mismo IoU y el mismo
       veredicto (R4.8).

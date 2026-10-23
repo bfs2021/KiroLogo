@@ -164,6 +164,11 @@
         "executionId": "2c24cf7f-2e0c-4882-af0d-2f80bf5981d7",
         "chatSessionId": "sess_c70d222e-8771-4a50-8a15-514de6b72b57",
         "timestamp": 1792791694415
+      },
+      {
+        "executionId": "2c24cf7f-2e0c-4882-af0d-2f80bf5981d7",
+        "chatSessionId": "sess_c70d222e-8771-4a50-8a15-514de6b72b57",
+        "timestamp": 1792792489867
       }
     ],
     "7.2 Lápiz y visibilidad": [
@@ -176,6 +181,11 @@
         "executionId": "2c24cf7f-2e0c-4882-af0d-2f80bf5981d7",
         "chatSessionId": "sess_c70d222e-8771-4a50-8a15-514de6b72b57",
         "timestamp": 1792791695419
+      },
+      {
+        "executionId": "2c24cf7f-2e0c-4882-af0d-2f80bf5981d7",
+        "chatSessionId": "sess_c70d222e-8771-4a50-8a15-514de6b72b57",
+        "timestamp": 1792792491468
       }
     ],
     "7.3 Color, grosor y relleno": [
@@ -188,6 +198,11 @@
         "executionId": "2c24cf7f-2e0c-4882-af0d-2f80bf5981d7",
         "chatSessionId": "sess_c70d222e-8771-4a50-8a15-514de6b72b57",
         "timestamp": 1792791696169
+      },
+      {
+        "executionId": "2c24cf7f-2e0c-4882-af0d-2f80bf5981d7",
+        "chatSessionId": "sess_c70d222e-8771-4a50-8a15-514de6b72b57",
+        "timestamp": 1792792492433
       }
     ],
     "9.1 Niveles autorados 2.1 y 2.4": [
@@ -397,6 +412,39 @@
         "executionId": "2c24cf7f-2e0c-4882-af0d-2f80bf5981d7",
         "chatSessionId": "sess_c70d222e-8771-4a50-8a15-514de6b72b57",
         "timestamp": 1792791628554
+      }
+    ],
+    "7. Intérprete — comandos del mundo 2 en `src/lenguaje/interprete.ts` (AMPLIAR)": [
+      {
+        "executionId": "2c24cf7f-2e0c-4882-af0d-2f80bf5981d7",
+        "chatSessionId": "sess_c70d222e-8771-4a50-8a15-514de6b72b57",
+        "timestamp": 1792792492746
+      }
+    ],
+    "7.4 Tests del intérprete en `src/lenguaje/interprete.test.ts`": [
+      {
+        "executionId": "2c24cf7f-2e0c-4882-af0d-2f80bf5981d7",
+        "chatSessionId": "sess_c70d222e-8771-4a50-8a15-514de6b72b57",
+        "timestamp": 1792792493527
+      }
+    ],
+    "8.1 Test de frontera decorativa en `src/motor/validador.test.ts`": [
+      {
+        "executionId": "2c24cf7f-2e0c-4882-af0d-2f80bf5981d7",
+        "chatSessionId": "sess_c70d222e-8771-4a50-8a15-514de6b72b57",
+        "timestamp": 1792792554700
+      },
+      {
+        "executionId": "2c24cf7f-2e0c-4882-af0d-2f80bf5981d7",
+        "chatSessionId": "sess_c70d222e-8771-4a50-8a15-514de6b72b57",
+        "timestamp": 1792792927279
+      }
+    ],
+    "8. Confirmar que el canal decorativo no llega al validador": [
+      {
+        "executionId": "2c24cf7f-2e0c-4882-af0d-2f80bf5981d7",
+        "chatSessionId": "sess_c70d222e-8771-4a50-8a15-514de6b72b57",
+        "timestamp": 1792792927434
       }
     ]
   }
