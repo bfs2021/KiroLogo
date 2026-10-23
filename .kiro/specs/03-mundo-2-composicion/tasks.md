@@ -93,12 +93,12 @@
     - `buscarComando('PARA')` y `buscarComando('FIN')` siguen resolviendo con `mundo: 2`.
     - El ejemplo mostrado ya no contiene `:lado`.
 
-- [ ] 5. Parser — definición e invocación de procedimientos en `src/lenguaje/parser.ts` (AMPLIAR)
+- [x] 5. Parser — definición e invocación de procedimientos en `src/lenguaje/parser.ts` (AMPLIAR)
 
   El trabajo real del parser: una primera pasada que recoge los nombres de `PARA` y una segunda que
   reconoce invocaciones y definiciones, con los cuatro errores nuevos.
 
-  - [-] 5.1 Primera pasada `recolectarProcedimientos`
+  - [x] 5.1 Primera pasada `recolectarProcedimientos`
     - Implementar `recolectarProcedimientos(tokens): ReadonlySet<string>` que recorre los tokens
       buscando `PARA NOMBRE … FIN` bien formados y devuelve el conjunto de nombres válidos.
     - Descartar los rechazados: nombre que pisa el lenguaje, redefinición (conserva el primero), y
@@ -106,14 +106,14 @@
     - Añadir el campo `readonly procedimientos: ReadonlySet<string>` a `Estado` y guardarlo en
       `analizar` antes del bucle de `analizarInstruccion`.
 
-  - [-] 5.2 Reconocer la invocación de procedimiento
+  - [x] 5.2 Reconocer la invocación de procedimiento
     - En `analizarInstruccion`, rama `'identificador'`: si el nombre normalizado está en
       `estado.procedimientos`, producir `InvocacionProcedimiento` con `argumentos: []` y avanzar
       (R1.2 reconocimiento; R1.5 referencia adelantada).
     - Si no está, conservar la caída a `resolverPalabraNoEjecutable` con los procedimientos como
       candidatos de sugerencia (R6.3, R6.4).
 
-  - [-] 5.3 Analizar la definición `PARA NOMBRE … FIN`
+  - [x] 5.3 Analizar la definición `PARA NOMBRE … FIN`
     - Implementar `analizarDefinicion(estado, tokenPara)` que consume `PARA`, el `identificador`
       del nombre, las instrucciones del cuerpo y `FIN`, y produce `DefinicionProcedimiento` con
       `parametros: []` e ignorando cualquier `:param` (R1.2).
@@ -124,13 +124,13 @@
     - Reportar `paraSinFin` (nombra el procedimiento y la línea del `PARA`) si se agotan los tokens
       sin `FIN` (R6.2).
 
-  - [-] 5.4 `FIN` suelto y recuperación
+  - [x] 5.4 `FIN` suelto y recuperación
     - En `analizarComando`, al ver `FIN` donde se espera una instrucción (sin `PARA` abierto),
       reportar `finSinPara` con la línea del `FIN`, descartarlo y continuar con `sincronizar`
       (R6.1).
     - Respetar `MAXIMO_ERRORES` y el orden por línea/columna.
 
-  - [ ]* 5.5 Tests del parser en `src/lenguaje/parser.test.ts`
+  - [x]* 5.5 Tests del parser en `src/lenguaje/parser.test.ts`
     - `PARA CUADRADO REPITE 4 [AV 100 GD 90] FIN` → `DefinicionProcedimiento` con
       `nombre: 'CUADRADO'`, `parametros: []` y el cuerpo esperado (R1.2).
     - `CUADRADO PARA CUADRADO REPITE 4 [AV 100 GD 90] FIN` → `CUADRADO` reconocido como
@@ -141,12 +141,12 @@
       `procedimientoRedefinido` (conserva la primera), `paraNombreQueEsLenguaje` (`PARA AVANZA`).
     - Se respeta `MAXIMO_ERRORES` y el orden de reporte.
 
-- [ ] 6. Parser — argumentos de `PONCOLOR` y `PONGROSOR` en `src/lenguaje/parser.ts` (AMPLIAR)
+- [x] 6. Parser — argumentos de `PONCOLOR` y `PONGROSOR` en `src/lenguaje/parser.ts` (AMPLIAR)
 
   Hoy el análisis de comando con argumento solo contempla un literal numérico. `PONCOLOR` admite
   palabra o terna RGB; hay que representarlos y llevarlos hasta el intérprete.
 
-  - [~] 6.1 Parsear el argumento de `PONCOLOR` y `PONGROSOR`
+  - [x] 6.1 Parsear el argumento de `PONCOLOR` y `PONGROSOR`
     - Ampliar `analizarComandoConArgumento` (o la ruta equivalente) para que `PONCOLOR` acepte las
       tres formas: palabra desnuda (`PONCOLOR naranja`), palabra con comilla inicial
       (`PONCOLOR "naranja`) y terna RGB como lista de tres enteros (`PONCOLOR [255 0 0]`) (R4.2).
@@ -154,7 +154,7 @@
     - Construir el nodo de invocación de comando llevando el argumento sin resolver (palabra o lista
       de tres números) para que el intérprete lo resuelva contra `colores.ts`.
 
-  - [ ]* 6.2 Tests del parseo de argumentos en `src/lenguaje/parser.test.ts`
+  - [x]* 6.2 Tests del parseo de argumentos en `src/lenguaje/parser.test.ts`
     - `PONCOLOR naranja`, `PONCOLOR "naranja` y `PONCOLOR [255 0 0]` producen el argumento esperado.
     - `PONGROSOR 5` produce el literal numérico.
     - `RL` y las abreviaturas `PC`, `PG` se reconocen como sus comandos (R4.9).
@@ -164,14 +164,14 @@
   El flujo de `pila`/`Marco`, `buscarDefinicion` y las guardas no cambian. Se amplían la unión
   `Operacion` con el canal decorativo y `ejecutarComando` con los nueve comandos del mundo 2.
 
-  - [~] 7.1 Operaciones decorativas en la unión `Operacion`
+  - [-] 7.1 Operaciones decorativas en la unión `Operacion`
     - Añadir `OperacionColor` (`tipo: 'color'`, `color: Color`), `OperacionGrosor`
       (`tipo: 'grosor'`, `grosor: number`) y `OperacionRelleno` (`tipo: 'relleno'`, `color: Color`)
       a la unión `Operacion`.
     - Introducir `EstadoDecorativo { color: Color; grosor: number }` que el intérprete arrastra
       entre operaciones, con valores por omisión `negro` y `1`.
 
-  - [~] 7.2 Lápiz y visibilidad
+  - [-] 7.2 Lápiz y visibilidad
     - `SUBELAPIZ`/`SL`: emitir `OperacionLapiz` con `lapizAbajo: false` vía `conLapiz(estado, false)`
       (R3.1, R3.2). `BAJALAPIZ`/`BL`: `conLapiz(estado, true)` (R3.3, R3.4).
     - `OCULTATORTUGA`/`OT` y `MUESTRATORTUGA`/`MT`: emitir `OperacionVisibilidad` vía
@@ -180,7 +180,7 @@
       `SUBELAPIZ`/`OCULTATORTUGA`/`MUESTRATORTUGA` sobre el mismo estado es idempotente y sin error
       (R3.7, R5.4, R5.5).
 
-  - [~] 7.3 Color, grosor y relleno
+  - [-] 7.3 Color, grosor y relleno
     - `PONCOLOR`/`PC`: resolver el argumento con `colores.ts`; si es válido, actualizar
       `EstadoDecorativo.color` y emitir `OperacionColor`; si no, conservar el color vigente y
       reportar `colorInvalido` (R4.1, R4.3).
