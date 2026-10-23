@@ -215,12 +215,12 @@
     - `extraerSegmentos` ignora `OperacionColor`, `OperacionGrosor`, `OperacionRelleno`,
       `OperacionLapiz` y `OperacionVisibilidad` (no producen segmento).
 
-- [ ] 9. Niveles autorados y generados del mundo 2 — `src/niveles/mundo-2-composicion.ts` (NUEVO)
+- [x] 9. Niveles autorados y generados del mundo 2 — `src/niveles/mundo-2-composicion.ts` (NUEVO)
 
   Mismo molde que `mundo-1-figuras.ts`: `parsearReferencia(texto)` con `{ mundo: 2 }`, los dos
   autorados y los cuatro generados, con presupuesto calculado por el Conteo, nunca escrito a mano.
 
-  - [~] 9.1 Niveles autorados 2.1 y 2.4
+  - [x] 9.1 Niveles autorados 2.1 y 2.4
     - `REFERENCIA_2_1 = parsearReferencia('REPITE 4 [AV 100 GD 90] AV 100 GD 30 REPITE 3 [AV 100 GD 120]')`
       (casa) y `NIVEL_2_1` con `abstraccion: []`, pistas conceptual/matemática/esqueleto (R8.1).
     - `REFERENCIA_2_4 = parsearReferencia('REPITE 4 [AV 50 GI 90 AV 50 GD 90 AV 50 GI 90]')` (cruz) y
@@ -228,14 +228,14 @@
     - Normalización traslación libre, rotación libre, escala exacta en ambos (R8.4).
     - El `presupuestoEstrella` se deriva del Conteo sobre la referencia, sin número a mano (R8.3).
 
-  - [~] 9.2 Declaración de los niveles generados 2.2, 2.3, 2.5, 2.6
+  - [x] 9.2 Declaración de los niveles generados 2.2, 2.3, 2.5, 2.6
     - `NIVEL_2_2` (`estrella-m2`), `NIVEL_2_3` (`escalera-m2`), `NIVEL_2_5` (`dos-poligonos-m2`) con
       `origen: { tipo: 'generado', idGenerador, parametros: {} }` y `abstraccion: []`.
     - `NIVEL_2_6` (`cuadricula-m2`) con `abstraccion: [{ clave: 'defineProcedimiento' }]` (R10.1).
     - Exportar `MUNDO_2` con los seis niveles en orden, todos con `mundo: 2`,
       `concepto: 'descomposicion'` y normalización libre/libre/exacta.
 
-  - [ ]* 9.3 Tests de niveles autorados en `src/niveles/mundo-2-composicion.test.ts`
+  - [x]* 9.3 Tests de niveles autorados en `src/niveles/mundo-2-composicion.test.ts`
     - 2.1 y 2.4 parsean sin error.
     - El `presupuestoEstrella` de 2.1 y de 2.4 coincide con `contarInstrucciones` sobre su
       referencia (R8.3), sin valor escrito a mano.
@@ -247,26 +247,26 @@
   `{ mundo: 2 }`, `encuadraYNoEsDegenerada`, reintento con la semilla siguiente, fallback
   determinista) y el record `GENERADORES_M2`.
 
-  - [~] 10.1 Generador `estrella-m2` (nivel 2.2)
+  - [-] 10.1 Generador `estrella-m2` (nivel 2.2)
     - `p ∈ {5, 7, 9}` (`prng.elegir`), `L` múltiplo de 20 entre 100 y 180
       (`prng.multiplo(100, 180, 20)`), forma `REPITE p [AV L GD 360*2/p]` (R9.1).
     - Para `p ∈ {5, 9}` el ángulo es entero (144, 80); para `p = 7` usar el entero más cercano y
       dejar que el lazo descarte la semilla si no encuadra o degenera.
 
-  - [~] 10.2 Generador `escalera-m2` (nivel 2.3)
+  - [-] 10.2 Generador `escalera-m2` (nivel 2.3)
     - 3 a 6 peldaños (`prng.entero(3, 6)`), huella = altura, múltiplo de 20 entre 20 y 60
       (`prng.multiplo(20, 60, 20)`) (R9.2).
 
-  - [~] 10.3 Generador `dos-poligonos-m2` (nivel 2.5)
+  - [-] 10.3 Generador `dos-poligonos-m2` (nivel 2.5)
     - Dos polígonos, cada uno de 3 a 6 lados, separados por un múltiplo de 20 entre 20 y 100 (R9.3).
     - El texto usa `SUBELAPIZ`/`BAJALAPIZ` para moverse entre los dos sin trazo intermedio (R9.4).
 
-  - [~] 10.4 Generador `cuadricula-m2` (nivel 2.6)
+  - [-] 10.4 Generador `cuadricula-m2` (nivel 2.6)
     - Cuadrícula de paneles 2×2, 3×2 o 3×3 (R9.5).
     - La referencia DEFINE un procedimiento con `PARA` e invoca una vez por panel (R9.6), de modo
       que su AST contiene un nodo `definicionProcedimiento`.
 
-  - [~] 10.5 Registro, encuadre y presupuesto
+  - [-] 10.5 Registro, encuadre y presupuesto
     - Exportar `GENERADORES_M2` con las claves `estrella-m2`, `escalera-m2`, `dos-poligonos-m2`,
       `cuadricula-m2`.
     - Descartar la semilla y probar la siguiente si la figura es degenerada (ancho o alto de la caja
