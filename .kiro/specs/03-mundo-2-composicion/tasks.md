@@ -59,7 +59,7 @@
   Agregar los `IdError` nuevos con sus parámetros y los textos exactos de la tabla de Error
   Handling, y permitir que la sugerencia de palabra desconocida considere procedimientos.
 
-  - [-] 3.1 Nuevos `IdError` con mensajes exactos
+  - [x] 3.1 Nuevos `IdError` con mensajes exactos
     - `finSinPara(linea)` → `Encontré FIN en la línea N pero no hay ningún PARA abierto.` (R6.1).
     - `paraSinFin(nombre, linea)` → `El comando NOMBRE que empezaste en la línea N nunca termina con FIN.` (R6.2).
     - `procedimientoRedefinido(nombre, linea)` → `Ya le enseñaste a Kiro qué es NOMBRE más arriba. No puedo aprenderlo dos veces; edita la primera definición.` (R6.5).
@@ -67,7 +67,7 @@
     - `colorInvalido(palabra)` → `No conozco el color X. Puedes usar: rojo, azul, verde, amarillo, naranja, morado, rosa, café, negro, blanco o gris.` (R4.3, R6.7).
     - `grosorInvalido()` → `El grosor debe ser un número entero entre 1 y 50.` (R4.5).
 
-  - [~] 3.2 Sugerencia hacia procedimientos en `resolverPalabraNoEjecutable`
+  - [-] 3.2 Sugerencia hacia procedimientos en `resolverPalabraNoEjecutable`
     - Extender la firma para recibir también los nombres de procedimiento definidos como candidatos
       de sugerencia, junto a los comandos desbloqueados.
     - Aplicar el mismo umbral de distancia de edición ya existente (≤1 para ≤3 caracteres, ≤2 para
