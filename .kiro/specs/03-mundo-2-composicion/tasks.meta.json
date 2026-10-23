@@ -249,6 +249,11 @@
         "executionId": "2c24cf7f-2e0c-4882-af0d-2f80bf5981d7",
         "chatSessionId": "sess_c70d222e-8771-4a50-8a15-514de6b72b57",
         "timestamp": 1792795872048
+      },
+      {
+        "executionId": "2c24cf7f-2e0c-4882-af0d-2f80bf5981d7",
+        "chatSessionId": "sess_c70d222e-8771-4a50-8a15-514de6b72b57",
+        "timestamp": 1792797837704
       }
     ],
     "10.2 Generador `escalera-m2` (nivel 2.3)": [
@@ -261,6 +266,11 @@
         "executionId": "2c24cf7f-2e0c-4882-af0d-2f80bf5981d7",
         "chatSessionId": "sess_c70d222e-8771-4a50-8a15-514de6b72b57",
         "timestamp": 1792795873458
+      },
+      {
+        "executionId": "2c24cf7f-2e0c-4882-af0d-2f80bf5981d7",
+        "chatSessionId": "sess_c70d222e-8771-4a50-8a15-514de6b72b57",
+        "timestamp": 1792797838685
       }
     ],
     "10.3 Generador `dos-poligonos-m2` (nivel 2.5)": [
@@ -273,6 +283,11 @@
         "executionId": "2c24cf7f-2e0c-4882-af0d-2f80bf5981d7",
         "chatSessionId": "sess_c70d222e-8771-4a50-8a15-514de6b72b57",
         "timestamp": 1792795874859
+      },
+      {
+        "executionId": "2c24cf7f-2e0c-4882-af0d-2f80bf5981d7",
+        "chatSessionId": "sess_c70d222e-8771-4a50-8a15-514de6b72b57",
+        "timestamp": 1792797840286
       }
     ],
     "10.4 Generador `cuadricula-m2` (nivel 2.6)": [
@@ -285,6 +300,11 @@
         "executionId": "2c24cf7f-2e0c-4882-af0d-2f80bf5981d7",
         "chatSessionId": "sess_c70d222e-8771-4a50-8a15-514de6b72b57",
         "timestamp": 1792795876399
+      },
+      {
+        "executionId": "2c24cf7f-2e0c-4882-af0d-2f80bf5981d7",
+        "chatSessionId": "sess_c70d222e-8771-4a50-8a15-514de6b72b57",
+        "timestamp": 1792797841804
       }
     ],
     "10.5 Registro, encuadre y presupuesto": [
@@ -297,6 +317,11 @@
         "executionId": "2c24cf7f-2e0c-4882-af0d-2f80bf5981d7",
         "chatSessionId": "sess_c70d222e-8771-4a50-8a15-514de6b72b57",
         "timestamp": 1792795877065
+      },
+      {
+        "executionId": "2c24cf7f-2e0c-4882-af0d-2f80bf5981d7",
+        "chatSessionId": "sess_c70d222e-8771-4a50-8a15-514de6b72b57",
+        "timestamp": 1792797843113
       }
     ],
     "11.1 Correr `npm test` y confirmar que pasan sin regresiones; ante dudas, preguntar al usuario.": [
@@ -304,6 +329,16 @@
         "executionId": "bd803e91-c866-40a5-92e7-1a88716ad95d",
         "chatSessionId": "sess_c70d222e-8771-4a50-8a15-514de6b72b57",
         "timestamp": 1792767736702
+      },
+      {
+        "executionId": "2c24cf7f-2e0c-4882-af0d-2f80bf5981d7",
+        "chatSessionId": "sess_c70d222e-8771-4a50-8a15-514de6b72b57",
+        "timestamp": 1792797904366
+      },
+      {
+        "executionId": "2c24cf7f-2e0c-4882-af0d-2f80bf5981d7",
+        "chatSessionId": "sess_c70d222e-8771-4a50-8a15-514de6b72b57",
+        "timestamp": 1792798043897
       }
     ],
     "12.1 Añadir `MUNDO_2` y los generadores": [
@@ -311,6 +346,11 @@
         "executionId": "bd803e91-c866-40a5-92e7-1a88716ad95d",
         "chatSessionId": "sess_c70d222e-8771-4a50-8a15-514de6b72b57",
         "timestamp": 1792767736824
+      },
+      {
+        "executionId": "2c24cf7f-2e0c-4882-af0d-2f80bf5981d7",
+        "chatSessionId": "sess_c70d222e-8771-4a50-8a15-514de6b72b57",
+        "timestamp": 1792798116179
       }
     ],
     "13.1 `fijarProcedimientos`": [
@@ -504,6 +544,27 @@
         "executionId": "2c24cf7f-2e0c-4882-af0d-2f80bf5981d7",
         "chatSessionId": "sess_c70d222e-8771-4a50-8a15-514de6b72b57",
         "timestamp": 1792795808455
+      }
+    ],
+    "10. Generadores del mundo 2 — `src/juego/generadores-mundo-2.ts` (NUEVO)": [
+      {
+        "executionId": "2c24cf7f-2e0c-4882-af0d-2f80bf5981d7",
+        "chatSessionId": "sess_c70d222e-8771-4a50-8a15-514de6b72b57",
+        "timestamp": 1792797843744
+      }
+    ],
+    "10.6 Tests de propiedad de los generadores en `src/juego/generadores-mundo-2.test.ts`": [
+      {
+        "executionId": "2c24cf7f-2e0c-4882-af0d-2f80bf5981d7",
+        "chatSessionId": "sess_c70d222e-8771-4a50-8a15-514de6b72b57",
+        "timestamp": 1792797844070
+      }
+    ],
+    "11. Checkpoint — Asegurar que la capa de lenguaje y niveles pasan": [
+      {
+        "executionId": "2c24cf7f-2e0c-4882-af0d-2f80bf5981d7",
+        "chatSessionId": "sess_c70d222e-8771-4a50-8a15-514de6b72b57",
+        "timestamp": 1792798044092
       }
     ]
   }

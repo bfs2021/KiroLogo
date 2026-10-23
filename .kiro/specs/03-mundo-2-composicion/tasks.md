@@ -241,32 +241,32 @@
       referencia (R8.3), sin valor escrito a mano.
     - La referencia de 2.1 y de 2.4 aprueba las tres estrellas de su propio nivel (R8.4).
 
-- [ ] 10. Generadores del mundo 2 — `src/juego/generadores-mundo-2.ts` (NUEVO)
+- [x] 10. Generadores del mundo 2 — `src/juego/generadores-mundo-2.ts` (NUEVO)
 
   Cuatro generadores con el patrón del mundo 1 (`crearPrng`, construir texto, `parsear` con
   `{ mundo: 2 }`, `encuadraYNoEsDegenerada`, reintento con la semilla siguiente, fallback
   determinista) y el record `GENERADORES_M2`.
 
-  - [-] 10.1 Generador `estrella-m2` (nivel 2.2)
+  - [x] 10.1 Generador `estrella-m2` (nivel 2.2)
     - `p ∈ {5, 7, 9}` (`prng.elegir`), `L` múltiplo de 20 entre 100 y 180
       (`prng.multiplo(100, 180, 20)`), forma `REPITE p [AV L GD 360*2/p]` (R9.1).
     - Para `p ∈ {5, 9}` el ángulo es entero (144, 80); para `p = 7` usar el entero más cercano y
       dejar que el lazo descarte la semilla si no encuadra o degenera.
 
-  - [-] 10.2 Generador `escalera-m2` (nivel 2.3)
+  - [x] 10.2 Generador `escalera-m2` (nivel 2.3)
     - 3 a 6 peldaños (`prng.entero(3, 6)`), huella = altura, múltiplo de 20 entre 20 y 60
       (`prng.multiplo(20, 60, 20)`) (R9.2).
 
-  - [-] 10.3 Generador `dos-poligonos-m2` (nivel 2.5)
+  - [x] 10.3 Generador `dos-poligonos-m2` (nivel 2.5)
     - Dos polígonos, cada uno de 3 a 6 lados, separados por un múltiplo de 20 entre 20 y 100 (R9.3).
     - El texto usa `SUBELAPIZ`/`BAJALAPIZ` para moverse entre los dos sin trazo intermedio (R9.4).
 
-  - [-] 10.4 Generador `cuadricula-m2` (nivel 2.6)
+  - [x] 10.4 Generador `cuadricula-m2` (nivel 2.6)
     - Cuadrícula de paneles 2×2, 3×2 o 3×3 (R9.5).
     - La referencia DEFINE un procedimiento con `PARA` e invoca una vez por panel (R9.6), de modo
       que su AST contiene un nodo `definicionProcedimiento`.
 
-  - [-] 10.5 Registro, encuadre y presupuesto
+  - [x] 10.5 Registro, encuadre y presupuesto
     - Exportar `GENERADORES_M2` con las claves `estrella-m2`, `escalera-m2`, `dos-poligonos-m2`,
       `cuadricula-m2`.
     - Descartar la semilla y probar la siguiente si la figura es degenerada (ancho o alto de la caja
@@ -274,7 +274,7 @@
     - El `presupuestoEstrella` sale del Conteo sobre la referencia devuelta, nunca escrito a mano
       (R9.7, R9.8).
 
-  - [ ]* 10.6 Tests de propiedad de los generadores en `src/juego/generadores-mundo-2.test.ts`
+  - [x]* 10.6 Tests de propiedad de los generadores en `src/juego/generadores-mundo-2.test.ts`
     - Para cada generador, 200 semillas consecutivas: todas encuadran y no son degeneradas, y su
       referencia gana las tres estrellas (precisión, economía y abstracción) (R9.11).
     - `dos-poligonos-m2`: la referencia usa `SUBELAPIZ`/`BAJALAPIZ` y no hay trazo entre los dos
@@ -283,19 +283,19 @@
       por panel (R9.6) y obtiene la estrella `defineProcedimiento` (R10.2).
     - En los cuatro, el presupuesto proviene del Conteo aplicado a la referencia (R9.7, R9.8).
 
-- [ ] 11. Checkpoint — Asegurar que la capa de lenguaje y niveles pasan
+- [x] 11. Checkpoint — Asegurar que la capa de lenguaje y niveles pasan
 
   Ejecutar todos los tests de los módulos de lenguaje, niveles y generadores antes de tocar la UI y
   las insignias.
 
-  - [~] 11.1 Correr `npm test` y confirmar que pasan sin regresiones; ante dudas, preguntar al usuario.
+  - [x] 11.1 Correr `npm test` y confirmar que pasan sin regresiones; ante dudas, preguntar al usuario.
 
 - [ ] 12. Registrar el mundo 2 en el catálogo — `src/niveles/catalogo.ts` (AMPLIAR)
 
   Incorporar los seis niveles y las cuatro entradas de generadores al registro que resuelve
   `reto.ts`.
 
-  - [~] 12.1 Añadir `MUNDO_2` y los generadores
+  - [-] 12.1 Añadir `MUNDO_2` y los generadores
     - `import { MUNDO_2 } from './mundo-2-composicion.js';` y
       `CATALOGO = [...MUNDO_0, ...MUNDO_1, ...MUNDO_2]`.
     - Incorporar las cuatro claves de `GENERADORES_M2` al registro de generadores que consulta
