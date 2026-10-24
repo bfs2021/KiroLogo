@@ -351,6 +351,11 @@
         "executionId": "2c24cf7f-2e0c-4882-af0d-2f80bf5981d7",
         "chatSessionId": "sess_c70d222e-8771-4a50-8a15-514de6b72b57",
         "timestamp": 1792798116179
+      },
+      {
+        "executionId": "2c24cf7f-2e0c-4882-af0d-2f80bf5981d7",
+        "chatSessionId": "sess_c70d222e-8771-4a50-8a15-514de6b72b57",
+        "timestamp": 1792798523117
       }
     ],
     "13.1 `fijarProcedimientos`": [
@@ -358,6 +363,16 @@
         "executionId": "bd803e91-c866-40a5-92e7-1a88716ad95d",
         "chatSessionId": "sess_c70d222e-8771-4a50-8a15-514de6b72b57",
         "timestamp": 1792767736949
+      },
+      {
+        "executionId": "2c24cf7f-2e0c-4882-af0d-2f80bf5981d7",
+        "chatSessionId": "sess_c70d222e-8771-4a50-8a15-514de6b72b57",
+        "timestamp": 1792798589691
+      },
+      {
+        "executionId": "2c24cf7f-2e0c-4882-af0d-2f80bf5981d7",
+        "chatSessionId": "sess_c70d222e-8771-4a50-8a15-514de6b72b57",
+        "timestamp": 1792799443270
       }
     ],
     "13.2 Conectar el editor al panel": [
@@ -365,6 +380,16 @@
         "executionId": "bd803e91-c866-40a5-92e7-1a88716ad95d",
         "chatSessionId": "sess_c70d222e-8771-4a50-8a15-514de6b72b57",
         "timestamp": 1792767737068
+      },
+      {
+        "executionId": "2c24cf7f-2e0c-4882-af0d-2f80bf5981d7",
+        "chatSessionId": "sess_c70d222e-8771-4a50-8a15-514de6b72b57",
+        "timestamp": 1792798590698
+      },
+      {
+        "executionId": "2c24cf7f-2e0c-4882-af0d-2f80bf5981d7",
+        "chatSessionId": "sess_c70d222e-8771-4a50-8a15-514de6b72b57",
+        "timestamp": 1792799444191
       }
     ],
     "14.1 Registrar la insignia": [
@@ -372,6 +397,11 @@
         "executionId": "bd803e91-c866-40a5-92e7-1a88716ad95d",
         "chatSessionId": "sess_c70d222e-8771-4a50-8a15-514de6b72b57",
         "timestamp": 1792767737183
+      },
+      {
+        "executionId": "2c24cf7f-2e0c-4882-af0d-2f80bf5981d7",
+        "chatSessionId": "sess_c70d222e-8771-4a50-8a15-514de6b72b57",
+        "timestamp": 1792799509267
       }
     ],
     "15.1 Ejecutar `npm test` y confirmar que todos los tests pasan sin regresiones en mundos 0 y 1.": [
@@ -565,6 +595,34 @@
         "executionId": "2c24cf7f-2e0c-4882-af0d-2f80bf5981d7",
         "chatSessionId": "sess_c70d222e-8771-4a50-8a15-514de6b72b57",
         "timestamp": 1792798044092
+      }
+    ],
+    "12. Registrar el mundo 2 en el catálogo — `src/niveles/catalogo.ts` (AMPLIAR)": [
+      {
+        "executionId": "2c24cf7f-2e0c-4882-af0d-2f80bf5981d7",
+        "chatSessionId": "sess_c70d222e-8771-4a50-8a15-514de6b72b57",
+        "timestamp": 1792798523309
+      }
+    ],
+    "12.2 Test del catálogo en `src/niveles/catalogo.test.ts`": [
+      {
+        "executionId": "2c24cf7f-2e0c-4882-af0d-2f80bf5981d7",
+        "chatSessionId": "sess_c70d222e-8771-4a50-8a15-514de6b72b57",
+        "timestamp": 1792798524049
+      }
+    ],
+    "13. Panel de comandos con procedimientos del jugador — `src/ui/panel-comandos.ts` (AMPLIAR)": [
+      {
+        "executionId": "2c24cf7f-2e0c-4882-af0d-2f80bf5981d7",
+        "chatSessionId": "sess_c70d222e-8771-4a50-8a15-514de6b72b57",
+        "timestamp": 1792799444606
+      }
+    ],
+    "13.3 Tests del panel en `src/ui/panel-comandos.test.ts`": [
+      {
+        "executionId": "2c24cf7f-2e0c-4882-af0d-2f80bf5981d7",
+        "chatSessionId": "sess_c70d222e-8771-4a50-8a15-514de6b72b57",
+        "timestamp": 1792799445266
       }
     ]
   }

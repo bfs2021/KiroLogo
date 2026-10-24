@@ -28,6 +28,26 @@ export interface ResultadoSintactico {
 /** Máximo de errores que se devuelven; los de línea mayor se descartan. */
 const MAXIMO_ERRORES = 20;
 
+/**
+ * Nombres de los procedimientos válidos de un programa, en orden de definición,
+ * tal como quedan registrados en la `Tabla_Procedimientos`. Es la primera pasada
+ * del parser (`recolectarProcedimientos`) expuesta como lista ordenada: descarta
+ * las definiciones rechazadas (nombre que pisa el lenguaje, redefinición, `PARA`
+ * sin `FIN`) y conserva la primera aparición de cada nombre.
+ *
+ * El panel de comandos la usa para mostrar los procedimientos del jugador junto a
+ * los comandos del lenguaje (R7.1, R7.4, R7.5). Opera sobre los tokens y no exige
+ * un parse sin errores: aunque el resto del programa tenga fallos, los `PARA … FIN`
+ * bien formados siguen reconociéndose, que es justo lo que el panel debe reflejar
+ * mientras el jugador escribe.
+ *
+ * El orden es el de definición porque `recolectarProcedimientos` recorre los tokens
+ * de izquierda a derecha y un `Set` conserva el orden de inserción.
+ */
+export function nombresDeProcedimientos(tokens: readonly Token[]): readonly string[] {
+  return [...recolectarProcedimientos(tokens)];
+}
+
 // ============================================================================
 // Estado del análisis
 // ============================================================================

@@ -290,39 +290,39 @@
 
   - [x] 11.1 Correr `npm test` y confirmar que pasan sin regresiones; ante dudas, preguntar al usuario.
 
-- [ ] 12. Registrar el mundo 2 en el catálogo — `src/niveles/catalogo.ts` (AMPLIAR)
+- [x] 12. Registrar el mundo 2 en el catálogo — `src/niveles/catalogo.ts` (AMPLIAR)
 
   Incorporar los seis niveles y las cuatro entradas de generadores al registro que resuelve
   `reto.ts`.
 
-  - [-] 12.1 Añadir `MUNDO_2` y los generadores
+  - [x] 12.1 Añadir `MUNDO_2` y los generadores
     - `import { MUNDO_2 } from './mundo-2-composicion.js';` y
       `CATALOGO = [...MUNDO_0, ...MUNDO_1, ...MUNDO_2]`.
     - Incorporar las cuatro claves de `GENERADORES_M2` al registro de generadores que consulta
       `reto.ts`.
 
-  - [ ]* 12.2 Test del catálogo en `src/niveles/catalogo.test.ts`
+  - [x]* 12.2 Test del catálogo en `src/niveles/catalogo.test.ts`
     - El mundo 2 tiene seis niveles (2.1–2.6) con `insignia: 'Descomposición'`.
     - El nivel 2.6 declara la exigencia de abstracción `defineProcedimiento` (R10.1).
     - El `presupuestoEstrella` de un nivel autorado es el del Conteo, no un valor a mano.
 
-- [ ] 13. Panel de comandos con procedimientos del jugador — `src/ui/panel-comandos.ts` (AMPLIAR)
+- [x] 13. Panel de comandos con procedimientos del jugador — `src/ui/panel-comandos.ts` (AMPLIAR)
 
   Mostrar los procedimientos definidos después de los comandos del lenguaje y mantener la lista al
   día cuando el texto cambia.
 
-  - [~] 13.1 `fijarProcedimientos`
+  - [x] 13.1 `fijarProcedimientos`
     - Añadir `fijarProcedimientos(nombres: readonly string[]): void` que reconstruye la sección de
       procedimientos tras los comandos del mundo, en orden de definición, con el nombre tal como se
       escribió y sin abreviatura (R7.1, R7.2).
     - Respetar el patrón de roving tabindex y no tocar los botones de comando del lenguaje.
     - Omitir las definiciones no registradas (incompletas o rechazadas) sin alterar las demás (R7.5).
 
-  - [~] 13.2 Conectar el editor al panel
+  - [x] 13.2 Conectar el editor al panel
     - Al cambiar el texto, parsear, obtener los nombres de procedimiento válidos y llamar
       `fijarProcedimientos` para reflejar altas, bajas y renombres (R7.3, R7.4).
 
-  - [ ]* 13.3 Tests del panel en `src/ui/panel-comandos.test.ts`
+  - [x]* 13.3 Tests del panel en `src/ui/panel-comandos.test.ts`
     - `fijarProcedimientos` añade los procedimientos tras los comandos del mundo, con el nombre sin
       abreviatura y en orden (R7.1, R7.2).
     - Cambiar la lista refleja altas, bajas y renombres (R7.4).
@@ -334,7 +334,7 @@
 
   Registrar la insignia del mundo 2 derivándola del progreso, sin estado propio.
 
-  - [~] 14.1 Registrar la insignia
+  - [-] 14.1 Registrar la insignia
     - Añadir `'descomposicion'` a `IdInsignia` y a `MUNDO_DE_INSIGNIA` (`descomposicion: 2`).
     - Implementar `insigniaDescomposicionOtorgada(progreso)` delegando en
       `mundoCompletoConTresEstrellas(2, progreso)` e incluir la rama del mundo 2 en
