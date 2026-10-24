@@ -330,17 +330,17 @@
     - En mundo 0/1 el panel no muestra comandos del mundo 2; en mundo 2 los muestra con descripción
       y ejemplo (R12.3, R12.4).
 
-- [ ] 14. Insignia Descomposición — `src/juego/insignias.ts` (AMPLIAR)
+- [x] 14. Insignia Descomposición — `src/juego/insignias.ts` (AMPLIAR)
 
   Registrar la insignia del mundo 2 derivándola del progreso, sin estado propio.
 
-  - [-] 14.1 Registrar la insignia
+  - [x] 14.1 Registrar la insignia
     - Añadir `'descomposicion'` a `IdInsignia` y a `MUNDO_DE_INSIGNIA` (`descomposicion: 2`).
     - Implementar `insigniaDescomposicionOtorgada(progreso)` delegando en
       `mundoCompletoConTresEstrellas(2, progreso)` e incluir la rama del mundo 2 en
       `insigniasDelMundo`.
 
-  - [ ]* 14.2 Tests de la insignia en `src/juego/insignias.test.ts`
+  - [x]* 14.2 Tests de la insignia en `src/juego/insignias.test.ts`
     - Con las tres estrellas en los seis niveles del mundo 2 → insignia otorgada (R11.1).
     - Con una estrella faltante en algún nivel → no otorgada (R11.2).
     - Volver a completar niveles con la insignia ya otorgada la mantiene una sola vez (R11.5).
@@ -350,8 +350,8 @@
   Correr la suite completa, confirmar que las specs 00 y 01 no se rompen, correr los tests de
   propiedad de los generadores y repasar el comportamiento en el navegador.
 
-  - [~] 15.1 Ejecutar `npm test` y confirmar que todos los tests pasan sin regresiones en mundos 0 y 1.
-  - [~] 15.2 Correr los tests de propiedad de los cuatro generadores sobre 200 semillas cada uno.
+  - [-] 15.1 Ejecutar `npm test` y confirmar que todos los tests pasan sin regresiones en mundos 0 y 1.
+  - [-] 15.2 Correr los tests de propiedad de los cuatro generadores sobre 200 semillas cada uno.
   - [~] 15.3 Repaso manual en el navegador:
     - `PARA CUADRADO REPITE 4 [AV 100 GD 90] FIN CUADRADO` dibuja un cuadrado y el panel muestra el
       procedimiento definido.
