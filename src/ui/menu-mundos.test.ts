@@ -284,6 +284,21 @@ describe('menu-mundos · insignia', () => {
     expect(menu.encabezadoMundo(0)!.querySelectorAll('.kl-menu-mundo-medalla').length).toBe(1);
   });
 
+  it('muestra la insignia Descomposición al completar el mundo 2 con tres estrellas (R11.3, R11.4)', () => {
+    const menu = crear(conTresEstrellas('2.1', '2.2', '2.3', '2.4', '2.5', '2.6'));
+    expect(menu.insigniaVisible(2)).toBe(true);
+    const medalla = menu.encabezadoMundo(2)!.querySelector('.kl-menu-mundo-medalla') as HTMLElement;
+    expect(medalla.hidden).toBe(false);
+    expect(medalla.title).toBe('Insignia Descomposición conseguida.');
+  });
+
+  it('no muestra la insignia del mundo 2 si falta una estrella (R11.2)', () => {
+    const menu = crear(conTresEstrellas('2.1', '2.2', '2.3', '2.4', '2.5'));
+    expect(menu.insigniaVisible(2)).toBe(false);
+    const medalla = menu.encabezadoMundo(2)!.querySelector('.kl-menu-mundo-medalla') as HTMLElement;
+    expect(medalla.hidden).toBe(true);
+  });
+
   it('refrescar vuelve a leer el progreso', () => {
     const progreso = cargarProgreso(null);
     const menu = crear(progreso);
