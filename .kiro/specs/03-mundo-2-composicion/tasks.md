@@ -350,8 +350,8 @@
   Correr la suite completa, confirmar que las specs 00 y 01 no se rompen, correr los tests de
   propiedad de los generadores y repasar el comportamiento en el navegador.
 
-  - [-] 15.1 Ejecutar `npm test` y confirmar que todos los tests pasan sin regresiones en mundos 0 y 1.
-  - [-] 15.2 Correr los tests de propiedad de los cuatro generadores sobre 200 semillas cada uno.
+  - [x] 15.1 Ejecutar `npm test` y confirmar que todos los tests pasan sin regresiones en mundos 0 y 1.
+  - [x] 15.2 Correr los tests de propiedad de los cuatro generadores sobre 200 semillas cada uno.
   - [~] 15.3 Repaso manual en el navegador:
     - `PARA CUADRADO REPITE 4 [AV 100 GD 90] FIN CUADRADO` dibuja un cuadrado y el panel muestra el
       procedimiento definido.
@@ -363,6 +363,33 @@
     - `PARA NOMBRE` sin `FIN` muestra el mensaje con el nombre y la línea (R6.2).
     - Un color mal escrito lista los once colores disponibles (R6.7).
     - `RELLENA` da un veredicto estable del validador (R4.8).
+
+## Hallazgos del repaso manual (15.3)
+
+El repaso en el navegador confirmó que la capa de lenguaje, el conteo, los niveles, los
+generadores, el panel y la insignia funcionan. También detectó tres defectos de la capa visual
+que la implementación inicial dejó sin cubrir:
+
+- **Medalla de insignia (RESUELTO).** El menú de mundos solo pintaba la medalla del mundo 0; la
+  insignia *Descomposición* (R11.3, R11.4) y la de *Iteración* no se mostraban. Corregido para que
+  cada mundo muestre su medalla. Cubierto por pruebas en `menu-mundos.test.ts`.
+- **El color no se pinta en el lienzo (PENDIENTE — fix dedicado).** `PONCOLOR`/`PONGROSOR` fijan el
+  estado decorativo y el intérprete emite `OperacionColor`/`OperacionGrosor`, pero el `Segmento` no
+  transporta color ni grosor y `dibujarEstela` pinta con el color único del tema, así que el trazo
+  del jugador no cambia de color (R4.1, R4.4 incompletos en la capa de dibujo). Arreglarlo es un
+  cambio transversal del motor (modelo de `Segmento`, animador y lienzo) que debe preservar R4.8
+  (el validador solo ve geometría, nunca color). Se aborda como fix dedicado y revisado, fuera de
+  esta entrega.
+- **El error de color/grosor inválido no llega a la UI (PENDIENTE — fix dedicado).** El intérprete
+  genera `colorInvalido`/`grosorInvalido` (R4.3, R4.5) y conserva el valor anterior, pero
+  `concluirIntento` solo muestra el error de ejecución cuando hubo una guarda; sin guarda, el
+  comentario de calificación sobrescribe el globo y el mensaje nunca se ve. Mostrarlo requiere
+  decidir cómo conviven un error de ejecución y el comentario de calificación en el mismo globo
+  (decisión de UX), por lo que se aborda como fix dedicado y revisado.
+
+El mensaje de ayuda del panel y la redacción del error de comilla también se revisarán en esos
+fixes (hoy el ejemplo sugerido usa `PONCOLOR "rojo"` con comilla de cierre, que el lenguaje no
+acepta).
 
 ## Notes
 
