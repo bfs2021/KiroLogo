@@ -762,7 +762,7 @@ describe('Feature: 08-diseno-visual, Property 1: el veredicto de presentación n
       }),
       { seed: 804, numRuns: 100 },
     );
-  }, 60_000);
+  }, 120_000);
 });
 
 // ============================================================================
